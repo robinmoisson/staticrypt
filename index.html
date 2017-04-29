@@ -1,0 +1,116 @@
+<!doctype html>
+<html>
+<head>
+    <meta charset="utf-8">
+    <title>Static HTML Crypto</title>
+    <meta name="description" content="">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <!--<link rel="stylesheet" type="text/css" href="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.7/css/bootstrap.min.css">-->
+    <link rel="stylesheet" type="text/css" href="bootstrap.min.css">
+</head>
+
+<body>
+<div class="container">
+    <div class="row">
+        <div class="col-xs-12">
+            <h1>StatiCrypt</h1>
+            <p>
+                Password protect a static HTML page.
+            </p>
+        </div>
+    </div>
+    <div class="row">
+        <div class="col-xs-12">
+            <form id="encrypt_form">
+                <div class="form-group">
+                    <label for="passphrase">Passphrase</label>
+                    <input type="password" class="form-control" id="passphrase"
+                           placeholder="Passphrase (choose a long one!)">
+                </div>
+                <div class="form-group">
+                    <label for="html_title">HTML title of generated page</label>
+                    <input type="text" class="form-control" id="html_title">
+                </div>
+                <div class="form-group">
+                    <label for="title">Page name</label>
+                    <input type="text" class="form-control" id="title">
+                </div>
+                <div class="form-group">
+                    <label for="instructions">Instructions to display the user</label>
+                    <textarea class="form-control" id="instructions"></textarea>
+                </div>
+                <div class="form-group">
+                    <label for="unencrypted_html">HTML to encrypt</label>
+                    <textarea class="form-control" id="unencrypted_html" placeholder="<html><head>..."></textarea>
+                </div>
+
+                <button class="btn btn-primary" type="submit">Generate passphrase protected HTML</button>
+            </form>
+        </div>
+    </div>
+
+    <div class="row">
+        <div class="col-xs-12">
+            <h2>Encrypted HTML</h2>
+            <a href="#" class="btn btn-primary download" target="_blank" download="encrypted.html" disabled>Download</a>
+            <pre id="encrypted_html_display">
+Nothing generated yet.</pre>
+        </div>
+    </div>
+</div>
+
+<!--<script-->
+        <!--src="https://code.jquery.com/jquery-3.2.1.min.js"-->
+        <!--integrity="sha256-hwg4gsxgFZhOsEEamdOYGBf13FyQuiTwlAQgxVSNgt4="-->
+        <!--crossorigin="anonymous"-->
+<script src="jquery-3.2.1.min.js"></script>
+<!--<script src="https://cdnjs.cloudflare.com/ajax/libs/crypto-js/3.1.9-1/crypto-js.min.js"></script>-->
+<script src="crypto-js.js"></script>
+<!--<script src="https://cdnjs.cloudflare.com/ajax/libs/jsrender/0.9.84/jsrender.js"></script>-->
+<script src="jsrender.js"></script>
+
+<script>
+    $(function () {
+
+        var renderTemplate = function(data) {
+
+            $.when($.get('password_template.html'))
+                .done(function(tmplData) {
+                    $.templates({ tmpl: tmplData });
+
+                    var renderedTmpl = $.render.tmpl(data);
+
+                    $('#encrypted_html_display').text(renderedTmpl);
+
+                    var downloadLink = $('a.download');
+                    downloadLink.attr('href', 'data:attachment/text,' + encodeURI(renderedTmpl));
+                    downloadLink.removeAttr('disabled');
+                });
+        };
+
+        $('#encrypt_form').submit(function (e) {
+            e.preventDefault();
+
+            var unencrypted = $('#unencrypted_html').val();
+            var passphrase = $('#passphrase').val();
+
+            var encrypted = CryptoJS.AES.encrypt(unencrypted, passphrase);
+            var hmac = CryptoJS.HmacSHA256(encrypted.toString(), CryptoJS.SHA256(passphrase)).toString();
+            var encryptedMsg = hmac + encrypted;
+
+            var data = {
+                html_title: $('#html_title').val(),
+                title: $('#title').val(),
+                instructions: $('#instructions').val(),
+                encrypted: encryptedMsg
+            };
+
+            renderTemplate(data);
+        });
+    });
+</script>
+
+
+
+</body>
+</html>
