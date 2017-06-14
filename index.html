@@ -143,7 +143,7 @@ crossorigin="anonymous"></script>
                     var renderedTmpl = $.render.tmpl(data);
 
                     var downloadLink = $('a.download');
-                    downloadLink.attr('href', 'data:attachment/text,' + encodeURI(renderedTmpl));
+                    downloadLink.attr('href', 'data:attachment/text,' + encodeURIComponent(renderedTmpl));
                     downloadLink.removeAttr('disabled');
                 });
         };
