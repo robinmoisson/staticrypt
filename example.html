@@ -2,7 +2,7 @@
 <html class="staticrypt-html">
 <head>
     <meta charset="utf-8">
-    <title>{{:title}}</title>
+    <title>Protected Page</title>
     <meta name="viewport" content="width=device-width, initial-scale=1">
 
     <!-- do not cache this page -->
@@ -112,8 +112,8 @@
 <div class="staticrypt-page">
     <div class="staticrypt-form">
         <div class="staticrypt-instructions">
-            <p class="staticrypt-title">{{:title}}</p>
-            <p>{{:instructions}}</p>
+            <p class="staticrypt-title">Protected Page</p>
+            <p>Enter "test" to unlock the page</p>
         </div>
 
         <hr class="staticrypt-hr">
@@ -146,7 +146,7 @@
             e.preventDefault();
 
             var passphrase = $('#staticrypt-password').val();
-            var encryptedMsg = '{{:encrypted}}';
+            var encryptedMsg = 'bf73a9eb1c0ef239c83d262470f6a1a55b024a867a41199f73a33b82d73f6855U2FsdGVkX1/GeUxTnFMh1/3gx6bj1Cb4/bQxA/2toJZe8tX6H4azBaCfva11oo9Klj4NIYglL2ln6tQdBGEFHLCRy1ib6Fd89heNRoE30ua/AN0jvfxGP81ZOOzjAeSGb3gDUqOpgobXNz0rTw1z3cl++Sj9yrrOePbhmu7tPEJhz9NT50iAakdHNqm4fOjU4UiJFYBRcKERg0rXG9mHFg==';
 
             var encryptedHMAC = encryptedMsg.substring(0, 64);
             var encryptedHTML = encryptedMsg.substring(64);

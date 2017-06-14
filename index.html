@@ -5,18 +5,65 @@
     <title>Static HTML Crypto</title>
     <meta name="description" content="">
     <meta name="viewport" content="width=device-width, initial-scale=1">
-    <!--<link rel="stylesheet" type="text/css" href="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.7/css/bootstrap.min.css">-->
     <link rel="stylesheet" type="text/css" href="bootstrap.min.css">
+    <style>
+        a.no-style {
+            color: inherit;
+            text-decoration: inherit;
+        }
+
+        body {
+            font-size: 16px;
+        }
+    </style>
 </head>
 
 <body>
 <div class="container">
     <div class="row">
         <div class="col-xs-12">
-            <h1>StatiCrypt</h1>
+            <h1>
+                StatiCrypt
+                <div class="pull-right">
+                    <iframe src="https://ghbtns.com/github-btn.html?user=robinmoisson&repo=staticrypt&type=star&size=large"
+                            frameborder="0" scrolling="0" width="80px" height="30px"></iframe>
+                    <iframe src="https://ghbtns.com/github-btn.html?user=robinmoisson&repo=staticrypt&type=fork&size=large"
+                            frameborder="0" scrolling="0" width="80px" height="30px"></iframe>
+                </div>
+                <br>
+                <small>Password protect a static HTML page</small>
+            </h1>
             <p>
-                Password protect a static HTML page.
+                Based on the <a href="https://github.com/brix/crypto-js">crypto-js library</a>, StatiCrypt uses AES-256
+                to encrypt your string with your passphrase in your browser (client side).
             </p>
+            <p>
+                Download your encrypted string in a HTML page with a password prompt you can upload anywhere (see <a target="_blank" href="example.html">example</a>).
+            </p>
+            <h4><a class="no-style" id="toggle-concept" href="#">HOW IT WORKS ►</a></h4>
+            <br>
+            <div id="concept" class="hidden">
+                <p>
+                    StatiCrypt generates a static, password protected page that can be decrypted in-browser:
+                    just send or upload the generated page to a place serving static content (github pages, for exemple)
+                    and you're done: the javascript will prompt users for password, decrypt the page and load your HTML.
+                </p>
+                <p>
+                    <b class="text-danger">Disclaimer</b> TL;DR: if you have extra sensitive data, you should probably use
+                    something else :)
+                </p>
+                <p>
+                    We basically encrypt your page and put everything with a user-friendly way to use a password in the new
+                    file.
+                    <br>AES-256 is state of the art but <b>brute-force/dictionnary attacks are trivial to
+                    do at a really fast pace: use a long, unusual passphrase&nbsp;!</b>
+                </p>
+                <p>
+                    The concept is simple but this is a side project - not purporting to be bulletproof, feel free to
+                    contribute or report any thought to the <a href="https://github.com/robinmoisson/staticrypt">GitHub
+                    project</a>&nbsp;!
+                </p>
+            </div>
         </div>
     </div>
     <div class="row">
@@ -28,23 +75,24 @@
                            placeholder="Passphrase (choose a long one!)">
                 </div>
                 <div class="form-group">
-                    <label for="html_title">HTML title of generated page</label>
-                    <input type="text" class="form-control" id="html_title">
+                    <label for="unencrypted_html">HTML/string to encrypt</label>
+                    <textarea class="form-control" id="unencrypted_html" placeholder="<html><head>..." rows="5"></textarea>
                 </div>
-                <div class="form-group">
-                    <label for="title">Page name</label>
-                    <input type="text" class="form-control" id="title">
-                </div>
-                <div class="form-group">
-                    <label for="instructions">Instructions to display the user</label>
-                    <textarea class="form-control" id="instructions"></textarea>
-                </div>
-                <div class="form-group">
-                    <label for="unencrypted_html">HTML to encrypt</label>
-                    <textarea class="form-control" id="unencrypted_html" placeholder="<html><head>..."></textarea>
+                <p>
+                    <a href="#" id="toggle-extra-option">+ More options</a>
+                </p>
+                <div id="extra-options" class="hidden">
+                    <div class="form-group">
+                        <label for="title">Page title</label>
+                        <input type="text" class="form-control" id="title" placeholder="Default: 'Protected Page'">
+                    </div>
+                    <div class="form-group">
+                        <label for="instructions">Instructions to display the user</label>
+                        <textarea class="form-control" id="instructions" placeholder="Default: nothing."></textarea>
+                    </div>
                 </div>
 
-                <button class="btn btn-primary" type="submit">Generate passphrase protected HTML</button>
+                <button class="btn btn-primary pull-right" type="submit">Generate passphrase protected HTML</button>
             </form>
         </div>
     </div>
@@ -52,17 +100,18 @@
     <div class="row">
         <div class="col-xs-12">
             <h2>Encrypted HTML</h2>
-            <a href="#" class="btn btn-primary download" target="_blank" download="encrypted.html" disabled>Download</a>
+            <p><a href="#" class="btn btn-success download" target="_blank" download="encrypted.html"
+                  disabled="disabled">Download html file with password prompt</a></p>
             <pre id="encrypted_html_display">
-Nothing generated yet.</pre>
+Your encrypted string</pre>
         </div>
     </div>
 </div>
 
 <!--<script-->
-        <!--src="https://code.jquery.com/jquery-3.2.1.min.js"-->
-        <!--integrity="sha256-hwg4gsxgFZhOsEEamdOYGBf13FyQuiTwlAQgxVSNgt4="-->
-        <!--crossorigin="anonymous"-->
+<!--src="https://code.jquery.com/jquery-3.2.1.min.js"-->
+<!--integrity="sha256-hwg4gsxgFZhOsEEamdOYGBf13FyQuiTwlAQgxVSNgt4="-->
+<!--crossorigin="anonymous"-->
 <script src="jquery-3.2.1.min.js"></script>
 <!--<script src="https://cdnjs.cloudflare.com/ajax/libs/crypto-js/3.1.9-1/crypto-js.min.js"></script>-->
 <script src="crypto-js.js"></script>
@@ -72,15 +121,13 @@ Nothing generated yet.</pre>
 <script>
     $(function () {
 
-        var renderTemplate = function(data) {
+        var renderTemplate = function (data) {
 
             $.when($.get('password_template.html'))
-                .done(function(tmplData) {
-                    $.templates({ tmpl: tmplData });
+                .done(function (tmplData) {
+                    $.templates({tmpl: tmplData});
 
                     var renderedTmpl = $.render.tmpl(data);
-
-                    $('#encrypted_html_display').text(renderedTmpl);
 
                     var downloadLink = $('a.download');
                     downloadLink.attr('href', 'data:attachment/text,' + encodeURI(renderedTmpl));
@@ -98,18 +145,28 @@ Nothing generated yet.</pre>
             var hmac = CryptoJS.HmacSHA256(encrypted.toString(), CryptoJS.SHA256(passphrase)).toString();
             var encryptedMsg = hmac + encrypted;
 
+            var pageTitle = $.trim($('#title').val());
+            var instructions = $('#instructions').val();
             var data = {
-                html_title: $('#html_title').val(),
-                title: $('#title').val(),
-                instructions: $('#instructions').val(),
+                title: pageTitle ? pageTitle : 'Protected Page',
+                instructions: instructions ? instructions : '',
                 encrypted: encryptedMsg
             };
 
+            $('#encrypted_html_display').text(encryptedMsg);
+
             renderTemplate(data);
+        });
+
+        $('#toggle-extra-option').click(function () {
+            $('#extra-options').toggleClass('hidden');
+        });
+
+        $('#toggle-concept').click(function () {
+            $('#concept').toggleClass('hidden');
         });
     });
 </script>
-
 
 
 </body>
