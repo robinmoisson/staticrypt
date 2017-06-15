@@ -134,34 +134,30 @@
 </footer>
 
 
-<script
-        src="https://code.jquery.com/jquery-3.2.1.min.js"
-        integrity="sha256-hwg4gsxgFZhOsEEamdOYGBf13FyQuiTwlAQgxVSNgt4="
-        crossorigin="anonymous"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/crypto-js/3.1.9-1/crypto-js.min.js"></script>
 
 <script>
-    $(function () {
-        $('#staticrypt-form').submit(function (e) {
-            e.preventDefault();
 
-            var passphrase = $('#staticrypt-password').val();
-            var encryptedMsg = 'bf73a9eb1c0ef239c83d262470f6a1a55b024a867a41199f73a33b82d73f6855U2FsdGVkX1/GeUxTnFMh1/3gx6bj1Cb4/bQxA/2toJZe8tX6H4azBaCfva11oo9Klj4NIYglL2ln6tQdBGEFHLCRy1ib6Fd89heNRoE30ua/AN0jvfxGP81ZOOzjAeSGb3gDUqOpgobXNz0rTw1z3cl++Sj9yrrOePbhmu7tPEJhz9NT50iAakdHNqm4fOjU4UiJFYBRcKERg0rXG9mHFg==';
+    document.getElementById('staticrypt-form').addEventListener('submit', function (e) {
+        e.preventDefault();
 
-            var encryptedHMAC = encryptedMsg.substring(0, 64);
-            var encryptedHTML = encryptedMsg.substring(64);
+        var passphrase = document.getElementById('staticrypt-password').value
+        var encryptedMsg = 'bf73a9eb1c0ef239c83d262470f6a1a55b024a867a41199f73a33b82d73f6855U2FsdGVkX1/GeUxTnFMh1/3gx6bj1Cb4/bQxA/2toJZe8tX6H4azBaCfva11oo9Klj4NIYglL2ln6tQdBGEFHLCRy1ib6Fd89heNRoE30ua/AN0jvfxGP81ZOOzjAeSGb3gDUqOpgobXNz0rTw1z3cl++Sj9yrrOePbhmu7tPEJhz9NT50iAakdHNqm4fOjU4UiJFYBRcKERg0rXG9mHFg==';
 
-            var decryptedHMAC = CryptoJS.HmacSHA256(encryptedHTML, CryptoJS.SHA256(passphrase)).toString();
+        var encryptedHMAC = encryptedMsg.substring(0, 64);
+        var encryptedHTML = encryptedMsg.substring(64);
 
-            if (decryptedHMAC !== encryptedHMAC) {
-                alert('Bad passphrase !');
-                return;
-            }
+        var decryptedHMAC = CryptoJS.HmacSHA256(encryptedHTML, CryptoJS.SHA256(passphrase)).toString();
 
-            var plainHTML = CryptoJS.AES.decrypt(encryptedHTML, passphrase).toString(CryptoJS.enc.Utf8);
+        if (decryptedHMAC !== encryptedHMAC) {
+            alert('Bad passphrase !');
+            return;
+        }
 
-            document.write(plainHTML);
-        });
+        var plainHTML = CryptoJS.AES.decrypt(encryptedHTML, passphrase).toString(CryptoJS.enc.Utf8);
+
+        document.write(plainHTML);
+        document.close();
     });
 </script>
 </body>

@@ -123,61 +123,61 @@ Your encrypted string</pre>
     </div>
 </div>
 
-<script
-src="https://code.jquery.com/jquery-3.2.1.min.js"
-integrity="sha256-hwg4gsxgFZhOsEEamdOYGBf13FyQuiTwlAQgxVSNgt4="
-crossorigin="anonymous"></script>
-<script src="jquery-3.2.1.min.js"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/crypto-js/3.1.9-1/crypto-js.min.js"></script>
-<script src="https://cdnjs.cloudflare.com/ajax/libs/jsrender/0.9.84/jsrender.js"></script>
 
 <script>
-    $(function () {
+    var renderTemplate = function (tpl, data) {
+        return tpl.replace(/{(.*?)}/g, function (_, key) {
+            return data && data[key] || '';
+        });
+    }
 
-        var renderTemplate = function (data) {
+    var renderTemplate = function (data) {
+        var request = new XMLHttpRequest();
+        request.open('GET', 'password_template.html', true);
+        request.onload = function() {
+            var renderedTmpl = renderTemplate(request.responseText, data);
 
-            $.when($.get('password_template.html'))
-                .done(function (tmplData) {
-                    $.templates({tmpl: tmplData});
+            var downloadLink = document.querySelector('a.download');
+            downloadLink.href = 'data:attachment/text,' + encodeURIComponent(renderedTmpl);
+            downloadLink.removeAttribute('disabled');
+        };
+        request.send();
+    };
 
-                    var renderedTmpl = $.render.tmpl(data);
+    document.getElementById('encrypt_form').addEventListener('submit', function (e) {
+        e.preventDefault();
 
-                    var downloadLink = $('a.download');
-                    downloadLink.attr('href', 'data:attachment/text,' + encodeURIComponent(renderedTmpl));
-                    downloadLink.removeAttr('disabled');
-                });
+        var unencrypted = document.getElementById('unencrypted_html').value;
+        var passphrase = document.getElementById('passphrase').value;
+
+        var encrypted = CryptoJS.AES.encrypt(unencrypted, passphrase);
+        var hmac = CryptoJS.HmacSHA256(encrypted.toString(), CryptoJS.SHA256(passphrase)).toString();
+        var encryptedMsg = hmac + encrypted;
+
+        var pageTitle = document.getElementById('title').value.trim();
+        var instructions = document.getElementById('instructions').value;
+        var data = {
+            title: pageTitle ? pageTitle : 'Protected Page',
+            instructions: instructions ? instructions : '',
+            encrypted: encryptedMsg
         };
 
-        $('#encrypt_form').submit(function (e) {
-            e.preventDefault();
+        document.getElementById('encrypted_html_display').textContent = encryptedMsg;
 
-            var unencrypted = $('#unencrypted_html').val();
-            var passphrase = $('#passphrase').val();
+        renderTemplate(data);
+    });
 
-            var encrypted = CryptoJS.AES.encrypt(unencrypted, passphrase);
-            var hmac = CryptoJS.HmacSHA256(encrypted.toString(), CryptoJS.SHA256(passphrase)).toString();
-            var encryptedMsg = hmac + encrypted;
+    document.getElementById('toggle-extra-option')
+    .addEventListener('click', function (e) {
+        e.preventDefault();
+        document.getElementById('extra-options').classList.toggle('hidden');
+    });
 
-            var pageTitle = $.trim($('#title').val());
-            var instructions = $('#instructions').val();
-            var data = {
-                title: pageTitle ? pageTitle : 'Protected Page',
-                instructions: instructions ? instructions : '',
-                encrypted: encryptedMsg
-            };
-
-            $('#encrypted_html_display').text(encryptedMsg);
-
-            renderTemplate(data);
-        });
-
-        $('#toggle-extra-option').click(function () {
-            $('#extra-options').toggleClass('hidden');
-        });
-
-        $('#toggle-concept').click(function () {
-            $('#concept').toggleClass('hidden');
-        });
+    document.getElementById('toggle-concept')
+    .addEventListener('click', function (e) {
+        e.preventDefault();
+        document.getElementById('concept').classList.toggle('hidden');
     });
 </script>
 
