@@ -137,7 +137,9 @@ Your encrypted string</pre>
     </div>
 </div>
 
-<script src="https://cdnjs.cloudflare.com/ajax/libs/crypto-js/3.1.9-1/crypto-js.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/crypto-js/3.1.9-1/crypto-js.min.js"
+        integrity="sha384-lp4k1VRKPU9eBnPePjnJ9M2RF3i7PC30gXs70+elCVfgwLwx1tv5+ctxdtwxqZa7"
+        crossorigin="anonymous"></script>
 
 <script>
     var htmlToDownload;
@@ -200,7 +202,7 @@ Your encrypted string</pre>
             title: pageTitle ? pageTitle : 'Protected Page',
             instructions: instructions ? instructions : '',
             encrypted: encryptedMsg,
-            crypto_tag: '<script src="https://cdnjs.cloudflare.com/ajax/libs/crypto-js/3.1.9-1/crypto-js.min.js"></scr' + 'ipt>'
+            crypto_tag: '<script src="https://cdnjs.cloudflare.com/ajax/libs/crypto-js/3.1.9-1/crypto-js.min.js" integrity="sha384-lp4k1VRKPU9eBnPePjnJ9M2RF3i7PC30gXs70+elCVfgwLwx1tv5+ctxdtwxqZa7" crossorigin="anonymous"></scr' + 'ipt>'
         };
 
         document.getElementById('encrypted_html_display').textContent = encryptedMsg;
