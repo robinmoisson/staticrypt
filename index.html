@@ -115,7 +115,7 @@
     <div class="row">
         <div class="col-xs-12">
             <h2>Encrypted HTML</h2>
-            <p><a class="btn btn-success download" target="_blank" download="encrypted.html"
+            <p><a class="btn btn-success download" download="encrypted.html"
                   disabled="disabled">Download html file with password prompt</a></p>
             <pre id="encrypted_html_display">
 Your encrypted string</pre>
@@ -126,6 +126,10 @@ Your encrypted string</pre>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/crypto-js/3.1.9-1/crypto-js.min.js"></script>
 
 <script>
+    if (typeof document.createElement('a').download === 'undefined') {
+        document.querySelector('a.download').target = '_blank';
+    }
+    
     var htmlToDownload;
 
     var renderTemplate = function (tpl, data) {
@@ -148,6 +152,7 @@ Your encrypted string</pre>
         };
         request.send();
     };
+    
 
     document.getElementById('encrypt_form').addEventListener('submit', function (e) {
         e.preventDefault();
