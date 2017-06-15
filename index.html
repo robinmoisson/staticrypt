@@ -115,8 +115,11 @@
     <div class="row">
         <div class="col-xs-12">
             <h2>Encrypted HTML</h2>
-            <p><a href="#" class="btn btn-success download" target="_blank" download="encrypted.html"
-                  disabled="disabled">Download html file with password prompt</a></p>
+            <form method="get" id="download-form" action="encrypted.html">
+              <p>
+                <button disabled="disabled" class="btn btn-success download" type="submit">Download html file with password prompt</button>
+              </p>
+            </form>
             <pre id="encrypted_html_display">
 Your encrypted string</pre>
         </div>
@@ -142,9 +145,11 @@ crossorigin="anonymous"></script>
 
                     var renderedTmpl = $.render.tmpl(data);
 
-                    var downloadLink = $('a.download');
-                    downloadLink.attr('href', 'data:attachment/text,' + encodeURIComponent(renderedTmpl));
-                    downloadLink.removeAttr('disabled');
+                    var downloadForm = $('#download-form');
+                    downloadForm.attr('action', 'data:attachment/text,' + encodeURIComponent(renderedTmpl));
+                    
+                    var downloadButton = $('#download-form .download');
+                    downloadButton.removeAttr('disabled');
                 });
         };
 
