@@ -4,16 +4,17 @@ Based on the [crypto-js](https://github.com/brix/crypto-js) library, StatiCrypt 
 
 Download your encrypted string in a HTML page with a password prompt you can upload anywhere (see [example](https://robinmoisson.github.io/staticrypt/example.html)).
 
+You can encrypt a file online at https://robinmoisson.github.io/staticrypt.
 
 ## HOW IT WORKS
 
-StatiCrypt generates a static, password protected page that can be decrypted in-browser: just send or upload the generated page to a place serving static content (github pages, for exemple) and you're done: the javascript will prompt users for password, decrypt the page and load your HTML.
+StatiCrypt generates a static, password protected page that can be decrypted in-browser: just send or upload the generated page to a place serving static content (github pages, for example) and you're done: the javascript will prompt users for password, decrypt the page and load your HTML.
 
-**Disclaimer** TL;DR: if you have extra sensitive data you should probably use something else :)
+**Disclaimer** TL;DR: if you have extra sensitive banking data you should probably use something else :)
 
 StatiCrypt basically encrypts your page and puts everything with a user-friendly way to use a password in the new file. 
 
-AES-256 is state of the art but brute-force/dictionnary attacks are trivial to do at a really fast pace: use a long, unusual passphrase!
+AES-256 is state of the art but brute-force/dictionnary attacks would be trivial to do at a really fast pace: **use a long, unusual passphrase!**
 
 The concept is simple but this is a side project - not purporting to be bulletproof, feel free to contribute or report any thought to the GitHub project !
 
