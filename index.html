@@ -15,6 +15,10 @@
         body {
             font-size: 16px;
         }
+
+        label.no-style {
+            font-weight: normal;
+        }
     </style>
 
     <script>
@@ -107,6 +111,14 @@
                     </div>
                 </div>
 
+                <div class="form-group">
+                    <label class="no-style">
+                        <input type="checkbox" id="embed-crypto" checked>
+                        Embed crypto-js into your file
+                        <abbr title="Leave checked to include crypto-js into your file so you can decrypt it offline. Uncheck to load crypto-js from a CDN.">?</abbr>
+                    </label>
+                </div>
+
                 <button class="btn btn-primary pull-right" type="submit">Generate passphrase protected HTML</button>
             </form>
         </div>
@@ -125,7 +137,9 @@ Your encrypted string</pre>
     </div>
 </div>
 
-<script src="https://cdnjs.cloudflare.com/ajax/libs/crypto-js/3.1.9-1/crypto-js.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/crypto-js/3.1.9-1/crypto-js.min.js"
+        integrity="sha384-lp4k1VRKPU9eBnPePjnJ9M2RF3i7PC30gXs70+elCVfgwLwx1tv5+ctxdtwxqZa7"
+        crossorigin="anonymous"></script>
 
 <script>
     var htmlToDownload;
@@ -136,6 +150,10 @@ Your encrypted string</pre>
         });
     };
 
+    /**
+     * Fill the password prompt template with data provided.
+     * @param data
+     */
     var setFileToDownload = function (data) {
         var request = new XMLHttpRequest();
         request.open('GET', 'password_template.html', true);
@@ -151,6 +169,23 @@ Your encrypted string</pre>
         request.send();
     };
 
+    /**
+     * Download crypto-js lib to embed it in the generated file, update the file when done.
+     * @param data
+     */
+    var setFileToDownloadWithEmbeddedCrypto = function (data) {
+        var request = new XMLHttpRequest();
+        request.open('GET', 'https://cdnjs.cloudflare.com/ajax/libs/crypto-js/3.1.9-1/crypto-js.min.js', true);
+        request.onload = function() {
+            data['crypto_tag'] = '<script>' + request.responseText + '</scr' + 'ipt>';
+            setFileToDownload(data);
+        };
+        request.send();
+    };
+
+    /**
+     * Handle form submission.
+     */
     document.getElementById('encrypt_form').addEventListener('submit', function (e) {
         e.preventDefault();
 
@@ -166,12 +201,19 @@ Your encrypted string</pre>
         var data = {
             title: pageTitle ? pageTitle : 'Protected Page',
             instructions: instructions ? instructions : '',
-            encrypted: encryptedMsg
+            encrypted: encryptedMsg,
+            crypto_tag: '<script src="https://cdnjs.cloudflare.com/ajax/libs/crypto-js/3.1.9-1/crypto-js.min.js" integrity="sha384-lp4k1VRKPU9eBnPePjnJ9M2RF3i7PC30gXs70+elCVfgwLwx1tv5+ctxdtwxqZa7" crossorigin="anonymous"></scr' + 'ipt>'
         };
 
         document.getElementById('encrypted_html_display').textContent = encryptedMsg;
 
-        setFileToDownload(data);
+        if (document.getElementById("embed-crypto").checked) {
+            setFileToDownloadWithEmbeddedCrypto(data);
+        }
+        else {
+            setFileToDownload(data);
+        }
+
     });
 
     document.getElementById('toggle-extra-option')
@@ -187,6 +229,9 @@ Your encrypted string</pre>
     });
 
 
+    /**
+     * Browser specific download code.
+     */
     document.getElementById('download-link')
         .addEventListener('click', function (e) {
 
