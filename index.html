@@ -115,7 +115,9 @@
     <div class="row">
         <div class="col-xs-12">
             <h2>Encrypted HTML</h2>
-            <p><a class="btn btn-success download" target="_blank" download="encrypted.html"
+            <p><a class="btn btn-success download"
+                  download="encrypted.html"
+                  id="download-link"
                   disabled="disabled">Download html file with password prompt</a></p>
             <pre id="encrypted_html_display">
 Your encrypted string</pre>
@@ -141,7 +143,7 @@ Your encrypted string</pre>
             var renderedTmpl = renderTemplate(request.responseText, data);
 
             var downloadLink = document.querySelector('a.download');
-            downloadLink.href = 'data:attachment/text,' + encodeURIComponent(renderedTmpl);
+            downloadLink.href = 'data:text/html,' + encodeURIComponent(renderedTmpl);
             downloadLink.removeAttribute('disabled');
 
             htmlToDownload = renderedTmpl;
@@ -185,7 +187,7 @@ Your encrypted string</pre>
     });
 
 
-    document.getElementById('toggle-concept')
+    document.getElementById('download-link')
         .addEventListener('click', function (e) {
 
         var isIE = (navigator.userAgent.indexOf("MSIE") !== -1 ) || (!!document.documentMode === true ); // >= 10
