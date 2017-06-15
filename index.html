@@ -126,13 +126,15 @@ Your encrypted string</pre>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/crypto-js/3.1.9-1/crypto-js.min.js"></script>
 
 <script>
+    var htmlToDownload;
+
     var renderTemplate = function (tpl, data) {
         return tpl.replace(/{(.*?)}/g, function (_, key) {
             return data && data[key] || '';
         });
-    }
+    };
 
-    var renderTemplate = function (data) {
+    var setFileToDownload = function (data) {
         var request = new XMLHttpRequest();
         request.open('GET', 'password_template.html', true);
         request.onload = function() {
@@ -141,6 +143,8 @@ Your encrypted string</pre>
             var downloadLink = document.querySelector('a.download');
             downloadLink.href = 'data:attachment/text,' + encodeURIComponent(renderedTmpl);
             downloadLink.removeAttribute('disabled');
+
+            htmlToDownload = renderedTmpl;
         };
         request.send();
     };
@@ -165,7 +169,7 @@ Your encrypted string</pre>
 
         document.getElementById('encrypted_html_display').textContent = encryptedMsg;
 
-        renderTemplate(data);
+        setFileToDownload(data);
     });
 
     document.getElementById('toggle-extra-option')
@@ -179,6 +183,23 @@ Your encrypted string</pre>
         e.preventDefault();
         document.getElementById('concept').classList.toggle('hidden');
     });
+
+
+    document.getElementById('toggle-concept')
+        .addEventListener('click', function (e) {
+
+        var isIE = (navigator.userAgent.indexOf("MSIE") !== -1 ) || (!!document.documentMode === true ); // >= 10
+        var isEdge = navigator.userAgent.indexOf("Edge") !== -1;
+
+        // download with MS specific feature
+        if (htmlToDownload && (isIE || isEdge)) {
+            e.preventDefault();
+            var blobObject = new Blob([htmlToDownload]);
+            window.navigator.msSaveOrOpenBlob(blobObject, 'encrypted.html');
+        }
+
+        return true;
+    })
 </script>
 
 
