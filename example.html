@@ -58,6 +58,7 @@
             padding: 15px;
             color: #FFFFFF;
             font-size: 14px;
+            cursor: pointer;
         }
 
         .staticrypt-form .staticrypt-decrypt-button:hover, .staticrypt-form .staticrypt-decrypt-button:active, .staticrypt-form .staticrypt-decrypt-button:focus {
@@ -105,6 +106,10 @@
             text-align: center;
             float: right;
         }
+
+        .staticrypt-footer a {
+            text-decoration: none;
+        }
     </style>
 </head>
 
@@ -122,7 +127,8 @@
             <input id="staticrypt-password"
                    type="password"
                    name="password"
-                   placeholder="passphrase"/>
+                   placeholder="passphrase"
+                   autofocus/>
 
             <input type="submit" class="staticrypt-decrypt-button" value="DECRYPT"/>
         </form>
@@ -141,13 +147,11 @@
     document.getElementById('staticrypt-form').addEventListener('submit', function (e) {
         e.preventDefault();
 
-        var passphrase = document.getElementById('staticrypt-password').value
-        var encryptedMsg = 'bf73a9eb1c0ef239c83d262470f6a1a55b024a867a41199f73a33b82d73f6855U2FsdGVkX1/GeUxTnFMh1/3gx6bj1Cb4/bQxA/2toJZe8tX6H4azBaCfva11oo9Klj4NIYglL2ln6tQdBGEFHLCRy1ib6Fd89heNRoE30ua/AN0jvfxGP81ZOOzjAeSGb3gDUqOpgobXNz0rTw1z3cl++Sj9yrrOePbhmu7tPEJhz9NT50iAakdHNqm4fOjU4UiJFYBRcKERg0rXG9mHFg==';
-
-        var encryptedHMAC = encryptedMsg.substring(0, 64);
-        var encryptedHTML = encryptedMsg.substring(64);
-
-        var decryptedHMAC = CryptoJS.HmacSHA256(encryptedHTML, CryptoJS.SHA256(passphrase)).toString();
+        var passphrase = document.getElementById('staticrypt-password').value,
+            encryptedMsg = 'bf73a9eb1c0ef239c83d262470f6a1a55b024a867a41199f73a33b82d73f6855U2FsdGVkX1/GeUxTnFMh1/3gx6bj1Cb4/bQxA/2toJZe8tX6H4azBaCfva11oo9Klj4NIYglL2ln6tQdBGEFHLCRy1ib6Fd89heNRoE30ua/AN0jvfxGP81ZOOzjAeSGb3gDUqOpgobXNz0rTw1z3cl++Sj9yrrOePbhmu7tPEJhz9NT50iAakdHNqm4fOjU4UiJFYBRcKERg0rXG9mHFg==',
+            encryptedHMAC = encryptedMsg.substring(0, 64),
+            encryptedHTML = encryptedMsg.substring(64),
+            decryptedHMAC = CryptoJS.HmacSHA256(encryptedHTML, CryptoJS.SHA256(passphrase)).toString();
 
         if (decryptedHMAC !== encryptedHMAC) {
             alert('Bad passphrase !');
