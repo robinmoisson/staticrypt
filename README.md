@@ -14,7 +14,7 @@ StatiCrypt generates a static, password protected page that can be decrypted in-
 
 StatiCrypt basically encrypts your page and puts everything with a user-friendly way to use a password in the new file. 
 
-AES-256 is state of the art but brute-force/dictionnary attacks would be trivial to do at a really fast pace: **use a long, unusual passphrase!**
+AES-256 is state of the art but brute-force/dictionary attacks would be trivial to do at a really fast pace: **use a long, unusual passphrase!**
 
 The concept is simple but this is a side project - not purporting to be bulletproof, feel free to contribute or report any thought to the GitHub project !
 
