@@ -145,7 +145,12 @@ Your encrypted string</pre>
         integrity="sha384-lp4k1VRKPU9eBnPePjnJ9M2RF3i7PC30gXs70+elCVfgwLwx1tv5+ctxdtwxqZa7"
         crossorigin="anonymous"></script>
 
+<script src="https://cdn.ckeditor.com/4.7.0/standard/ckeditor.js"></script>
+
 <script>
+    // enable CKEDIRTOR
+    CKEDITOR.replace( 'instructions' );
+
     var htmlToDownload;
 
     var renderTemplate = function (tpl, data) {
@@ -192,6 +197,10 @@ Your encrypted string</pre>
      */
     document.getElementById('encrypt_form').addEventListener('submit', function (e) {
         e.preventDefault();
+
+        // update instruction textarea value with CKEDITOR content
+        // (see https://stackoverflow.com/questions/3147670/ckeditor-update-textarea)
+        CKEDITOR.instances['instructions'].updateElement();
 
         var unencrypted = document.getElementById('unencrypted_html').value;
         var passphrase = document.getElementById('passphrase').value;
