@@ -16,5 +16,4 @@ StatiCrypt basically encrypts your page and puts everything with a user-friendly
 
 AES-256 is state of the art but brute-force/dictionary attacks would be trivial to do at a really fast pace: **use a long, unusual passphrase!**
 
-The concept is simple but this is a side project - not purporting to be bulletproof, feel free to contribute or report any thought to the GitHub project !
-
+The concept is simple but this is a side project - not purporting to be bulletproof, feel free to contribute or report any thought to the GitHub project!
