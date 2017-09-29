@@ -197,7 +197,7 @@ Your encrypted string</pre>
         var passphrase = document.getElementById('passphrase').value;
 
         var encrypted = CryptoJS.AES.encrypt(unencrypted, passphrase);
-        var hmac = CryptoJS.HmacSHA256(encrypted.toString(), CryptoJS.SHA256(passphrase)).toString();
+        var hmac = CryptoJS.HmacSHA256(encrypted.toString(), CryptoJS.SHA256(passphrase).toString()).toString();
         var encryptedMsg = hmac + encrypted;
 
         var pageTitle = document.getElementById('title').value.trim();

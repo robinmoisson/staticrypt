@@ -143,15 +143,14 @@
 <script src="https://cdnjs.cloudflare.com/ajax/libs/crypto-js/3.1.9-1/crypto-js.min.js" integrity="sha384-lp4k1VRKPU9eBnPePjnJ9M2RF3i7PC30gXs70+elCVfgwLwx1tv5+ctxdtwxqZa7" crossorigin="anonymous"></script>
 
 <script>
-
-    document.getElementById('staticrypt-form').addEventListener('submit', function (e) {
+    document.getElementById('staticrypt-form').addEventListener('submit', function(e) {
         e.preventDefault();
 
         var passphrase = document.getElementById('staticrypt-password').value,
-            encryptedMsg = 'bf73a9eb1c0ef239c83d262470f6a1a55b024a867a41199f73a33b82d73f6855U2FsdGVkX1/GeUxTnFMh1/3gx6bj1Cb4/bQxA/2toJZe8tX6H4azBaCfva11oo9Klj4NIYglL2ln6tQdBGEFHLCRy1ib6Fd89heNRoE30ua/AN0jvfxGP81ZOOzjAeSGb3gDUqOpgobXNz0rTw1z3cl++Sj9yrrOePbhmu7tPEJhz9NT50iAakdHNqm4fOjU4UiJFYBRcKERg0rXG9mHFg==',
+            encryptedMsg = '46000e585e625a99008c89c628710dc4b798c864fa810ae0458bc6b49a703f90U2FsdGVkX1+g3FXrsAI5EjFDMufRodFX1zR4khDb1ua1hT7e2Wjt3k9089USzxeyquHa8Yk5VZ7e6PoJ68Y9QibpQUedY7HMJC9k2WNw+ojPdk0xzPxSBWY7pDX+ZoLUzEztNzxsnPhQITmN8WfRdz6+3ortQmGRUn1qAXznRviSh5t7HzwlkRFEeNqjMJCB/Mjj+OnWpXZeNLo6nAdEag==',
             encryptedHMAC = encryptedMsg.substring(0, 64),
             encryptedHTML = encryptedMsg.substring(64),
-            decryptedHMAC = CryptoJS.HmacSHA256(encryptedHTML, CryptoJS.SHA256(passphrase)).toString();
+            decryptedHMAC = CryptoJS.HmacSHA256(encryptedHTML, CryptoJS.SHA256(passphrase).toString()).toString();
 
         if (decryptedHMAC !== encryptedHMAC) {
             alert('Bad passphrase !');
