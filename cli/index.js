@@ -7,52 +7,29 @@ var https = require("https");
 const SCRIPT_URL = 'https://cdnjs.cloudflare.com/ajax/libs/crypto-js/3.1.9-1/crypto-js.min.js';
 const SCRIPT_TAG = '<script src="' + SCRIPT_URL + '" integrity="sha384-lp4k1VRKPU9eBnPePjnJ9M2RF3i7PC30gXs70+elCVfgwLwx1tv5+ctxdtwxqZa7" crossorigin="anonymous"></script>';
 
-const argv = process.argv;
-const argc = process.argv.length;
-
-if(argc < 4 || argc > 7){
-    console.log("Failure: invalid argument length!");
-    process.exit(1);
-}
-
-const htmlFilepath = argv[2];
-const outputFilePath = htmlFilepath + ".encrypted";
-
-const password = argv[3];
-
-var pageTitle = "Protected Page";
-if(argc >= 5){
-    pageTitle = argv[4];
-}
-
-var instructions = "";
-if(argc >= 6){
-    instructions = argv[5];
-}
-
-var embed = true;
-if(argc >= 7){
-    embed = (argv[6] == 'true');
-}
+const namedArgs = parseArgs(process.argv, process.argv.length);
+console.log(namedArgs);
+console.log(namedArgs.input);
 
 try{
-    var contents = FileSystem.readFileSync(htmlFilepath, 'utf8');
+    var contents = FileSystem.readFileSync(namedArgs.input, 'utf8');
 }catch(e){
+    console.error(e);
     console.log("Failure: file does not exist!");
     process.exit(1);
 }
 
-var encrypted = CryptoJS.AES.encrypt(contents, password);
-var hmac = CryptoJS.HmacSHA256(encrypted.toString(), CryptoJS.SHA256(password)).toString();
+var encrypted = CryptoJS.AES.encrypt(contents, namedArgs.password);
+var hmac = CryptoJS.HmacSHA256(encrypted.toString(), CryptoJS.SHA256(namedArgs.password)).toString();
 var encryptedMessage = hmac + encrypted;
 
 var data = {
-    title: pageTitle,
-    instructions: instructions,
+    title: namedArgs.title != null ? namedArgs.title : "Protected Page",
+    instructions: namedArgs.instructions != null ? namedArgs.instructions : "",
     encrypted: encryptedMessage,
     crypto_tag: SCRIPT_TAG,
-    embed: embed,
-    outputFilePath: outputFilePath
+    embed: namedArgs.embed != null ? namedArgs.embed : false,
+    outputFilePath: namedArgs.output != null ? namedArgs.output : namedArgs.input + ".encrypted"
 };
 
 if(data.embed){
@@ -99,4 +76,70 @@ function render(tpl, data){
     return tpl.replace(/{(.*?)}/g, function (_, key) {
         return data && data[key] || '';
     });
+}
+
+function parseArgs(argv, argc){
+    var argList = {
+        required: {
+            "input": false,
+            "password": false
+        },
+        optional: {
+            "output": false,
+            "title": false,
+            "instructions" : false,
+            "embed": false
+        }
+    };
+
+    var namedArgs = {};
+
+    // parse through args
+    for(var i = 2; i < argc; ++i){
+        var pieces = argv[i].split('=');
+        if(pieces.length != 2){
+            console.error("Failure: invalid argument '" + argv[i] + "'");
+            process.exit(1);
+        }else{
+            const name = pieces[0];
+
+            if(argList.required[name] == true){
+                // duplicate
+                console.log("Failure: duplicate argument '" + name + "'");
+                process.exit(1);
+            }else if(argList.required[name] == false){
+                // valid
+                namedArgs[name] = pieces[1];
+                argList.required[name] = true;
+            }else if(argList.optional[name] == true){
+                // duplicate
+                console.log("Failure: duplicate argument '" + name + "'");
+                process.exit(1);
+            }else if(argList.optional[name] == false){
+                // valid
+                namedArgs[name] = pieces[1];
+                argList.optional[name] = true;
+            }else{
+                // unknown argument
+                console.log("Failure: unknown argument '" + name + "'");
+                process.exit(1);
+            }
+        }
+    }
+
+    // make sure all required args are present
+    for(var argName in argList.required){
+        if(argList.required[argName] == false){
+            console.log("Failure: missing required argument '" + argName + "'");
+            process.exit(1);
+        }
+    }
+
+    // validate password length
+    if(namedArgs.password.length < 5){
+        console.log("Failure: password length less than 5");
+        process.exit(1);
+    }
+
+    return namedArgs;
 }
