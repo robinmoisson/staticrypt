@@ -8,14 +8,11 @@ const SCRIPT_URL = 'https://cdnjs.cloudflare.com/ajax/libs/crypto-js/3.1.9-1/cry
 const SCRIPT_TAG = '<script src="' + SCRIPT_URL + '" integrity="sha384-lp4k1VRKPU9eBnPePjnJ9M2RF3i7PC30gXs70+elCVfgwLwx1tv5+ctxdtwxqZa7" crossorigin="anonymous"></script>';
 
 const namedArgs = parseArgs(process.argv, process.argv.length);
-console.log(namedArgs);
-console.log(namedArgs.input);
 
 try{
     var contents = FileSystem.readFileSync(namedArgs.input, 'utf8');
 }catch(e){
-    console.error(e);
-    console.log("Failure: file does not exist!");
+    console.log("Failure: input file does not exist!");
     process.exit(1);
 }
 
