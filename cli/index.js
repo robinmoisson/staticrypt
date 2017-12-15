@@ -97,7 +97,8 @@ function parseArgs(argv, argc){
     for(var i = 2; i < argc; ++i){
         var pieces = argv[i].split('=');
         if(pieces.length != 2){
-            console.error("Failure: invalid argument '" + argv[i] + "'");
+            console.log("Failure: invalid argument '" + argv[i] + "'");
+            usage();
             process.exit(1);
         }else{
             const name = pieces[0];
@@ -121,6 +122,7 @@ function parseArgs(argv, argc){
             }else{
                 // unknown argument
                 console.log("Failure: unknown argument '" + name + "'");
+                usage();
                 process.exit(1);
             }
         }
@@ -130,6 +132,7 @@ function parseArgs(argv, argc){
     for(var argName in argList.required){
         if(argList.required[argName] == false){
             console.log("Failure: missing required argument '" + argName + "'");
+            usage();
             process.exit(1);
         }
     }
@@ -141,4 +144,17 @@ function parseArgs(argv, argc){
     }
 
     return namedArgs;
+}
+
+function usage(){
+    console.log("Staticrypt arguments:");
+    console.log("  Required:");
+    console.log("    input: Path to input HTML file.");
+    console.log("    password: Password with which to encrypt the file");
+    console.log("  Optional:");
+    // output, title, instructions, embed
+    console.log("    output: File name / path for generated encrypted file.  Default is <input file name>.encrypted.");
+    console.log("    title: Title for output HTML page.  Default is 'Protected Page'.");
+    console.log("    instructions: Special instructions to display to ther user.  Default is none.");
+    console.log("    embed: Whether or not to embed crypto-js in the page or use an external CDN.  Default is false.");
 }
