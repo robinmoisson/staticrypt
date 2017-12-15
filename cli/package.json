@@ -1,14 +1,17 @@
 {
-  "name": "staticrypt-cli",
-  "version": "1.0.0",
-  "description": "",
-  "main": "index.js",
-  "scripts": {
-    "test": "node test.js"
-  },
-  "dependencies": {
-    "crypto-js": ">=3.1.9-1"
-  },
-  "author": "Aaron Coplan",
-  "license": "UNLICENSED"
+    "name": "staticrypt-cli",
+    "version": "1.0.0",
+    "description": "",
+    "main": "index.js",
+    "bin": {
+        "staticrypt": "./index.js"
+    },
+    "scripts": {
+        "test": "node test.js"
+    },
+    "dependencies": {
+        "crypto-js": ">=3.1.9-1"
+    },
+    "author": "Aaron Coplan",
+    "license": "UNLICENSED"
 }
