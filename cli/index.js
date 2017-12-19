@@ -4,7 +4,6 @@
 
 var CryptoJS = require("crypto-js");
 var FileSystem = require("fs");
-var https = require("https");
 
 const SCRIPT_URL = 'https://cdnjs.cloudflare.com/ajax/libs/crypto-js/3.1.9-1/crypto-js.min.js';
 const SCRIPT_TAG = '<script src="' + SCRIPT_URL + '" integrity="sha384-lp4k1VRKPU9eBnPePjnJ9M2RF3i7PC30gXs70+elCVfgwLwx1tv5+ctxdtwxqZa7" crossorigin="anonymous"></script>';
@@ -28,27 +27,18 @@ var data = {
     encrypted: encryptedMessage,
     crypto_tag: SCRIPT_TAG,
     embed: namedArgs.embed != null ? namedArgs.embed : false,
-    outputFilePath: namedArgs.output != null ? namedArgs.output : namedArgs.input + ".encrypted"
+    outputFilePath: namedArgs.output != null ? namedArgs.output : namedArgs.input.replace('.html', '') + "_encrypted.html"
 };
 
 if(data.embed){
-    https.get(SCRIPT_URL, (resp) => {
-        let txt = '';
-
-        resp.on('data', (chunk) => {
-            txt += chunk;
-        });
-
-        resp.on('end', () => {
-            data["crypto_tag"] = '<script>' + txt + '</script>';
-            console.log(data);
-            genFile(data);
-        });
-
-    }).on('error', (err) => {
-        console.log("Failure: could not fetch embedded script");
+    try{
+        var embedContents = FileSystem.readFileSync('crypto-js.min.js', 'utf8');
+        data["crypto_tag"] = '<script>' + txt + '</script>';
+        genFile(data);
+    }catch(e){
+        console.log("Failure: embed file does not exist!");
         process.exit(1);
-    });
+    }
 }else{
     genFile(data);
 }
