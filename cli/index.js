@@ -19,7 +19,7 @@ try{
 }
 
 var encrypted = CryptoJS.AES.encrypt(contents, namedArgs.password);
-var hmac = CryptoJS.HmacSHA256(encrypted.toString(), CryptoJS.SHA256(namedArgs.password)).toString();
+var hmac = CryptoJS.HmacSHA256(encrypted.toString(), CryptoJS.SHA256(namedArgs.password).toString()).toString();
 var encryptedMessage = hmac + encrypted;
 
 var data = {
