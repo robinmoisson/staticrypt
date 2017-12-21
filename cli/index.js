@@ -27,13 +27,13 @@ var data = {
     encrypted: encryptedMessage,
     crypto_tag: SCRIPT_TAG,
     embed: namedArgs.embed != null ? namedArgs.embed : false,
-    outputFilePath: namedArgs.output != null ? namedArgs.output : namedArgs.input.replace('.html', '') + "_encrypted.html"
+    outputFilePath: namedArgs.output != null ? namedArgs.output : namedArgs.input.replace(/\.html$/, '') + "_encrypted.html"
 };
 
 if(data.embed){
     try{
         var embedContents = FileSystem.readFileSync('crypto-js.min.js', 'utf8');
-        data["crypto_tag"] = '<script>' + txt + '</script>';
+        data["crypto_tag"] = '<script>' + embedContents + '</script>';
         genFile(data);
     }catch(e){
         console.log("Failure: embed file does not exist!");
