@@ -10,13 +10,32 @@ const SCRIPT_URL = 'https://cdnjs.cloudflare.com/ajax/libs/crypto-js/3.1.9-1/cry
 const SCRIPT_TAG = '<script src="' + SCRIPT_URL + '" integrity="sha384-lp4k1VRKPU9eBnPePjnJ9M2RF3i7PC30gXs70+elCVfgwLwx1tv5+ctxdtwxqZa7" crossorigin="anonymous"></script>';
 
 const namedArgs = Yargs
-      .usage('staticrypt <input> <password> options')
+      .usage('Usage: staticrypt <input> <password> [options]')
       .demandCommand(2)
-      .default({'output': null, 'title': null, 'instructions': null, 'embed': null})
-      .alias('o', 'output')
-      .alias('t', 'title')
-      .alias('i', 'instructions')
-      .alias('e', 'embed')
+      .option('e', {
+          alias: 'embed',
+          type: 'boolean',
+          describe: 'Whether or not to embed crypto-js in the page (or use an external CDN)',
+          default: false
+      })
+      .option('o', {
+          alias: 'output',
+          type: 'string',
+          describe: 'File name / path for generated encrypted file',
+          default: null
+      })
+      .option('t', {
+          alias: 'title',
+          type: 'string',
+          describe: "Title for output HTML page",
+          default: 'Protected Page'
+      })
+      .option('i', {
+          alias: 'instructions',
+          type: 'string',
+          describe: 'Special instructions to display to the user.',
+          default: null
+      })
       .argv;
 
 if(namedArgs._.length != 2){
@@ -24,8 +43,8 @@ if(namedArgs._.length != 2){
     process.exit(1);
 }
 
-const input = namedArgs._[0];
-const password = namedArgs._[1];
+const input = namedArgs._[0].toString();
+const password = namedArgs._[1].toString();
 
 try{
     var contents = FileSystem.readFileSync(input, 'utf8');
