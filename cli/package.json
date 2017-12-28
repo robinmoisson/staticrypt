@@ -1,0 +1,15 @@
+{
+    "name": "staticrypt-cli",
+    "version": "1.0.0",
+    "description": "",
+    "main": "index.js",
+    "bin": {
+        "staticrypt": "./index.js"
+    },
+    "dependencies": {
+        "crypto-js": ">=3.1.9-1",
+        "yargs": ">=10.0.3"
+    },
+    "author": "Aaron Coplan",
+    "license": "MIT"
+}
