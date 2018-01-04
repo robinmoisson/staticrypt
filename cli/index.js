@@ -34,11 +34,11 @@ const namedArgs = Yargs
           alias: 'instructions',
           type: 'string',
           describe: 'Special instructions to display to the user.',
-          default: null
+          default: ''
       })
       .argv;
 
-if(namedArgs._.length != 2){
+if(namedArgs._.length !== 2){
     Yargs.showHelp();
     process.exit(1);
 }
@@ -53,32 +53,41 @@ try{
     process.exit(1);
 }
 
+// encrypt input
 var encrypted = CryptoJS.AES.encrypt(contents, password);
 var hmac = CryptoJS.HmacSHA256(encrypted.toString(), CryptoJS.SHA256(password).toString()).toString();
 var encryptedMessage = hmac + encrypted;
 
-var data = {
-    title: namedArgs.title != null ? namedArgs.title : "Protected Page",
-    instructions: namedArgs.instructions != null ? namedArgs.instructions : "",
-    encrypted: encryptedMessage,
-    crypto_tag: SCRIPT_TAG,
-    embed: namedArgs.embed != null ? namedArgs.embed : false,
-    outputFilePath: namedArgs.output != null ? namedArgs.output : input.replace(/\.html$/, '') + "_encrypted.html"
-};
-
-if(data.embed){
-    try{
+// create crypto-js tag (embedded or not)
+var cryptoTag = SCRIPT_TAG;
+if (namedArgs.embed) {
+    try {
         var embedContents = FileSystem.readFileSync('crypto-js.min.js', 'utf8');
-        data["crypto_tag"] = '<script>' + embedContents + '</script>';
-        genFile(data);
-    }catch(e){
+    } catch(e) {
         console.log("Failure: embed file does not exist!");
         process.exit(1);
     }
-}else{
-    genFile(data);
+    cryptoTag = '<script>' + embedContents + '</script>';
 }
 
+
+var data = {
+    title: namedArgs.title,
+    instructions: namedArgs.instructions,
+    encrypted: encryptedMessage,
+    crypto_tag: cryptoTag,
+    embed: namedArgs.embed,
+    outputFilePath: namedArgs.output !== null ? namedArgs.output : input.replace(/\.html$/, '') + "_encrypted.html"
+};
+
+genFile(data);
+
+
+/**
+ * Fill the template with provided data and writes it to output file.
+ *
+ * @param data
+ */
 function genFile(data){
     try{
         var templateContents = FileSystem.readFileSync(__dirname + '/password_template.html', 'utf8');
@@ -97,6 +106,13 @@ function genFile(data){
     }
 }
 
+/**
+ * Replace the placeholder tags (between '{tag}') in 'tpl' string with provided data.
+ *
+ * @param tpl
+ * @param data
+ * @returns string
+ */
 function render(tpl, data){
     return tpl.replace(/{(.*?)}/g, function (_, key) {
         return data && data[key] || '';
