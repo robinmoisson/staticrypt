@@ -10,7 +10,7 @@ const SCRIPT_URL = 'https://cdnjs.cloudflare.com/ajax/libs/crypto-js/3.1.9-1/cry
 const SCRIPT_TAG = '<script src="' + SCRIPT_URL + '" integrity="sha384-lp4k1VRKPU9eBnPePjnJ9M2RF3i7PC30gXs70+elCVfgwLwx1tv5+ctxdtwxqZa7" crossorigin="anonymous"></script>';
 
 const namedArgs = Yargs
-      .usage('Usage: staticrypt <input> <password> [options]')
+      .usage('Usage: staticrypt <filename> <passphrase> [options]')
       .demandCommand(2)
       .option('e', {
           alias: 'embed',
@@ -35,6 +35,12 @@ const namedArgs = Yargs
           type: 'string',
           describe: 'Special instructions to display to the user.',
           default: ''
+      })
+      .option('f', {
+          alias: 'file-template',
+          type: 'string',
+          describe: 'Path to custom HTML template with password prompt.',
+          default: __dirname + '/password_template.html'
       })
       .argv;
 
@@ -90,7 +96,7 @@ genFile(data);
  */
 function genFile(data){
     try{
-        var templateContents = FileSystem.readFileSync(__dirname + '/password_template.html', 'utf8');
+        var templateContents = FileSystem.readFileSync(namedArgs.f, 'utf8');
     }catch(e){
         console.log("Failure: could not read template!");
         process.exit(1);
