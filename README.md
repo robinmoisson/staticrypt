@@ -14,31 +14,36 @@ StatiCrypt generates a static, password protected page that can be decrypted in-
 
 StatiCrypt basically encrypts your page and puts everything with a user-friendly way to use a password in the new file. 
 
-AES-256 is state of the art but brute-force/dictionary attacks would be trivial to do at a really fast pace: **use a long, unusual passphrase!**
+AES-256 is state of the art but brute-force/dictionary attacks would be trivial to do at a really fast pace: **use a long, unusual passphrase**.
 
-The concept is simple but this is a side project - not purporting to be bulletproof, feel free to contribute or report any thought to the GitHub project !
+The concept is simple and should work ok but I am not a cryptographer, feel free to contribute or report any thought to the GitHub project !
 
 ## CLI
 
 Staticrypt is available through npm as a CLI, install with `npm install -g staticrypt` and use as follow:
 
-    Usage: staticrypt <input> <password> [options]
+    Usage: staticrypt <filename> <passphrase> [options]
     
     Options:
-      --help              Show help                                        [boolean]
-      --version           Show version number                              [boolean]
-      -e, --embed         Whether or not to embed crypto-js in the page (or use an
-                          external CDN)                   [boolean] [default: false]
-      -o, --output        File name / path for generated encrypted file
+      --help               Show help                                       [boolean]
+      --version            Show version number                             [boolean]
+      -e, --embed          Whether or not to embed crypto-js in the page (or use an
+                           external CDN)                  [boolean] [default: false]
+      -o, --output         File name / path for generated encrypted file
                                                             [string] [default: null]
-      -t, --title         Title for output HTML page
+      -t, --title          Title for output HTML page
                                                 [string] [default: "Protected Page"]
-      -i, --instructions  Special instructions to display to the user.
+      -i, --instructions   Special instructions to display to the user.
                                                             [string] [default: null]
+      -f, --file-template  Path to custom HTML template with password prompt.
+                   [string] [default: "[...]/cli/password_template.html"]
+
                                                             
 Example usages:
 
 - `staticrypt test.html mysecretpassword` -> creates a `test_encrypted.html` file
 - `find . -type f -name "*.html" -exec staticrypt {} mypassword \;` -> create encrypted files for all HTML files in your directory
+
+You can use a custom template for the password prompt - just copy `cli/password_template.html` and modify it to suit your presentation style and point to your template file with the `-f` flag. Be careful to not break the encrypting javascript part, the variables replace by staticrypt are between curly brackets: `{instructions}`.
 
 Thanks [Aaron Coplan](https://github.com/AaronCoplan) for bringing the CLI to life !
