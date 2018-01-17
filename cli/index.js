@@ -41,7 +41,7 @@ const namedArgs = Yargs
           alias: 'file-template',
           type: 'string',
           describe: 'Path to custom HTML template with password prompt.',
-          default: __dirname + '/password_template.html'
+          default: path.join(__dirname, 'password_template.html')
       })
       .argv;
 
