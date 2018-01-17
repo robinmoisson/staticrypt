@@ -4,6 +4,7 @@
 
 var CryptoJS = require("crypto-js");
 var FileSystem = require("fs");
+const path = require("path");
 const Yargs = require('yargs');
 
 const SCRIPT_URL = 'https://cdnjs.cloudflare.com/ajax/libs/crypto-js/3.1.9-1/crypto-js.min.js';
@@ -68,7 +69,7 @@ var encryptedMessage = hmac + encrypted;
 var cryptoTag = SCRIPT_TAG;
 if (namedArgs.embed) {
     try {
-        var embedContents = FileSystem.readFileSync('crypto-js.min.js', 'utf8');
+        var embedContents = FileSystem.readFileSync(path.join(__dirname, 'crypto-js.min.js'), 'utf8');
     } catch(e) {
         console.log("Failure: embed file does not exist!");
         process.exit(1);
