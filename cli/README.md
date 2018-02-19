@@ -28,7 +28,7 @@ Staticrypt is available through npm as a CLI, install with `npm install -g stati
       --help               Show help                                       [boolean]
       --version            Show version number                             [boolean]
       -e, --embed          Whether or not to embed crypto-js in the page (or use an
-                           external CDN)                  [boolean] [default: false]
+                           external CDN)                   [boolean] [default: true]
       -o, --output         File name / path for generated encrypted file
                                                             [string] [default: null]
       -t, --title          Title for output HTML page
@@ -44,3 +44,5 @@ Example usages:
 - `find . -type f -name "*.html" -exec staticrypt {} mypassword \;` -> create encrypted files for all HTML files in your directory (recursively)
 
 You can use a custom template for the password prompt - just copy `cli/password_template.html` and modify it to suit your presentation style and point to your template file with the `-f` flag. Be careful to not break the encrypting javascript part, the variables replaced by staticrypt are between curly brackets: `{instructions}`.
+
+**ADBLOCKERS**: If you do not embed crypto-js and serve it from a CDN, some adblockers see the `crypto-js.min.js`, think that's a crypto miner and block it.

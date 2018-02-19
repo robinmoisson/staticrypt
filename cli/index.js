@@ -17,7 +17,7 @@ const namedArgs = Yargs
           alias: 'embed',
           type: 'boolean',
           describe: 'Whether or not to embed crypto-js in the page (or use an external CDN)',
-          default: false
+          default: true
       })
       .option('o', {
           alias: 'output',
