@@ -210,29 +210,36 @@ Filename changed to circumvent adblockers that mistake it for a crypto miner (se
 
         var unencrypted = document.getElementById('unencrypted_html').value;
         var passphrase = document.getElementById('passphrase').value;
+        var iv = crypto.getRandomValues(new Uint8Array(16));
+        var ivHex = bytesToHexString(iv);
+        var pwUtf8 = stringToUint8Array(passphrase);
+        crypto.subtle.digest('SHA-256', pwUtf8).then(function(hash) {
+            var pwHex = bytesToHexString(hash);
+            var keyData = hexStringToUint8Array(pwHex);
+            crypto.subtle.importKey("raw", keyData, "aes-gcm", false, ["encrypt"]).then(function(key) {
+                return crypto.subtle.encrypt({
+                    name: "aes-gcm",
+                    iv: iv
+                }, key, stringToUint8Array(unencrypted));
+            }, failAndLog)
+            .then(function(cipherText) {
+                var encryptedMsg = ivHex + bytesToHexString(cipherText);
 
-        var encrypted = CryptoJS.AES.encrypt(unencrypted, passphrase);
-        var hmac = CryptoJS.HmacSHA256(encrypted.toString(), CryptoJS.SHA256(passphrase).toString()).toString();
-        var encryptedMsg = hmac + encrypted;
+                var pageTitle = document.getElementById('title').value.trim();
+                var instructions = document.getElementById('instructions').value;
+                var data = {
+                    title: pageTitle ? pageTitle : 'Protected Page',
+                    instructions: instructions ? instructions : '',
+                    encrypted: encryptedMsg,
+                    crypto_tag: '<script src="https://cdnjs.cloudflare.com/ajax/libs/crypto-js/3.1.9-1/crypto-js.min.js" integrity="sha384-lp4k1VRKPU9eBnPePjnJ9M2RF3i7PC30gXs70+elCVfgwLwx1tv5+ctxdtwxqZa7" crossorigin="anonymous"></scr' + 'ipt>'
+                };
 
-        var pageTitle = document.getElementById('title').value.trim();
-        var instructions = document.getElementById('instructions').value;
-        var data = {
-            title: pageTitle ? pageTitle : 'Protected Page',
-            instructions: instructions ? instructions : '',
-            encrypted: encryptedMsg,
-            crypto_tag: '<script src="https://cdnjs.cloudflare.com/ajax/libs/crypto-js/3.1.9-1/crypto-js.min.js" integrity="sha384-lp4k1VRKPU9eBnPePjnJ9M2RF3i7PC30gXs70+elCVfgwLwx1tv5+ctxdtwxqZa7" crossorigin="anonymous"></scr' + 'ipt>'
-        };
+                document.getElementById('encrypted_html_display').textContent = encryptedMsg;
 
-        document.getElementById('encrypted_html_display').textContent = encryptedMsg;
+                setFileToDownload(data);
 
-        if (document.getElementById("embed-crypto").checked) {
-            setFileToDownloadWithEmbeddedCrypto(data);
-        }
-        else {
-            setFileToDownload(data);
-        }
-
+            }, failAndLog);
+        });
     });
 
     document.getElementById('toggle-extra-option')
@@ -246,6 +253,52 @@ Filename changed to circumvent adblockers that mistake it for a crypto miner (se
         e.preventDefault();
         document.getElementById('concept').classList.toggle('hidden');
     });
+
+    /*
+     * encode/decode funtions
+     */
+
+    function hexStringToUint8Array(hexString) {
+        if (hexString.length % 2 != 0)
+            throw "Invalid hexString";
+        var arrayBuffer = new Uint8Array(hexString.length / 2);
+
+        for (var i = 0; i < hexString.length; i += 2) {
+            var byteValue = parseInt(hexString.substr(i, 2), 16);
+            if (byteValue == NaN)
+                throw "Invalid hexString";
+            arrayBuffer[i / 2] = byteValue;
+        }
+
+        return arrayBuffer;
+    }
+
+    function bytesToHexString(bytes) {
+        if (!bytes)
+            return null;
+
+        bytes = new Uint8Array(bytes);
+        var hexBytes = [];
+
+        for (var i = 0; i < bytes.length; ++i) {
+            var byteString = bytes[i].toString(16);
+            if (byteString.length < 2)
+                byteString = "0" + byteString;
+            hexBytes.push(byteString);
+        }
+        return hexBytes.join("");
+    }
+
+    function stringToUint8Array(str) {
+        var encoder = new TextEncoder('utf-8');
+        return encoder.encode(str);
+    }
+
+    function failAndLog(error) {
+        console.log(error);
+    }
+
+
 
 
     /**
