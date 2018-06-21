@@ -1,0 +1,133 @@
+<!DOCTYPE html>
+<html lang="en">
+  <!--
+https://gist.github.com/chrisveness/43bcda93af9f646d083fad678071b90a
+https://medium.com/net-magazine/the-web-cryptography-api-15d052271494
+-->
+
+  <head>
+    <meta charset="UTF-8">
+    <title>WebCrypto API Demo: AES-GCM</title>
+
+    <script type="text/javascript">
+      function AES_GCM_encrypt() {
+        var iv = crypto.getRandomValues(new Uint8Array(16));
+        console.log(iv);
+        var ivHex = bytesToHexString(iv);
+        //console.log(ivHex);
+        var pwUtf8 = new TextEncoder().encode(document.getElementById("password").value);
+        crypto.subtle.digest('SHA-256', pwUtf8)
+          .then(function(hash) {
+            var pwHex = bytesToHexString(hash);
+            var keyData = hexStringToUint8Array(pwHex);
+            crypto.subtle.importKey("raw", keyData, "aes-gcm", false, ["encrypt"])
+              .then(function(key) {
+                var plainText = document.getElementById("plainTextGCM").value;
+                return crypto.subtle.encrypt({
+                  name: "aes-gcm",
+                  iv: iv
+                }, key, stringToUint8Array(plainText));
+              }, failAndLog)
+              .then(function(cipherText) {
+                document.getElementById("cipherTextGCM").value = ivHex + bytesToHexString(cipherText);
+              }, failAndLog);
+          });
+      }
+
+      function AES_GCM_decrypt() {
+        var pwUtf8 = new TextEncoder().encode(document.getElementById("password").value);
+        crypto.subtle.digest('SHA-256', pwUtf8)
+          .then(function(hash) {
+            var pwHex = bytesToHexString(hash);
+            var keyData = hexStringToUint8Array(pwHex);
+            crypto.subtle.importKey("raw", keyData, "aes-gcm", false, ["decrypt"])
+              .then(function(key) {
+                var cipherText = document.getElementById("cipherTextGCM").value;
+                var iv = hexStringToUint8Array(cipherText.slice(0, 32));
+                var cipherHex = cipherText.slice(32);
+                return crypto.subtle.decrypt({
+                  name: "aes-gcm",
+                  iv: iv
+                }, key, hexStringToUint8Array(cipherHex));
+              }, failAndLog)
+              .then(function(plainText) {
+                document.getElementById("resultGCM").innerHTML = "Result: " + bytesToString(plainText);
+              }, function(result) {
+                document.getElementById("resultGCM").innerHTML = "Result: " + result;
+              });
+          });
+      }
+
+      /*
+      Common funtions
+      */
+
+      function hexStringToUint8Array(hexString) {
+        if (hexString.length % 2 != 0)
+          throw "Invalid hexString";
+        var arrayBuffer = new Uint8Array(hexString.length / 2);
+
+        for (var i = 0; i < hexString.length; i += 2) {
+          var byteValue = parseInt(hexString.substr(i, 2), 16);
+          if (byteValue == NaN)
+            throw "Invalid hexString";
+          arrayBuffer[i / 2] = byteValue;
+        }
+
+        return arrayBuffer;
+      }
+
+      function bytesToHexString(bytes) {
+        if (!bytes)
+          return null;
+
+        bytes = new Uint8Array(bytes);
+        var hexBytes = [];
+
+        for (var i = 0; i < bytes.length; ++i) {
+          var byteString = bytes[i].toString(16);
+          if (byteString.length < 2)
+            byteString = "0" + byteString;
+          hexBytes.push(byteString);
+        }
+        return hexBytes.join("");
+      }
+
+      function stringToUint8Array(str) {
+        var encoder = new TextEncoder('utf-8');
+        return encoder.encode(str);
+      }
+
+      function bytesToString(bytes) {
+        var decoder = new TextDecoder('utf-8');
+        return decoder.decode(bytes);
+      }
+
+      function failAndLog(error) {
+        console.log(error);
+      }
+
+    </script>
+
+  </head>
+
+  <body>
+    <h1>AES-GCM</h1>
+    <p>Click the corresponding buttons to do AES-GCM encryption/decryption.</p>
+    <div>
+      Password: <input type="text" id="password" value="test">
+    </div>
+    <div>
+      Plain Text: <input type="text" id="plainTextGCM" value="Hello, World! 漢字">
+      <button type="button" onclick="AES_GCM_encrypt()">encryptGCM</button>
+    </div>
+    <div>
+      Cipher Text: <input type="text" id="cipherTextGCM" size="50">
+      <button type="button" onclick="AES_GCM_decrypt()">decryptGCM</button>
+    </div>
+    <div id="resultGCM">
+      Result:
+    </div>
+  </body>
+
+</html>
