@@ -53,7 +53,7 @@
                 <small>Password protect a static HTML page</small>
             </h1>
             <p>
-                Based on the <a href="https://github.com/brix/crypto-js">crypto-js library</a>, StatiCrypt uses AES-256
+                StatiCrypt uses AES-256
                 to encrypt your string with your passphrase in your browser (client side).
             </p>
             <p>
@@ -117,15 +117,6 @@
                     </div>
                 </div>
 
-                <div class="form-group">
-                    <label class="no-style">
-                        <input type="checkbox" id="embed-crypto" checked>
-                        Embed crypto-js into your file
-                        <abbr title="Leave checked to include crypto-js into your file so you can decrypt it offline.
-                        Uncheck to load crypto-js from a CDN (some adblockers might think it's a crypto miner).">?</abbr>
-                    </label>
-                </div>
-
                 <button class="btn btn-primary pull-right" type="submit">Generate passphrase protected HTML</button>
             </form>
         </div>
@@ -149,7 +140,6 @@ Crypto JS 3.1.9-1
 Copied as is from https://cdnjs.cloudflare.com/ajax/libs/crypto-js/3.1.9-1/crypto-js.js
 Filename changed to circumvent adblockers that mistake it for a crypto miner (see https://github.com/robinmoisson/staticrypt/issues/107)
 -->
-<script src="kryptojs-3.1.9-1-lib.js"></script>
 
 <script src="https://cdn.ckeditor.com/4.7.0/standard/ckeditor.js"></script>
 
@@ -180,20 +170,6 @@ Filename changed to circumvent adblockers that mistake it for a crypto miner (se
             downloadLink.removeAttribute('disabled');
 
             htmlToDownload = renderedTmpl;
-        };
-        request.send();
-    };
-
-    /**
-     * Download crypto-js lib to embed it in the generated file, update the file when done.
-     * @param data
-     */
-    var setFileToDownloadWithEmbeddedCrypto = function (data) {
-        var request = new XMLHttpRequest();
-        request.open('GET', 'kryptojs-3.1.9-1-lib.js', true);
-        request.onload = function() {
-            data['crypto_tag'] = '<script>' + request.responseText + '</scr' + 'ipt>';
-            setFileToDownload(data);
         };
         request.send();
     };
@@ -297,9 +273,6 @@ Filename changed to circumvent adblockers that mistake it for a crypto miner (se
     function failAndLog(error) {
         console.log(error);
     }
-
-
-
 
     /**
      * Browser specific download code.
