@@ -53,7 +53,7 @@
                 <small>Password protect a static HTML page</small>
             </h1>
             <p>
-                StatiCrypt uses AES-256
+                StatiCrypt uses AES-GCM
                 to encrypt your string with your passphrase in your browser (client side).
             </p>
             <p>
@@ -79,7 +79,7 @@
                 <p>
                     It basically encrypts your page and puts everything with a user-friendly way to use a password
                     in the new file.
-                    <br>AES-256 is state of the art but <b>brute-force/dictionary attacks would be trivial to
+                    <br>AES-GCM is state of the art but <b>brute-force/dictionary attacks would be trivial to
                     do at a really fast pace: use a long, unusual passphrase!</b>
                 </p>
                 <p>
@@ -206,8 +206,7 @@ Filename changed to circumvent adblockers that mistake it for a crypto miner (se
                 var data = {
                     title: pageTitle ? pageTitle : 'Protected Page',
                     instructions: instructions ? instructions : '',
-                    encrypted: encryptedMsg,
-                    crypto_tag: '<script src="https://cdnjs.cloudflare.com/ajax/libs/crypto-js/3.1.9-1/crypto-js.min.js" integrity="sha384-lp4k1VRKPU9eBnPePjnJ9M2RF3i7PC30gXs70+elCVfgwLwx1tv5+ctxdtwxqZa7" crossorigin="anonymous"></scr' + 'ipt>'
+                    encrypted: encryptedMsg
                 };
 
                 document.getElementById('encrypted_html_display').textContent = encryptedMsg;

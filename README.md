@@ -1,6 +1,6 @@
 # StatiCrypt
 
-Based on the [crypto-js](https://github.com/brix/crypto-js) library, StatiCrypt uses AES-256 to encrypt your string with your passphrase in your browser (client side).
+Based on the [Web Crypto API](https://developer.mozilla.org/en-US/docs/Web/API/Web_Crypto_API), StatiCrypt uses AES-GCM to encrypt your string with your passphrase in your browser (client side).
 
 Download your encrypted string in a HTML page with a password prompt you can upload anywhere (see [example](https://robinmoisson.github.io/staticrypt/example.html)).
 
@@ -14,9 +14,11 @@ StatiCrypt generates a static, password protected page that can be decrypted in-
 
 It basically encrypts your page and puts everything with a user-friendly way to use a password in the new file.
 
-AES-256 is state of the art but brute-force/dictionary attacks would be trivial to do at a really fast pace: **use a long, unusual passphrase**.
+AES-GCM is state of the art but brute-force/dictionary attacks would be trivial to do at a really fast pace: **use a long, unusual passphrase**.
 
-The concept is simple but I am not a cryptographer, feel free to contribute or report any thought to the GitHub project!
+The concept is simple and should work ok but I am not a cryptographer, if you have extra sensitive banking data you might want to use something else :)
+
+Feel free to contribute or report any thought to the [GitHub project](https://robinmoisson.github.io/staticrypt) !
 
 ## CLI
 
@@ -38,14 +40,11 @@ Staticrypt is available through npm as a CLI, install with `npm install -g stati
       -f, --file-template  Path to custom HTML template with password prompt.
                               [string] [default: "[...]/cli/password_template.html"]
 
-
 Example usages:
 
-- `staticrypt test.html mysecretpassword` -> creates a `test_encrypted.html` file
-- `find . -type f -name "*.html" -exec staticrypt {} mypassword \;` -> create encrypted files for all HTML files in your directory
+- `staticrypt test.html mypassword` -> creates a `test_encrypted.html` file
+- `find . -type f -name "*.html" -exec staticrypt {} mypassword \;` -> create encrypted files for all HTML files in your directory (recursively)
 
 You can use a custom template for the password prompt - just copy `cli/password_template.html` and modify it to suit your presentation style and point to your template file with the `-f` flag. Be careful to not break the encrypting javascript part, the variables replaced by staticrypt are between curly brackets: `{instructions}`.
-
-**ADBLOCKERS**: If you do not embed crypto-js and serve it from a CDN, some adblockers see the `crypto-js.min.js`, think that's a crypto miner and block it.
 
 Thanks [Aaron Coplan](https://github.com/AaronCoplan) for bringing the CLI to life!
