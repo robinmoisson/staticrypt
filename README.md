@@ -16,7 +16,7 @@ It basically encrypts your page and puts everything with a user-friendly way to 
 
 AES-256 is state of the art but brute-force/dictionary attacks would be trivial to do at a really fast pace: **use a long, unusual passphrase**.
 
-The concept is simple but I am not a cryptographer, feel free to contribute or report any thought to the GitHub project!
+The concept is simple but I am not a cryptographer, feel free to contribute or report any thought to the GitHub project! (Though be warned it might take me a long time to get to it - I apologize in advance)
 
 ## CLI
 

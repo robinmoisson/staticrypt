@@ -118,7 +118,8 @@
     <div class="staticrypt-form">
         <div class="staticrypt-instructions">
             <p class="staticrypt-title">Protected Page</p>
-            <p>Enter "test" to unlock the page</p>
+            <p><p>Enter &quot;test&quot; to unlock the page</p>
+</p>
         </div>
 
         <hr class="staticrypt-hr">
@@ -140,14 +141,39 @@
 </footer>
 
 
-<script src="kryptojs-3.1.9-1-lib.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/crypto-js/3.1.9-1/crypto-js.min.js" integrity="sha384-lp4k1VRKPU9eBnPePjnJ9M2RF3i7PC30gXs70+elCVfgwLwx1tv5+ctxdtwxqZa7" crossorigin="anonymous"></script>
 
 <script>
+
+    /**
+     * Decrypt a salted msg using a password.
+     * Inspired by https://github.com/adonespitogo
+     */
+    var keySize = 256;
+    var iterations = 1000;
+    function decrypt (encryptedMsg, pass) {
+        var salt = CryptoJS.enc.Hex.parse(encryptedMsg.substr(0, 32));
+        var iv = CryptoJS.enc.Hex.parse(encryptedMsg.substr(32, 32))
+        var encrypted = encryptedMsg.substring(64);
+
+        var key = CryptoJS.PBKDF2(pass, salt, {
+            keySize: keySize/32,
+            iterations: iterations
+        });
+
+        var decrypted = CryptoJS.AES.decrypt(encrypted, key, {
+            iv: iv,
+            padding: CryptoJS.pad.Pkcs7,
+            mode: CryptoJS.mode.CBC
+        }).toString(CryptoJS.enc.Utf8);
+        return decrypted;
+    }
+
     document.getElementById('staticrypt-form').addEventListener('submit', function(e) {
         e.preventDefault();
 
         var passphrase = document.getElementById('staticrypt-password').value,
-            encryptedMsg = '46000e585e625a99008c89c628710dc4b798c864fa810ae0458bc6b49a703f90U2FsdGVkX1+g3FXrsAI5EjFDMufRodFX1zR4khDb1ua1hT7e2Wjt3k9089USzxeyquHa8Yk5VZ7e6PoJ68Y9QibpQUedY7HMJC9k2WNw+ojPdk0xzPxSBWY7pDX+ZoLUzEztNzxsnPhQITmN8WfRdz6+3ortQmGRUn1qAXznRviSh5t7HzwlkRFEeNqjMJCB/Mjj+OnWpXZeNLo6nAdEag==',
+            encryptedMsg = '1c5350b7566531a9aa06d5c186b58de688287a5f64c1439fadab7c5f8ffd3c676a558d9e37e7c0c4b8df03fbb0149c292c02cff335c90cc2ccc7e02fcda394247bvtjq4PeULRWa0f/TewJBGyaHeltmS3NITxoMwMpHJoe4E4AXjJqHcFjHY+1H6u1IIxjQlP4/WRDUu6U+QG+eHIfOgwE4sz+9CkrHFSG8HX2p0NpEs7HYls8rZEk1SKcMrtlzuSwKBV60jIketViNVFHmnbPJYmK0FKVQcFh19EO1dtuvAK8M3CMVOPUIYh',
             encryptedHMAC = encryptedMsg.substring(0, 64),
             encryptedHTML = encryptedMsg.substring(64),
             decryptedHMAC = CryptoJS.HmacSHA256(encryptedHTML, CryptoJS.SHA256(passphrase).toString()).toString();
@@ -157,7 +183,7 @@
             return;
         }
 
-        var plainHTML = CryptoJS.AES.decrypt(encryptedHTML, passphrase).toString(CryptoJS.enc.Utf8);
+        var plainHTML = decrypt(encryptedHTML, passphrase);
 
         document.write(plainHTML);
         document.close();
