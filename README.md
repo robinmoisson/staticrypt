@@ -18,6 +18,8 @@ AES-256 is state of the art but brute-force/dictionary attacks would be trivial 
 
 The concept is simple but I am not a cryptographer, feel free to contribute or report any thought to the GitHub project! (Though be warned it might take me a long time to get to it - I apologize in advance)
 
+Similar project: [MaxLaumeister/clientside-html-password](https://github.com/MaxLaumeister/clientside-html-password)
+
 ## CLI
 
 Staticrypt is available through npm as a CLI, install with `npm install -g staticrypt` and use as follow:
