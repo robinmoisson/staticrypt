@@ -43,11 +43,22 @@ const namedArgs = Yargs
           describe: 'Path to custom HTML template with password prompt.',
           default: path.join(__dirname, 'password_template.html')
       })
+      .option('s', {
+          alias: 'storepassphrase',
+          type: 'string',
+          describe: 'Store the passphrase (in clear text) so tht the user doesn\'t have to re-enter on each page load. Valid options are; SessionStorage, LocalStorage, None',
+          default: 'None'
+      })
       .argv;
 
 if(namedArgs._.length !== 2){
     Yargs.showHelp();
     process.exit(1);
+}
+
+if(typeof(namedArgs.storepassphrase) !== 'string' || !['LOCALSTORAGE', 'SESSIONSTORAGE', 'NONE'].includes(namedArgs.storepassphrase.toUpperCase()) ) {
+    console.log('Invalid option for storepassphrase (-s): ', namedArgs.storepassphrase)
+    process.exit(1)
 }
 
 const input = namedArgs._[0].toString();
@@ -105,6 +116,15 @@ if (namedArgs.embed) {
     cryptoTag = '<script>' + embedContents + '</script>';
 }
 
+// create passphrase storage script
+var passphraseStorage = '<script> var passphraseStorage </script>'
+
+if (typeof(namedArgs.storepassphrase) == 'string') {
+    const caseInsensitive = namedArgs.storepassphrase.toUpperCase()
+    if (caseInsensitive === "LOCALSTORAGE" || caseInsensitive === 'SESSIONSTORAGE') {
+        passphraseStorage = '<script> var storageType = ' + (caseInsensitive === 'LOCALSTORAGE' ? '"localStorage"' : '"sessionStorage"') + " \n" + FileSystem.readFileSync(path.join(__dirname, 'passphrase-storage.js'), 'utf8') + '</script>'
+    }
+}
 
 var data = {
     title: namedArgs.title,
@@ -112,6 +132,7 @@ var data = {
     encrypted: encryptedMessage,
     crypto_tag: cryptoTag,
     embed: namedArgs.embed,
+    passphrase_storage: passphraseStorage,
     outputFilePath: namedArgs.output !== null ? namedArgs.output : input.replace(/\.html$/, '') + "_encrypted.html"
 };
 
