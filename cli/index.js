@@ -46,7 +46,7 @@ const namedArgs = Yargs
       .option('s', {
           alias: 'storepassphrase',
           type: 'string',
-          describe: 'Store the passphrase (in clear text) so tht the user doesn\'t have to re-enter on each page load. Valid options are; SessionStorage, LocalStorage, None',
+          describe: 'Store the passphrase (in clear text) so tht the user doesn\'t have to re-enter on each page load. Valid options are: SessionStorage, LocalStorage, None',
           default: 'None'
       })
       .argv;
