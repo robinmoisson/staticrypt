@@ -16,9 +16,9 @@ It basically encrypts your page and puts everything with a user-friendly way to 
 
 AES-GCM is state of the art but brute-force/dictionary attacks would be trivial to do at a really fast pace: **use a long, unusual passphrase**.
 
-The concept is simple and should work ok but I am not a cryptographer, if you have extra sensitive banking data you might want to use something else :)
+The concept is simple but I am not a cryptographer, feel free to contribute or report any thought to the GitHub project! (Though be warned it might take me a long time to get to it - I apologize in advance)
 
-Feel free to contribute or report any thought to the [GitHub project](https://robinmoisson.github.io/staticrypt) !
+Similar project: [MaxLaumeister/clientside-html-password](https://github.com/MaxLaumeister/clientside-html-password)
 
 ## CLI
 

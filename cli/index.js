@@ -60,9 +60,37 @@ try{
     process.exit(1);
 }
 
+/**
+ * Salt and encrypt a msg with a password.
+ * Inspired by https://github.com/adonespitogo
+ */
+var keySize = 256;
+var iterations = 1000;
+function encrypt (msg, password) {
+    var salt = CryptoJS.lib.WordArray.random(128/8);
+
+    var key = CryptoJS.PBKDF2(password, salt, {
+        keySize: keySize/32,
+        iterations: iterations
+    });
+
+    var iv = CryptoJS.lib.WordArray.random(128/8);
+
+    var encrypted = CryptoJS.AES.encrypt(msg, key, {
+        iv: iv,
+        padding: CryptoJS.pad.Pkcs7,
+        mode: CryptoJS.mode.CBC
+    });
+
+    // salt, iv will be hex 32 in length
+    // append them to the ciphertext for use  in decryption
+    var encryptedMsg = salt.toString()+ iv.toString() + encrypted.toString();
+    return encryptedMsg;
+}
+
 // encrypt input
-var encrypted = CryptoJS.AES.encrypt(contents, password);
-var hmac = CryptoJS.HmacSHA256(encrypted.toString(), CryptoJS.SHA256(password).toString()).toString();
+var encrypted = encrypt(contents, password);
+var hmac = CryptoJS.HmacSHA256(encrypted, CryptoJS.SHA256(password).toString()).toString();
 var encryptedMessage = hmac + encrypted;
 
 // create crypto-js tag (embedded or not)
