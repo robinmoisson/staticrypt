@@ -1,18 +1,18 @@
 {
   "name": "staticrypt",
-  "version": "1.3.2",
-  "description": "Based on the [crypto-js](https://github.com/brix/crypto-js) library, StatiCrypt uses AES-256 to encrypt your input with your passphrase and put it in a HTML file with a password prompt that can decrypted in-browser (client side).",
+  "version": "1.4.0",
+  "description": "Based on the [webcrypto](https://nodejs.org/api/webcrypto.html) api, StatiCrypt uses AES-GCM to encrypt your input with your passphrase and put it in a HTML file with a password prompt that can decrypted in-browser (client side).",
   "main": "index.js",
   "bin": {
     "staticrypt": "./index.js"
   },
   "dependencies": {
-    "crypto-js": ">=3.1.9-1",
     "yargs": ">=10.0.3"
   },
   "author": "Robin Moisson (https://github.com/robinmoisson)",
   "contributors": [
-    "Aaron Coplan (https://github.com/AaronCoplan)"
+    "Aaron Coplan (https://github.com/AaronCoplan)",
+    "James Dalton (https://github.com/tarpdalton)"
   ],
   "license": "MIT",
   "devDependencies": {},
