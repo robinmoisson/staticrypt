@@ -10,7 +10,7 @@ const Yargs = require('yargs');
 const SCRIPT_URL = 'https://cdnjs.cloudflare.com/ajax/libs/crypto-js/3.1.9-1/crypto-js.min.js';
 const SCRIPT_TAG = '<script src="' + SCRIPT_URL + '" integrity="sha384-lp4k1VRKPU9eBnPePjnJ9M2RF3i7PC30gXs70+elCVfgwLwx1tv5+ctxdtwxqZa7" crossorigin="anonymous"></script>';
 
-const namedArgs = Yargs
+const yargs = Yargs
     .usage('Usage: staticrypt <filename> <passphrase> [options]')
     .demandCommand(2)
     .option('e', {
@@ -64,8 +64,8 @@ const namedArgs = Yargs
         type: 'string',
         describe: 'Label to use for the decrypt button. Default: "DECRYPT".',
         default: 'DECRYPT'
-    })
-    .argv;
+    });
+const namedArgs = yargs.argv;
 
 if (namedArgs._.length !== 2) {
     Yargs.showHelp();
@@ -75,31 +75,24 @@ if (namedArgs._.length !== 2) {
 const input = namedArgs._[0].toString();
 const password = namedArgs._[1].toString();
 
-try {
-    var contents = FileSystem.readFileSync(input, 'utf8');
-} catch (e) {
-    console.log("Failure: input file does not exist!");
-    process.exit(1);
-}
-
 /**
  * Salt and encrypt a msg with a password.
  * Inspired by https://github.com/adonespitogo
  */
-var keySize = 256;
-var iterations = 1000;
-
 function encrypt(msg, password) {
-    var salt = CryptoJS.lib.WordArray.random(128 / 8);
+    const keySize = 256;
+    const iterations = 1000;
 
-    var key = CryptoJS.PBKDF2(password, salt, {
+    const salt = CryptoJS.lib.WordArray.random(128 / 8);
+
+    const key = CryptoJS.PBKDF2(password, salt, {
         keySize: keySize / 32,
         iterations: iterations
     });
 
-    var iv = CryptoJS.lib.WordArray.random(128 / 8);
+    const iv = CryptoJS.lib.WordArray.random(128 / 8);
 
-    var encrypted = CryptoJS.AES.encrypt(msg, key, {
+    const encrypted = CryptoJS.AES.encrypt(msg, key, {
         iv: iv,
         padding: CryptoJS.pad.Pkcs7,
         mode: CryptoJS.mode.CBC
@@ -110,43 +103,80 @@ function encrypt(msg, password) {
     return salt.toString() + iv.toString() + encrypted.toString();
 }
 
+let contents;
+try {
+    contents = FileSystem.readFileSync(input, 'utf8');
+} catch (e) {
+    console.log("Failure: input file does not exist!");
+    process.exit(1);
+}
+
 // encrypt input
-var encrypted = encrypt(contents, password);
-var hmac = CryptoJS.HmacSHA256(encrypted, CryptoJS.SHA256(password).toString()).toString();
-var encryptedMessage = hmac + encrypted;
+const encrypted = encrypt(contents, password);
+const hmac = CryptoJS.HmacSHA256(encrypted, CryptoJS.SHA256(password).toString()).toString();
+const encryptedMessage = hmac + encrypted;
 
 // create crypto-js tag (embedded or not)
-var cryptoTag = SCRIPT_TAG;
+let cryptoTag = SCRIPT_TAG;
 if (namedArgs.embed) {
     try {
-        var embedContents = FileSystem.readFileSync(path.join(__dirname, 'crypto-js.min.js'), 'utf8');
+        const embedContents = FileSystem.readFileSync(path.join(__dirname, 'crypto-js.min.js'), 'utf8');
+
+        cryptoTag = '<script>' + embedContents + '</script>';
     } catch (e) {
         console.log("Failure: embed file does not exist!");
         process.exit(1);
     }
-    cryptoTag = '<script>' + embedContents + '</script>';
 }
 
-console.log(JSON.stringify(namedArgs, null, 2))
+/**
+ * Check if a particular option has been set by the user. User case:
+ *
+ * // The "--remember" flag has a specific behavior: if the flag is included without value (like '-r'), the key is set with
+ * // the value 'undefined'. If it is included with a value, ('-r 100'), the key is set with that value. Both means
+ * // remember is enabled. If the flag is omitted by the user the key isn't set, meaning remember is disabled.
+ *
+ * From https://github.com/yargs/yargs/issues/513#issuecomment-221412008
+ *
+ * @param option
+ * @returns {boolean}
+ */
+function userSetOption(option) {
+    function searchForOption(option) {
+        return process.argv.indexOf(option) > -1;
+    }
 
-// The "--remember" flag has a specific behavior: if the flag is included without value (like '-r'), the key is set with
-// the value 'undefined'. If it is included with a value, ('-r 100'), the key is set with that value. Both means
-// remember is enabled. If the flag is omitted by the user the key isn't set, meaning remember is disabled.
-const isRememberEnabled = 'remember' in namedArgs;
+    if (searchForOption(`-${option}`) || searchForOption(`--${option}`)) {
+        return true;
+    }
+
+    // Handle aliases for same option
+    for (let aliasIndex in yargs.parsed.aliases[option]) {
+        const alias = yargs.parsed.aliases[option][aliasIndex];
+
+        if (searchForOption(`-${alias}`) || searchForOption(`--${alias}`))
+            return true;
+    }
+
+    return false;
+}
+
+const isRememberEnabled = userSetOption('r');
 // give a default value here instead of in the yargs config, so we can distinguish when the flag is included with no
 // value from when the flag isn't included
-const rememberDurationInDays = namedArgs.remember || 0;
+const rememberDurationInDays = namedArgs.remember ? namedArgs.remember : 0;
 
-var data = {
+const data = {
     crypto_tag: cryptoTag,
+    decrypt_button: namedArgs.decryptButton,
     embed: namedArgs.embed,
     encrypted: encryptedMessage,
     instructions: namedArgs.instructions,
     is_remember_enabled: isRememberEnabled,
     output_file_path: namedArgs.output !== null ? namedArgs.output : input.replace(/\.html$/, '') + "_encrypted.html",
-    passphrase_placeholder: namedArgs["passphrase-placeholder"],
+    passphrase_placeholder: namedArgs.passphrasePlaceholder,
     remember_duration_in_days: rememberDurationInDays,
-    remember_me: namedArgs["remember-label"],
+    remember_me: namedArgs.rememberLabel,
     title: namedArgs.title,
 };
 
@@ -159,14 +189,16 @@ genFile(data);
  * @param data
  */
 function genFile(data) {
+    let templateContents;
+
     try {
-        var templateContents = FileSystem.readFileSync(namedArgs.f, 'utf8');
+        templateContents = FileSystem.readFileSync(namedArgs.f, 'utf8');
     } catch (e) {
         console.log("Failure: could not read template!");
         process.exit(1);
     }
 
-    var renderedTemplate = render(templateContents, data);
+    const renderedTemplate = render(templateContents, data);
 
     try {
         FileSystem.writeFileSync(data.output_file_path, renderedTemplate);
@@ -185,6 +217,10 @@ function genFile(data) {
  */
 function render(tpl, data) {
     return tpl.replace(/{(.*?)}/g, function (_, key) {
-        return data && data[key] || '';
+        if (data && data[key] !== undefined) {
+            return data[key];
+        }
+
+        return '';
     });
 }

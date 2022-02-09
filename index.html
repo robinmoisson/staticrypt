@@ -220,7 +220,11 @@ Filename changed to circumvent adblockers that mistake it for a crypto miner (se
 
     var renderTemplate = function (tpl, data) {
         return tpl.replace(/{(.*?)}/g, function (_, key) {
-            return data && data[key] || '';
+            if (data && data[key] !== undefined) {
+                return data[key];
+            }
+
+            return '';
         });
     };
 
