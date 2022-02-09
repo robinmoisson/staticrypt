@@ -61,7 +61,7 @@ You can use a custom template for the password prompt - just copy `cli/password_
 
 ### `--remember`
 
-This will add a "Remember me" checkbox. If checked, when the user enters their passphrase its salted hashed value will be stored in localStorage. In case this value becomes compromised an attacker can decrypt the page, but this should hopefully protect against password reuse attack (of course please a unique passphrase nonetheless).
+This will add a "Remember me" checkbox. If checked, when the user enters their passphrase its salted hashed value will be stored in localStorage. In case this value becomes compromised an attacker can decrypt the page, but this should hopefully protect against password reuse attack (of course please use a unique passphrase nonetheless).
 
 This allows encrypting multiple page on a single domain with the same password: if you check "Remember me", you'll have to enter you password once then all the pages on that domain will automatically decrypt their content.
 
