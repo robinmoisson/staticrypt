@@ -172,7 +172,7 @@ const data = {
     embed: namedArgs.embed,
     encrypted: encryptedMessage,
     instructions: namedArgs.instructions,
-    is_remember_enabled: isRememberEnabled,
+    is_remember_enabled: isRememberEnabled ? 'true' : 'false',
     output_file_path: namedArgs.output !== null ? namedArgs.output : input.replace(/\.html$/, '') + "_encrypted.html",
     passphrase_placeholder: namedArgs.passphrasePlaceholder,
     remember_duration_in_days: rememberDurationInDays,
