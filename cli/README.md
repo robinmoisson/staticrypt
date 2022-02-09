@@ -38,6 +38,19 @@ Staticrypt is available through npm as a CLI, install with `npm install -g stati
                                                             [string] [default: null]
       -f, --file-template       Path to custom HTML template with password prompt.
                               [string] [default: "[...]/cli/password_template.html"]
+      -r, --remember            Show a "Remember me" checkbox that will save the
+                                password in clear text in localStorage when
+                                entered by the user.
+                                You can set the expiration in days as value (no
+                                value means "0", no expiration).        [number]
+      --remember-label          Label to use for the "Remember me" checkbox.
+                                Default: "Remember me".
+                                               [string] [default: "Remember me"]
+      --passphrase-placeholder  Placeholder to use for the passphrase input.
+                                Default: "Passphrase".
+                                                [string] [default: "Passphrase"]
+      --decrypt-button          Label to use for the decrypt button. Default:
+                                "DECRYPT".         [string] [default: "DECRYPT"]
 
 Example usages:
 
@@ -50,7 +63,7 @@ You can use a custom template for the password prompt - just copy `cli/password_
 
 ## Contribution
 
-Thank you: [@AaronCoplan](https://github.com/AaronCoplan) for bringing the CLI to life
+Thank you: [@AaronCoplan](https://github.com/AaronCoplan) for bringing the CLI to life, [@epicfaace](https://github.com/epicfaace) & [@thomasmarr](https://github.com/thomasmarr) for sparking the caching of the passphrase in localStorage (allowing the "Remember me" checkbox)
 
 **Opening PRs:** You're free to open PRs if you're ok with having no response for a (very) long time and me ending up getting inspiration from your proposal but merging something different myself instead of your PR because of limited available time and lighter mental load (I'll try to credit you though). I still appreciate them but I'd rather be upfront about it, rather than waiting for a perfect occasion to manifest and never actually updating anything. Apologies in advance, and thank you!
 
@@ -60,4 +73,4 @@ If you find a serious security bug please open an issue, I'll try to fix it rela
 
 https://github.com/MaxLaumeister/PageCrypt is a similar project (I think it predates staticrypt).
 
-https://github.com/tarpdalton/staticrypt/tree/webcrypto is a fork that uses the WebCrypto browser api to encrypt and decrypt the page, which removes the need for `crypto-js`. There's a PR open which I haven't checked in detail yet. WebCrypto is [only available in HTTPS context](https://developer.mozilla.org/en-US/docs/Web/API/Web_Crypto_API) (which [is annoying people](https://github.com/w3c/webcrypto/issues/28)) so it won't work if you're on HTTP.
+https://github.com/tarpdalton/staticrypt/tree/webcrypto is a fork that uses the WebCrypto browser api to encrypt and decrypt the page, which removes the need for `crypto-js`. There's a PR open which I haven't checked in detail yet. WebCrypto is only available in HTTPS context (which [is annoying people](https://github.com/w3c/webcrypto/issues/28)) so it won't work if you're on HTTP.

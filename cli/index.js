@@ -130,7 +130,7 @@ if (namedArgs.embed) {
 }
 
 /**
- * Check if a particular option has been set by the user. User case:
+ * Check if a particular option has been set by the user. Use case:
  *
  * // The "--remember" flag has a specific behavior: if the flag is included without value (like '-r'), the key is set with
  * // the value 'undefined'. If it is included with a value, ('-r 100'), the key is set with that value. Both means
