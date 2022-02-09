@@ -59,17 +59,27 @@ Example usages:
 
 You can use a custom template for the password prompt - just copy `cli/password_template.html` and modify it to suit your presentation style and point to your template file with the `-f` flag. Be careful to not break the encrypting javascript part, the variables replaced by staticrypt are between curly brackets: `{instructions}`.
 
-**ADBLOCKERS**: If you do not embed crypto-js and serve it from a CDN, some adblockers see the `crypto-js.min.js`, think that's a crypto miner and block it.
+### `--remember`
+
+This will add a "Remember me" checkbox. If checked, when the user enters their passphrase its salted hashed value will be stored in localStorage. In case this value becomes compromised an attacker can decrypt the page, but this should hopefully protect against password reuse attack (of course please a unique passphrase nonetheless).
+
+This allows encrypting multiple page on a single domain with the same password: if you check "Remember me", you'll have to enter you password once then all the pages on that domain will automatically decrypt their content.
+
+If no value is provided the stored passphrase doesn't expire, you can also give it a value in days for how long should the store value be kept. If the user reconnects to the page after the expiration date the store value will be cleared.
+
+### `--embed` and crypto-js
+
+If you do not embed crypto-js and serve it from a CDN, some adblockers see the `crypto-js.min.js`, think that's a crypto miner and block it.
 
 ## Contribution
 
 Thank you: [@AaronCoplan](https://github.com/AaronCoplan) for bringing the CLI to life, [@epicfaace](https://github.com/epicfaace) & [@thomasmarr](https://github.com/thomasmarr) for sparking the caching of the passphrase in localStorage (allowing the "Remember me" checkbox)
 
-**Opening PRs:** You're free to open PRs if you're ok with having no response for a (very) long time and me ending up getting inspiration from your proposal but merging something different myself instead of your PR because of limited available time and lighter mental load (I'll try to credit you though). I still appreciate them but I'd rather be upfront about it, rather than waiting for a perfect occasion to manifest and never actually updating anything. Apologies in advance, and thank you!
+**Opening PRs:** You're free to open PRs if you're ok with having no response for a (possibly very) long time and me possibly ending up getting inspiration from your proposal but merging something different myself (I'll try to credit you though). Apologies in advance for the delay, and thank you!
 
 If you find a serious security bug please open an issue, I'll try to fix it relatively quickly.
 
-## Alternativs
+## Alternatives
 
 https://github.com/MaxLaumeister/PageCrypt is a similar project (I think it predates staticrypt).
 
