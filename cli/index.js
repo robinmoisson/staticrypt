@@ -163,9 +163,6 @@ const encrypted = encrypt(contents, hashedPassphrase);
 // we use the hashed passphrase in the HMAC because this is effectively what will be used a passphrase (so we can store
 // it localStorage safely, we don't use the clear text passphrase)
 const hmac = CryptoJS.HmacSHA256(encrypted, CryptoJS.SHA256(hashedPassphrase).toString()).toString();
-console.log("encryptd passphrase", hashedPassphrase);
-console.log("hmac", hmac);
-console.log("salt", salt);
 const encryptedMessage = hmac + encrypted;
 
 // create crypto-js tag (embedded or not)

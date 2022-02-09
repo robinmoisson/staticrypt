@@ -316,11 +316,12 @@ Filename changed to circumvent adblockers that mistake it for a crypto miner (se
             passphrase = document.getElementById('passphrase').value;
 
         var hashed = hashPassphrase(passphrase);
-        // we actually use the hashedPassphrase as the encryption passphrase
         var hashedPassphrase = hashed.hashedPassphrase,
             salt = hashed.salt;
 
         var encrypted = encrypt(unencrypted, hashedPassphrase),
+            // we use the hashed passphrase in the HMAC because this is effectively what will be used a passphrase (so
+            // we can store it localStorage safely, we don't use the clear text passphrase)
             hmac = CryptoJS.HmacSHA256(encrypted, CryptoJS.SHA256(hashedPassphrase).toString()).toString(),
             encryptedMsg = hmac + encrypted;
 
@@ -345,7 +346,7 @@ Filename changed to circumvent adblockers that mistake it for a crypto miner (se
             title: pageTitle ? pageTitle : 'Protected Page',
         };
 
-        document.getElementById('encrypted_html_display').textContent = encryptedMsg;
+        document.getElementById('encrypted_html_display').textContent = encrypted;
 
         if (document.getElementById("embed-crypto").checked) {
             setFileToDownloadWithEmbeddedCrypto(data);
