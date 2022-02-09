@@ -118,7 +118,7 @@ const yargs = Yargs
     .option('r', {
         alias: 'remember',
         type: 'number',
-        describe: 'Show a "Remember me" checkbox that will save the passphrase in clear text in localStorage when entered by the user.\nYou can set the expiration in days as value (no value means "0", no expiration).',
+        describe: 'Show a "Remember me" checkbox that will save the (salted + hashed) passphrase in localStorage when entered by the user.\nYou can set the expiration in days as value (no value means "0", no expiration).',
     })
     .option('remember-label', {
         type: 'string',

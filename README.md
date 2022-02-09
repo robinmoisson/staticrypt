@@ -39,7 +39,7 @@ Staticrypt is available through npm as a CLI, install with `npm install -g stati
       -f, --file-template       Path to custom HTML template with password prompt.
                               [string] [default: "[...]/cli/password_template.html"]
       -r, --remember            Show a "Remember me" checkbox that will save the
-                                password in clear text in localStorage when
+                                (salted + hashed) passphrase in localStorage when
                                 entered by the user.
                                 You can set the expiration in days as value (no
                                 value means "0", no expiration).        [number]
