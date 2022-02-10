@@ -26,10 +26,17 @@
     </style>
 
     <script>
-        (function(i,s,o,g,r,a,m){i['GoogleAnalyticsObject']=r;i[r]=i[r]||function(){
-                (i[r].q=i[r].q||[]).push(arguments)},i[r].l=1*new Date();a=s.createElement(o),
-            m=s.getElementsByTagName(o)[0];a.async=1;a.src=g;m.parentNode.insertBefore(a,m)
-        })(window,document,'script','https://www.google-analytics.com/analytics.js','ga');
+        (function (i, s, o, g, r, a, m) {
+            i['GoogleAnalyticsObject'] = r;
+            i[r] = i[r] || function () {
+                (i[r].q = i[r].q || []).push(arguments)
+            }, i[r].l = 1 * new Date();
+            a = s.createElement(o),
+                m = s.getElementsByTagName(o)[0];
+            a.async = 1;
+            a.src = g;
+            m.parentNode.insertBefore(a, m)
+        })(window, document, 'script', 'https://www.google-analytics.com/analytics.js', 'ga');
 
         ga('create', 'UA-73629908-2', 'auto');
         ga('send', 'pageview');
@@ -65,7 +72,11 @@
             </p>
             <br>
 
-            <h4><a class="no-style" id="toggle-concept" href="#">HOW IT WORKS ►</a></h4>
+            <h4>
+                <a class="no-style" id="toggle-concept" href="#">
+                    <span id="toggle-concept-sign">►</span> HOW IT WORKS
+                </a>
+            </h4>
             <div id="concept" class="hidden">
                 <p>
                     <b class="text-danger">Disclaimer</b> if you have extra sensitive banking data, you should probably
@@ -98,11 +109,28 @@
                     <input type="password" class="form-control" id="passphrase"
                            placeholder="Passphrase (choose a long one!)">
                 </div>
+
                 <div class="form-group">
                     <label for="unencrypted_html">HTML/string to encrypt</label>
-                    <textarea class="form-control" id="unencrypted_html" placeholder="<html><head>..."
+                    <textarea class="form-control"
+                              id="unencrypted_html"
+                              placeholder="<html><head>..."
                               rows="5"></textarea>
                 </div>
+
+                <div class="form-group">
+                    <label class="no-style">
+                        <input type="checkbox" id="remember" checked>
+                        Add "Remember me" checkbox (append <code>?staticrypt_logout</code> to your URL to logout)
+                        <small>
+                            <abbr class="text-muted"
+                                  title="The password will be stored in clear text in the browser's localStorage upon entry by the user. See &quot;More options&quot; to set the expiration (default: none)">
+                                (?)
+                            </abbr>
+                        </small>
+                    </label>
+                </div>
+
                 <p>
                     <a href="#" id="toggle-extra-option">+ More options</a>
                 </p>
@@ -111,19 +139,53 @@
                         <label for="title">Page title</label>
                         <input type="text" class="form-control" id="title" placeholder="Default: 'Protected Page'">
                     </div>
+
                     <div class="form-group">
                         <label for="instructions">Instructions to display the user</label>
                         <textarea class="form-control" id="instructions" placeholder="Default: nothing."></textarea>
                     </div>
-                </div>
 
-                <div class="form-group">
-                    <label class="no-style">
-                        <input type="checkbox" id="embed-crypto" checked>
-                        Embed crypto-js into your file
-                        <abbr title="Leave checked to include crypto-js into your file so you can decrypt it offline.
-                        Uncheck to load crypto-js from a CDN (some adblockers might think it's a crypto miner).">?</abbr>
-                    </label>
+                    <div class="form-group">
+                        <label for="title">Passphrase input placeholder</label>
+                        <input type="text" class="form-control" id="passphrase_placeholder"
+                               placeholder="Default: 'Passphrase'">
+                    </div>
+
+                    <div class="form-group">
+                        <label for="title">"Remember me" checkbox label</label>
+                        <input type="text" class="form-control" id="remember_me" placeholder="Default: 'Remember me'">
+                    </div>
+
+                    <div class="form-group">
+                        <label for="title">"Remember me" expiration in days</label>
+                        <input type="number"
+                               class="form-control"
+                               id="remember_in_days"
+                               step="any"
+                               placeholder="Default: 0 (no expiration)">
+                        <small class="form-text text-muted">
+                            After this many days, the user will have to enter the passphrase again. Leave empty or set
+                            to 0 for no expiration.
+                        </small>
+                    </div>
+
+                    <div class="form-group">
+                        <label for="title">Decrypt button label</label>
+                        <input type="text" class="form-control" id="decrypt_button" placeholder="Default: 'DECRYPT'">
+                    </div>
+
+                    <div class="form-group">
+                        <label class="no-style">
+                            <input type="checkbox" id="embed-crypto" checked>
+                            Embed crypto-js into your file
+                            <small>
+                                <abbr class="text-muted"
+                                      title="Leave checked to include crypto-js into your file so you can decrypt it offline. Uncheck to load crypto-js from a CDN (some adblockers might think it's a crypto miner).">
+                                    (?)
+                                </abbr>
+                            </small>
+                        </label>
+                    </div>
                 </div>
 
                 <button class="btn btn-primary pull-right" type="submit">Generate passphrase protected HTML</button>
@@ -131,7 +193,7 @@
         </div>
     </div>
 
-    <div class="row">
+    <div class="row mb-5">
         <div class="col-xs-12">
             <h2>Encrypted HTML</h2>
             <p><a class="btn btn-success download"
@@ -155,13 +217,17 @@ Filename changed to circumvent adblockers that mistake it for a crypto miner (se
 
 <script>
     // enable CKEDIRTOR
-    CKEDITOR.replace( 'instructions' );
+    CKEDITOR.replace('instructions');
 
     var htmlToDownload;
 
     var renderTemplate = function (tpl, data) {
         return tpl.replace(/{(.*?)}/g, function (_, key) {
-            return data && data[key] || '';
+            if (data && data[key] !== undefined) {
+                return data[key];
+            }
+
+            return '';
         });
     };
 
@@ -172,7 +238,7 @@ Filename changed to circumvent adblockers that mistake it for a crypto miner (se
     var setFileToDownload = function (data) {
         var request = new XMLHttpRequest();
         request.open('GET', 'password_template.html', true);
-        request.onload = function() {
+        request.onload = function () {
             var renderedTmpl = renderTemplate(request.responseText, data);
 
             var downloadLink = document.querySelector('a.download');
@@ -191,7 +257,7 @@ Filename changed to circumvent adblockers that mistake it for a crypto miner (se
     var setFileToDownloadWithEmbeddedCrypto = function (data) {
         var request = new XMLHttpRequest();
         request.open('GET', 'kryptojs-3.1.9-1-lib.js', true);
-        request.onload = function() {
+        request.onload = function () {
             data['crypto_tag'] = '<script>' + request.responseText + '</scr' + 'ipt>';
             setFileToDownload(data);
         };
@@ -202,28 +268,38 @@ Filename changed to circumvent adblockers that mistake it for a crypto miner (se
      * Salt and encrypt a msg with a password.
      * Inspired by https://github.com/adonespitogo
      */
-    var keySize = 256;
-    var iterations = 1000;
-    function encrypt (msg, password) {
-        var salt = CryptoJS.lib.WordArray.random(128/8);
+    function encrypt(msg, hashedPassphrase) {
+        var iv = CryptoJS.lib.WordArray.random(128 / 8);
 
-        var key = CryptoJS.PBKDF2(password, salt, {
-            keySize: keySize/32,
-            iterations: iterations
-        });
-
-        var iv = CryptoJS.lib.WordArray.random(128/8);
-
-        var encrypted = CryptoJS.AES.encrypt(msg, key, {
+        var encrypted = CryptoJS.AES.encrypt(msg, hashedPassphrase, {
             iv: iv,
             padding: CryptoJS.pad.Pkcs7,
             mode: CryptoJS.mode.CBC
         });
 
-        // salt, iv will be hex 32 in length
-        // append them to the ciphertext for use  in decryption
-        var encryptedMsg = salt.toString()+ iv.toString() + encrypted.toString();
-        return encryptedMsg;
+        // iv will be hex 16 in length (32 characters)
+        // we prepend it to the ciphertext for use in decryption
+        return iv.toString() + encrypted.toString();
+    }
+
+    /**
+     * Salt and hash the passphrase so it can be stored in localStorage without opening a password reuse vulnerability.
+     *
+     * @param {string} passphrase
+     * @returns {{salt: string, hashedPassphrase: string}}
+     */
+    function hashPassphrase(passphrase) {
+        var salt = CryptoJS.lib.WordArray.random(128 / 8).toString();
+
+        var hashedPassphrase = CryptoJS.PBKDF2(passphrase, salt, {
+            keySize: 256 / 32,
+            iterations: 1000
+        });
+
+        return {
+            salt: salt,
+            hashedPassphrase: hashedPassphrase.toString(),
+        };
     }
 
     /**
@@ -236,44 +312,67 @@ Filename changed to circumvent adblockers that mistake it for a crypto miner (se
         // (see https://stackoverflow.com/questions/3147670/ckeditor-update-textarea)
         CKEDITOR.instances['instructions'].updateElement();
 
-        var unencrypted = document.getElementById('unencrypted_html').value;
-        var passphrase = document.getElementById('passphrase').value;
+        var unencrypted = document.getElementById('unencrypted_html').value,
+            passphrase = document.getElementById('passphrase').value;
 
-        var encrypted = encrypt(unencrypted, passphrase);
-        var hmac = CryptoJS.HmacSHA256(encrypted, CryptoJS.SHA256(passphrase).toString()).toString();
-        var encryptedMsg = hmac + encrypted;
+        var hashed = hashPassphrase(passphrase);
+        var hashedPassphrase = hashed.hashedPassphrase,
+            salt = hashed.salt;
 
-        var pageTitle = document.getElementById('title').value.trim();
-        var instructions = document.getElementById('instructions').value;
+        var encrypted = encrypt(unencrypted, hashedPassphrase),
+            // we use the hashed passphrase in the HMAC because this is effectively what will be used a passphrase (so
+            // we can store it localStorage safely, we don't use the clear text passphrase)
+            hmac = CryptoJS.HmacSHA256(encrypted, CryptoJS.SHA256(hashedPassphrase).toString()).toString(),
+            encryptedMsg = hmac + encrypted;
+
+        var decryptButton = document.getElementById('decrypt_button').value,
+            instructions = document.getElementById('instructions').value,
+            isRememberEnabled = document.getElementById('remember').checked,
+            pageTitle = document.getElementById('title').value.trim(),
+            passphrasePlaceholder = document.getElementById('passphrase_placeholder').value.trim(),
+            rememberDurationInDays = document.getElementById('remember_in_days').value || 0,
+            rememberMe = document.getElementById('remember_me').value;
+
         var data = {
-            title: pageTitle ? pageTitle : 'Protected Page',
-            instructions: instructions ? instructions : '',
+            crypto_tag: '<script src="https://cdnjs.cloudflare.com/ajax/libs/crypto-js/3.1.9-1/crypto-js.min.js" integrity="sha384-lp4k1VRKPU9eBnPePjnJ9M2RF3i7PC30gXs70+elCVfgwLwx1tv5+ctxdtwxqZa7" crossorigin="anonymous"></scr' + 'ipt>',
+            decrypt_button: decryptButton ? decryptButton : 'DECRYPT',
             encrypted: encryptedMsg,
-            crypto_tag: '<script src="https://cdnjs.cloudflare.com/ajax/libs/crypto-js/3.1.9-1/crypto-js.min.js" integrity="sha384-lp4k1VRKPU9eBnPePjnJ9M2RF3i7PC30gXs70+elCVfgwLwx1tv5+ctxdtwxqZa7" crossorigin="anonymous"></scr' + 'ipt>'
+            salt: salt,
+            instructions: instructions ? instructions : '',
+            is_remember_enabled: isRememberEnabled ? 'true' : 'false',
+            passphrase_placeholder: passphrasePlaceholder ? passphrasePlaceholder : 'Passphrase',
+            remember_duration_in_days: rememberDurationInDays.toString(),
+            remember_me: rememberMe ? rememberMe : 'Remember me',
+            title: pageTitle ? pageTitle : 'Protected Page',
         };
 
-        document.getElementById('encrypted_html_display').textContent = encryptedMsg;
+        document.getElementById('encrypted_html_display').textContent = encrypted;
 
         if (document.getElementById("embed-crypto").checked) {
             setFileToDownloadWithEmbeddedCrypto(data);
-        }
-        else {
+        } else {
             setFileToDownload(data);
         }
 
     });
 
     document.getElementById('toggle-extra-option')
-    .addEventListener('click', function (e) {
-        e.preventDefault();
-        document.getElementById('extra-options').classList.toggle('hidden');
-    });
+        .addEventListener('click', function (e) {
+            e.preventDefault();
+            document.getElementById('extra-options').classList.toggle('hidden');
+        });
 
+    var isConceptShown = false;
     document.getElementById('toggle-concept')
-    .addEventListener('click', function (e) {
-        e.preventDefault();
-        document.getElementById('concept').classList.toggle('hidden');
-    });
+        .addEventListener('click', function (e) {
+            e.preventDefault();
+
+            isConceptShown = !isConceptShown;
+
+            document.getElementById('toggle-concept-sign').innerText = isConceptShown ? '▼' : '►';
+
+            document.getElementById('concept').classList.toggle('hidden');
+        });
 
 
     /**
@@ -282,18 +381,18 @@ Filename changed to circumvent adblockers that mistake it for a crypto miner (se
     document.getElementById('download-link')
         .addEventListener('click', function (e) {
 
-        var isIE = (navigator.userAgent.indexOf("MSIE") !== -1 ) || (!!document.documentMode === true ); // >= 10
-        var isEdge = navigator.userAgent.indexOf("Edge") !== -1;
+            var isIE = (navigator.userAgent.indexOf("MSIE") !== -1) || (!!document.documentMode === true); // >= 10
+            var isEdge = navigator.userAgent.indexOf("Edge") !== -1;
 
-        // download with MS specific feature
-        if (htmlToDownload && (isIE || isEdge)) {
-            e.preventDefault();
-            var blobObject = new Blob([htmlToDownload]);
-            window.navigator.msSaveOrOpenBlob(blobObject, 'encrypted.html');
-        }
+            // download with MS specific feature
+            if (htmlToDownload && (isIE || isEdge)) {
+                e.preventDefault();
+                var blobObject = new Blob([htmlToDownload]);
+                window.navigator.msSaveOrOpenBlob(blobObject, 'encrypted.html');
+            }
 
-        return true;
-    })
+            return true;
+        })
 </script>
 
 
