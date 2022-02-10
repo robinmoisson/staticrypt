@@ -67,6 +67,8 @@ This allows encrypting multiple page on a single domain with the same password: 
 
 If no value is provided the stored passphrase doesn't expire, you can also give it a value in days for how long should the store value be kept. If the user reconnects to the page after the expiration date the store value will be cleared.
 
+You can clear the values in localStorage (effectively "login out") at any time by appending `staticrypt_logout` to the URL query paramets (`mysite.com?staticrypt_logout`).
+
 ### `--embed` and crypto-js
 
 If you do not embed crypto-js and serve it from a CDN, some adblockers see the `crypto-js.min.js`, think that's a crypto miner and block it.
