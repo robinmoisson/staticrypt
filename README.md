@@ -25,32 +25,36 @@ Staticrypt is available through npm as a CLI, install with `npm install -g stati
     Usage: staticrypt <filename> <passphrase> [options]
 
     Options:
-      --help                    Show help                                   [boolean]
-      --version                 Show version number                         [boolean]
-      -e, --embed               Whether or not to embed crypto-js in the page (or use 
-                                an external CDN)
+          --help                    Show help                              [boolean]
+          --version                 Show version number                    [boolean]
+      -e, --embed                   Whether or not to embed crypto-js in the page
+                                    (or use an external CDN).
                                                            [boolean] [default: true]
-      -o, --output              File name / path for generated encrypted file
+      -o, --output                  File name / path for generated encrypted file.
                                                             [string] [default: null]
-      -t, --title               Title for output HTML page
+      -t, --title                   Title for output HTML page.
                                                 [string] [default: "Protected Page"]
-      -i, --instructions        Special instructions to display to the user.
-                                                            [string] [default: null]
-      -f, --file-template       Path to custom HTML template with password prompt.
-                              [string] [default: "[...]/cli/password_template.html"]
-      -r, --remember            Show a "Remember me" checkbox that will save the
-                                (salted + hashed) passphrase in localStorage when
-                                entered by the user.
-                                You can set the expiration in days as value (no
-                                value means "0", no expiration).        [number]
-      --remember-label          Label to use for the "Remember me" checkbox.
-                                Default: "Remember me".
-                                               [string] [default: "Remember me"]
-      --passphrase-placeholder  Placeholder to use for the passphrase input.
-                                Default: "Passphrase".
-                                                [string] [default: "Passphrase"]
-      --decrypt-button          Label to use for the decrypt button. Default:
-                                "DECRYPT".         [string] [default: "DECRYPT"]
+      -i, --instructions            Special instructions to display to the user.
+                                                              [string] [default: ""]
+      -f, --file-template           Path to custom HTML template with passphrase
+                                    prompt.
+                   [string] [default: "/geek/staticrypt/cli/password_template.html"]
+      -r, --remember                Show a "Remember me" checkbox that will save the
+                                    (salted + hashed) passphrase in localStorage
+                                    when entered by the user.
+                                    You can set the expiration in days as value (no
+                                    value means "0", no expiration).
+                                                               [number] [default: 0]
+          --noremember              Set this flag to remove the "Remember me"
+                                    checkbox.             [boolean] [default: false]
+          --remember-label          Label to use for the "Remember me" checkbox.
+                                    Default: "Remember me".
+                                                   [string] [default: "Remember me"]
+          --passphrase-placeholder  Placeholder to use for the passphrase input.
+                                    Default: "Passphrase".
+                                                    [string] [default: "Passphrase"]
+          --decrypt-button          Label to use for the decrypt button. Default:
+                                    "DECRYPT".         [string] [default: "DECRYPT"]
 
 Example usages:
 
@@ -59,15 +63,19 @@ Example usages:
 
 You can use a custom template for the password prompt - just copy `cli/password_template.html` and modify it to suit your presentation style and point to your template file with the `-f` flag. Be careful to not break the encrypting javascript part, the variables replaced by staticrypt are between curly brackets: `{instructions}`.
 
-### `--remember`
+### "Remember me" checkbox
 
-This will add a "Remember me" checkbox. If checked, when the user enters their passphrase its salted hashed value will be stored in localStorage. In case this value becomes compromised an attacker can decrypt the page, but this should hopefully protect against password reuse attack (of course please use a unique passphrase nonetheless).
+By default, the CLI will add a "Remember me" checkbox on the password prompt. If checked, when the user enters their passphrase its salted hashed value will be stored in localStorage. In case this value becomes compromised an attacker can decrypt the page, but this should hopefully protect against password reuse attack (of course please use a unique passphrase nonetheless).
 
 This allows encrypting multiple page on a single domain with the same password: if you check "Remember me", you'll have to enter you password once then all the pages on that domain will automatically decrypt their content.
 
 If no value is provided the stored passphrase doesn't expire, you can also give it a value in days for how long should the store value be kept. If the user reconnects to the page after the expiration date the store value will be cleared.
 
 You can clear the values in localStorage (effectively "login out") at any time by appending `staticrypt_logout` to the URL query paramets (`mysite.com?staticrypt_logout`).
+
+#### `--noremember`
+
+If you don't want the checkbox to be included, you can add the `--noremember` flag to disable it. 
 
 ### `--embed` and crypto-js
 

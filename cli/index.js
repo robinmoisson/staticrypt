@@ -11,38 +11,6 @@ const SCRIPT_URL = 'https://cdnjs.cloudflare.com/ajax/libs/crypto-js/3.1.9-1/cry
 const SCRIPT_TAG = '<script src="' + SCRIPT_URL + '" integrity="sha384-lp4k1VRKPU9eBnPePjnJ9M2RF3i7PC30gXs70+elCVfgwLwx1tv5+ctxdtwxqZa7" crossorigin="anonymous"></script>';
 
 /**
- * Check if a particular option has been set by the user. Use case:
- *
- * // The "--remember" flag has a specific behavior: if the flag is included without value (like '-r'), the key is set with
- * // the value 'undefined'. If it is included with a value, ('-r 100'), the key is set with that value. Both means
- * // remember is enabled. If the flag is omitted by the user the key isn't set, meaning remember is disabled.
- *
- * From https://github.com/yargs/yargs/issues/513#issuecomment-221412008
- *
- * @param option
- * @returns {boolean}
- */
-function userSetOption(option) {
-    function searchForOption(option) {
-        return process.argv.indexOf(option) > -1;
-    }
-
-    if (searchForOption(`-${option}`) || searchForOption(`--${option}`)) {
-        return true;
-    }
-
-    // Handle aliases for same option
-    for (let aliasIndex in yargs.parsed.aliases[option]) {
-        const alias = yargs.parsed.aliases[option][aliasIndex];
-
-        if (searchForOption(`-${alias}`) || searchForOption(`--${alias}`))
-            return true;
-    }
-
-    return false;
-}
-
-/**
  * Salt and encrypt a msg with a password.
  * Inspired by https://github.com/adonespitogo
  */
@@ -80,7 +48,7 @@ function hashPassphrase(passphrase) {
     };
 }
 
-const yargs = Yargs
+const namedArgs = Yargs
     .usage('Usage: staticrypt <filename> <passphrase> [options]')
     .demandCommand(2)
     .option('e', {
@@ -113,12 +81,16 @@ const yargs = Yargs
         describe: 'Path to custom HTML template with passphrase prompt.',
         default: path.join(__dirname, 'password_template.html')
     })
-    // do not give a default option to this 'remember' parameter - we want to see when the flag is included with no
-    // value and when it's not included at all
     .option('r', {
         alias: 'remember',
         type: 'number',
         describe: 'Show a "Remember me" checkbox that will save the (salted + hashed) passphrase in localStorage when entered by the user.\nYou can set the expiration in days as value (no value means "0", no expiration).',
+        default: 0,
+    })
+    .option('noremember', {
+        type: 'boolean',
+        describe: 'Set this flag to remove the "Remember me" checkbox.',
+        default: false,
     })
     .option('remember-label', {
         type: 'string',
@@ -134,8 +106,7 @@ const yargs = Yargs
         type: 'string',
         describe: 'Label to use for the decrypt button. Default: "DECRYPT".',
         default: 'DECRYPT'
-    });
-const namedArgs = yargs.argv;
+    }).argv;
 
 if (namedArgs._.length !== 2) {
     Yargs.showHelp();
@@ -178,21 +149,16 @@ if (namedArgs.embed) {
     }
 }
 
-const isRememberEnabled = userSetOption('r');
-// give a default value here instead of in the yargs config, so we can distinguish when the flag is included with no
-// value from when the flag isn't included
-const rememberDurationInDays = namedArgs.remember ? namedArgs.remember : 0;
-
 const data = {
     crypto_tag: cryptoTag,
     decrypt_button: namedArgs.decryptButton,
     embed: namedArgs.embed,
     encrypted: encryptedMessage,
     instructions: namedArgs.instructions,
-    is_remember_enabled: isRememberEnabled ? 'true' : 'false',
+    is_remember_enabled: namedArgs.noremember ? 'false' : 'true',
     output_file_path: namedArgs.output !== null ? namedArgs.output : input.replace(/\.html$/, '') + "_encrypted.html",
     passphrase_placeholder: namedArgs.passphrasePlaceholder,
-    remember_duration_in_days: rememberDurationInDays,
+    remember_duration_in_days: namedArgs.remember,
     remember_me: namedArgs.rememberLabel,
     salt: salt,
     title: namedArgs.title,
