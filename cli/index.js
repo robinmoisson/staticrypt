@@ -34,9 +34,7 @@ function encrypt(msg, hashedPassphrase) {
  * @param {string} passphrase
  * @returns {{salt: string, hashedPassphrase: string}}
  */
-function hashPassphrase(passphrase) {
-    var salt = CryptoJS.lib.WordArray.random(128 / 8).toString();
-
+function hashPassphrase(passphrase, salt) {
     var hashedPassphrase = CryptoJS.PBKDF2(passphrase, salt, {
         keySize: 256 / 32,
         iterations: 1000
@@ -102,6 +100,11 @@ const namedArgs = Yargs
         describe: 'Placeholder to use for the passphrase input. Default: "Passphrase".',
         default: 'Passphrase'
     })
+    .option('salt', {
+        type: 'string',
+        describe: 'Set the salt manually, should be set if you want use "Remeber me" through multiple pages.',
+        default: null
+    })
     .option('decrypt-button', {
         type: 'string',
         describe: 'Label to use for the decrypt button. Default: "DECRYPT".',
@@ -126,10 +129,11 @@ try {
     process.exit(1);
 }
 
+const salt = namedArgs.salt !== null? namedArgs.salt : CryptoJS.lib.WordArray.random(128 / 8).toString();
+
 // encrypt input
-const hashed = hashPassphrase(passphrase);
+const hashed = hashPassphrase(passphrase, salt);
 const hashedPassphrase = hashed.hashedPassphrase;
-const salt = hashed.salt;
 const encrypted = encrypt(contents, hashedPassphrase);
 // we use the hashed passphrase in the HMAC because this is effectively what will be used a passphrase (so we can store
 // it in localStorage safely, we don't use the clear text passphrase)
