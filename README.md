@@ -1,3 +1,5 @@
+![password prompt preview](preview.png)
+
 # StatiCrypt
 
 Based on the [crypto-js](https://github.com/brix/crypto-js) library, StatiCrypt uses AES-256 to encrypt your string with your passphrase in your browser (client side).
