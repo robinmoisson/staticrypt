@@ -1,3 +1,5 @@
+![password prompt preview](preview.png)
+
 # StatiCrypt
 
 Based on the [crypto-js](https://github.com/brix/crypto-js) library, StatiCrypt uses AES-256 to encrypt your string with your passphrase in your browser (client side).
@@ -27,40 +29,45 @@ Staticrypt is available through npm as a CLI, install with `npm install -g stati
     Options:
           --help                    Show help                              [boolean]
           --version                 Show version number                    [boolean]
+      -c, --config                  Path to the config file. Set to "none" to
+                                    disable.  [string] [default: ".staticrypt.json"]
+          --decrypt-button          Label to use for the decrypt button. Default:
+                                    "DECRYPT".         [string] [default: "DECRYPT"]
       -e, --embed                   Whether or not to embed crypto-js in the page
                                     (or use an external CDN).
                                                            [boolean] [default: true]
-      -o, --output                  File name / path for generated encrypted file.
-                                                            [string] [default: null]
-      -t, --title                   Title for output HTML page.
-                                                [string] [default: "Protected Page"]
-      -i, --instructions            Special instructions to display to the user.
-                                                              [string] [default: ""]
       -f, --file-template           Path to custom HTML template with passphrase
                                     prompt.
-                                      [string] [default: "./password_template.html"]
+                   [string] [default: "/geek/staticrypt/cli/password_template.html"]
+      -i, --instructions            Special instructions to display to the user.
+                                                              [string] [default: ""]
+          --noremember              Set this flag to remove the "Remember me"
+                                    checkbox.             [boolean] [default: false]
+      -o, --output                  File name / path for generated encrypted file.
+                                                            [string] [default: null]
+          --passphrase-placeholder  Placeholder to use for the passphrase input.
+                                                    [string] [default: "Passphrase"]
       -r, --remember                Expiration in days of the "Remember me" checkbox
                                     that will save the (salted + hashed) passphrase
                                     in localStorage when entered by the user.
                                     Default: "0", no expiration.
                                                                [number] [default: 0]
-          --noremember              Set this flag to remove the "Remember me"
-                                    checkbox.             [boolean] [default: false]
           --remember-label          Label to use for the "Remember me" checkbox.
                                                    [string] [default: "Remember me"]
-          --passphrase-placeholder  Placeholder to use for the passphrase input.
-                                                    [string] [default: "Passphrase"]
       -s, --salt                    Set the salt manually. It should be set if you
                                     want use "Remember me" through multiple pages.
                                     It needs to be a 32 character long hexadecimal
                                     string.
                                     Include the empty flag to generate a random salt
                                     you can use: "statycrypt -s".           [string]
-          --decrypt-button          Label to use for the decrypt button. Default:
-                                    "DECRYPT".         [string] [default: "DECRYPT"]
+      -t, --title                   Title for output HTML page.
+                                                [string] [default: "Protected Page"]
+
 
 
 ### Example usages
+
+> These will create a `.staticrypt.json` file in the current directory, see the FAQ as to why. You can prevent it by setting the `--config` flag to "none".
 
 Encrypt `test.html` and create a `test_encrypted.html` file (add `-o my_encrypted_file.html` to change the name of the output file):
 
@@ -68,13 +75,17 @@ Encrypt `test.html` and create a `test_encrypted.html` file (add `-o my_encrypte
 staticrypt test.html MY_PASSPHRASE
 ```
 
+Encrypt all html files in a directory and replace them with encrypted versions (`{}` will be replaced with each file name by the `find` command - if you wanted to move the encrypted files to a `encrypted/` directory, you could use `-o encrypted/{}`):
+
+```
+find . -type f -name "*.html" -exec staticrypt {} MY_PASSPHRASE -o {} \;
+```
+
 Encrypt all html files in a directory except the ones ending in `_encrypted.html`:
 
 ```
-find . -type f -name "*.html" -not -name "*_encrypted.html" -exec staticrypt {} MY_PASSPHRASE -s MY_SALT \;
+find . -type f -name "*.html" -not -name "*_encrypted.html" -exec staticrypt {} MY_PASSPHRASE \;
 ```
-
-Replace `MY_PASSPHRASE` with a secure passphrase, and `MY_SALT` with a random 32 character long hexadecimal string (it should look like this `c5bcf27cc5e5bb1ecbc41f3da4470dea`, you can generate one with `staticrypt -s` or `staticrypt --salt`). The salt parameter is required if you want to have the same "Remember me" checkbox work on all pages, see detail in the corresponding section of this doc.
 
 ### "Remember me" checkbox
 
@@ -107,6 +118,16 @@ If you don't want the checkbox to be included, you can add the `--noremember` fl
 ### Why do we embed the whole crypto-js library in each encrypted file by default?
 
 Some adblockers used to see the `crypto-js.min.js` served by CDN, think that's a crypto miner and block it. If you don't want to include it and serve from a CDN instead, you can add `--embed false`.
+
+### Why does staticrypt create a config file?
+
+The "Remember me" feature stores the user password hashed and salted in the browser's localStorage, so it needs the salt to be the same each time you encrypt otherwise the user would be logged out when you encrypt the page again. The config file is a way to store the salt in between runs, so you don't have to remember it and pass it manually.
+
+When deciding what salt to use, staticrypt will first look for a `--salt` flag, then try to get the salt from the config file, and if it still doesn't find a salt it will generate a random one. It then saves the salt in the config file.
+
+If you don't want staticrypt to create or use the config file, you can set `--config none` to disable it.
+
+The salt isn't secret, so you don't need to worry about hiding the config file.
 
 ## 🙏 Contribution
 

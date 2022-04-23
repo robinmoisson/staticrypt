@@ -2,8 +2,8 @@
 
 'use strict';
 
-var CryptoJS = require("crypto-js");
-var FileSystem = require("fs");
+const CryptoJS = require("crypto-js");
+const fs = require("fs");
 const path = require("path");
 const Yargs = require('yargs');
 
@@ -44,6 +44,10 @@ function hashPassphrase(passphrase, salt) {
     return hashedPassphrase.toString();
 }
 
+function generateRandomSalt() {
+    return CryptoJS.lib.WordArray.random(128 / 8).toString();
+}
+
 /**
  * Check if a particular option has been set by the user. Useful for distinguishing default value with flag without
  * parameter.
@@ -78,23 +82,28 @@ function isOptionSetByUser(option, yargs) {
 
 const yargs = Yargs
     .usage('Usage: staticrypt <filename> <passphrase> [options]')
+    .option('c', {
+        alias: 'config',
+        type: 'string',
+        describe: 'Path to the config file. Set to "none" to disable.',
+        default: '.staticrypt.json',
+    })
+    .option('decrypt-button', {
+        type: 'string',
+        describe: 'Label to use for the decrypt button. Default: "DECRYPT".',
+        default: 'DECRYPT'
+    })
     .option('e', {
         alias: 'embed',
         type: 'boolean',
         describe: 'Whether or not to embed crypto-js in the page (or use an external CDN).',
         default: true
     })
-    .option('o', {
-        alias: 'output',
+    .option('f', {
+        alias: 'file-template',
         type: 'string',
-        describe: 'File name / path for generated encrypted file.',
-        default: null
-    })
-    .option('t', {
-        alias: 'title',
-        type: 'string',
-        describe: "Title for output HTML page.",
-        default: 'Protected Page'
+        describe: 'Path to custom HTML template with passphrase prompt.',
+        default: path.join(__dirname, 'password_template.html')
     })
     .option('i', {
         alias: 'instructions',
@@ -102,11 +111,21 @@ const yargs = Yargs
         describe: 'Special instructions to display to the user.',
         default: ''
     })
-    .option('f', {
-        alias: 'file-template',
+    .option('noremember', {
+        type: 'boolean',
+        describe: 'Set this flag to remove the "Remember me" checkbox.',
+        default: false,
+    })
+    .option('o', {
+        alias: 'output',
         type: 'string',
-        describe: 'Path to custom HTML template with passphrase prompt.',
-        default: path.join(__dirname, 'password_template.html')
+        describe: 'File name / path for generated encrypted file.',
+        default: null
+    })
+    .option('passphrase-placeholder', {
+        type: 'string',
+        describe: 'Placeholder to use for the passphrase input.',
+        default: 'Passphrase'
     })
     .option('r', {
         alias: 'remember',
@@ -115,20 +134,10 @@ const yargs = Yargs
             'in localStorage when entered by the user. Default: "0", no expiration.',
         default: 0,
     })
-    .option('noremember', {
-        type: 'boolean',
-        describe: 'Set this flag to remove the "Remember me" checkbox.',
-        default: false,
-    })
     .option('remember-label', {
         type: 'string',
         describe: 'Label to use for the "Remember me" checkbox.',
         default: 'Remember me'
-    })
-    .option('passphrase-placeholder', {
-        type: 'string',
-        describe: 'Placeholder to use for the passphrase input.',
-        default: 'Passphrase'
     })
     // do not give a default option to this 'remember' parameter - we want to see when the flag is included with no
     // value and when it's not included at all
@@ -139,37 +148,63 @@ const yargs = Yargs
             'can use: "statycrypt -s".',
         type: 'string',
     })
-    .option('decrypt-button', {
+    .option('t', {
+        alias: 'title',
         type: 'string',
-        describe: 'Label to use for the decrypt button. Default: "DECRYPT".',
-        default: 'DECRYPT'
+        describe: "Title for output HTML page.",
+        default: 'Protected Page'
     });
 const namedArgs = yargs.argv;
 
-// get the salt to use
-let salt = CryptoJS.lib.WordArray.random(128 / 8).toString();
-if (isOptionSetByUser('s', yargs)) {
-    // if the flag is passed without parameter, generate a salt, display & exit
-    if (!namedArgs.salt) {
-        console.log(salt);
-        process.exit(0);
-    }
-    // else use the user provided salt
-    else {
-        salt = String(namedArgs.salt).toLowerCase();
 
-        // validate the salt
-        if (salt.length !== 32 || /[^a-f0-9]/.test(salt)) {
-            console.log("The salt should be a 32 character long hexadecimal string (only [0-9a-f] characters allowed)");
-            process.exit(1);
-        }
-    }
+// if the 's' flag is passed without parameter, generate a salt, display & exit
+if (isOptionSetByUser('s', yargs) && !namedArgs.salt) {
+    console.log(generateRandomSalt());
+    process.exit(0);
 }
 
-// if we haven't returned by now, ensure we have the correct number of arguments
+// validate the number of arguments
 if (namedArgs._.length !== 2) {
     Yargs.showHelp();
     process.exit(1);
+}
+
+// get config file
+const isUsingconfigFile = namedArgs.config.toLowerCase() !== 'none';
+const configPath = path.join(__dirname, namedArgs.config);
+let config = {};
+if (isUsingconfigFile && fs.existsSync(configPath)) {
+    config = JSON.parse(fs.readFileSync(configPath, 'utf8'));
+}
+
+/**
+ * Get the salt to use
+ */
+let salt;
+// either a salt was provided by the user through the flag --salt
+if (!!namedArgs.salt) {
+    salt = String(namedArgs.salt).toLowerCase();
+}
+// or we try to read the salt from config file
+else if (!!config.salt) {
+    salt = config.salt;
+}
+// or we generate a salt
+else {
+    salt = generateRandomSalt();
+}
+
+// validate the salt
+if (salt.length !== 32 || /[^a-f0-9]/.test(salt)) {
+    console.log("The salt should be a 32 character long hexadecimal string (only [0-9a-f] characters allowed)");
+    console.log("Detected salt: " + salt);
+    process.exit(1);
+}
+
+// write salt to config file
+if (isUsingconfigFile && config.salt !== salt) {
+    config.salt = salt;
+    fs.writeFileSync(configPath, JSON.stringify(config, null, 4));
 }
 
 // parse input
@@ -179,7 +214,7 @@ const input = namedArgs._[0].toString(),
 // get the file content
 let contents;
 try {
-    contents = FileSystem.readFileSync(input, 'utf8');
+    contents = fs.readFileSync(input, 'utf8');
 } catch (e) {
     console.log("Failure: input file does not exist!");
     process.exit(1);
@@ -197,7 +232,7 @@ const encryptedMessage = hmac + encrypted;
 let cryptoTag = SCRIPT_TAG;
 if (namedArgs.embed) {
     try {
-        const embedContents = FileSystem.readFileSync(path.join(__dirname, 'crypto-js.min.js'), 'utf8');
+        const embedContents = fs.readFileSync(path.join(__dirname, 'crypto-js.min.js'), 'utf8');
 
         cryptoTag = '<script>' + embedContents + '</script>';
     } catch (e) {
@@ -233,7 +268,7 @@ function genFile(data) {
     let templateContents;
 
     try {
-        templateContents = FileSystem.readFileSync(namedArgs.f, 'utf8');
+        templateContents = fs.readFileSync(namedArgs.f, 'utf8');
     } catch (e) {
         console.log("Failure: could not read template!");
         process.exit(1);
@@ -242,7 +277,7 @@ function genFile(data) {
     const renderedTemplate = render(templateContents, data);
 
     try {
-        FileSystem.writeFileSync(data.output_file_path, renderedTemplate);
+        fs.writeFileSync(data.output_file_path, renderedTemplate);
     } catch (e) {
         console.log("Failure: could not generate output file!");
         process.exit(1);

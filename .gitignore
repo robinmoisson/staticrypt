@@ -1,2 +1,4 @@
 .idea
 node_modules
+cli/.staticrypt.json
+.staticrypt.json
