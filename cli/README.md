@@ -10,7 +10,7 @@ You can encrypt a file online in your browser (client side) at https://robinmois
 
 ## HOW IT WORKS
 
-StatiCrypt generates a static, password protected page that can be decrypted in-browser: just send or upload the generated page to a place serving static content (github pages, for example) and you're done: the javascript will prompt users for password, decrypt the page and load your HTML.
+StatiCrypt use the [crypto-js](https://github.com/brix/crypto-js) library to generate a static, password protected page that can be decrypted in-browser: just send or upload the generated page to a place serving static content (github pages, for example) and you're done: the javascript will prompt users for password, decrypt the page and load your HTML.
 
 It basically encrypts your page and puts everything with a user-friendly way to use a password in the new file.
 
@@ -97,7 +97,7 @@ If no value is provided the stored passphrase doesn't expire, you can also give 
 
 #### "Logging out"
 
-You can clear StatiCrypt values in localStorage (effectively "logging out") at any time by appending `staticrypt_logout` to the URL query paramets (`mysite.com?staticrypt_logout`).
+You can clear StatiCrypt values in localStorage (effectively "logging out") at any time by appending `staticrypt_logout` to the URL query parameters (`mysite.com?staticrypt_logout`).
 
 #### Encrypting multiple pages
 
