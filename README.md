@@ -22,7 +22,7 @@ You can report thoughts and issues to the [GitHub project](https://robinmoisson.
 
 ## CLI
 
-Staticrypt is available through npm as a CLI, install with `npm install -g staticrypt` (with or without the `-g` flag).
+Staticrypt is available through npm as a CLI, install with `npm install -g staticrypt` (with or without the `-g` flag). If without the `-g` flag, you can call the command with `npx staticrypt ...`.
 
 ### Example usage
 
