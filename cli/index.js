@@ -171,7 +171,7 @@ if (namedArgs._.length !== 2) {
 
 // get config file
 const isUsingconfigFile = namedArgs.config.toLowerCase() !== 'false';
-const configPath = path.join(__dirname, namedArgs.config);
+const configPath = './' + namedArgs.config;
 let config = {};
 if (isUsingconfigFile && fs.existsSync(configPath)) {
     config = JSON.parse(fs.readFileSync(configPath, 'utf8'));
