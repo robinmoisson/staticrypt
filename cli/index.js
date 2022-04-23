@@ -85,7 +85,7 @@ const yargs = Yargs
     .option('c', {
         alias: 'config',
         type: 'string',
-        describe: 'Path to the config file. Set to "none" to disable.',
+        describe: 'Path to the config file. Set to "false" to disable.',
         default: '.staticrypt.json',
     })
     .option('decrypt-button', {
@@ -170,7 +170,7 @@ if (namedArgs._.length !== 2) {
 }
 
 // get config file
-const isUsingconfigFile = namedArgs.config.toLowerCase() !== 'none';
+const isUsingconfigFile = namedArgs.config.toLowerCase() !== 'false';
 const configPath = path.join(__dirname, namedArgs.config);
 let config = {};
 if (isUsingconfigFile && fs.existsSync(configPath)) {

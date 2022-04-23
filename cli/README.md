@@ -2,11 +2,11 @@
 
 # StatiCrypt
 
-Based on the [crypto-js](https://github.com/brix/crypto-js) library, StatiCrypt uses AES-256 to encrypt your string with your passphrase in your browser (client side).
+StatiCrypt uses AES-256 to encrypt your HTML file with your passphrase and return a static page with a password prompt you can safely upload anywhere (see [example](https://robinmoisson.github.io/staticrypt/example.html)).
 
-Download your encrypted string in a HTML page with a password prompt you can upload anywhere (see [example](https://robinmoisson.github.io/staticrypt/example.html)).
+This means you can password protect the content of your static HTML file while still having the whole file completely public, without any back-end - serving it over Netlify, GitHub pages, etc.
 
-You can encrypt a file online at https://robinmoisson.github.io/staticrypt.
+You can encrypt a file online in your browser (client side) at https://robinmoisson.github.io/staticrypt, or use the CLI to do it in your build process.
 
 ## HOW IT WORKS
 
@@ -22,14 +22,38 @@ You can report thoughts and issues to the [GitHub project](https://robinmoisson.
 
 ## CLI
 
-Staticrypt is available through npm as a CLI, install with `npm install -g staticrypt` (with or without the `-g` flag) and use as follow:
+Staticrypt is available through npm as a CLI, install with `npm install -g staticrypt` (with or without the `-g` flag).
+
+### Example usage
+
+> These will create a `.staticrypt.json` file in the current directory, see the FAQ as to why. You can prevent it by setting the `--config` flag to "false".
+
+Encrypt `test.html` and create a `test_encrypted.html` file (add `-o my_encrypted_file.html` to change the name of the output file):
+
+```
+staticrypt test.html MY_PASSPHRASE
+```
+
+Encrypt all html files in a directory and replace them with encrypted versions (`{}` will be replaced with each file name by the `find` command - if you wanted to move the encrypted files to a `encrypted/` directory, you could use `-o encrypted/{}`):
+
+```
+find . -type f -name "*.html" -exec staticrypt {} MY_PASSPHRASE -o {} \;
+```
+
+Encrypt all html files in a directory except the ones ending in `_encrypted.html`:
+
+```
+find . -type f -name "*.html" -not -name "*_encrypted.html" -exec staticrypt {} MY_PASSPHRASE \;
+```
+
+### CLI Reference
 
     Usage: staticrypt <filename> <passphrase> [options]
 
     Options:
           --help                    Show help                              [boolean]
           --version                 Show version number                    [boolean]
-      -c, --config                  Path to the config file. Set to "none" to
+      -c, --config                  Path to the config file. Set to "false" to
                                     disable.  [string] [default: ".staticrypt.json"]
           --decrypt-button          Label to use for the decrypt button. Default:
                                     "DECRYPT".         [string] [default: "DECRYPT"]
@@ -65,51 +89,29 @@ Staticrypt is available through npm as a CLI, install with `npm install -g stati
 
 
 
-### Example usages
-
-> These will create a `.staticrypt.json` file in the current directory, see the FAQ as to why. You can prevent it by setting the `--config` flag to "none".
-
-Encrypt `test.html` and create a `test_encrypted.html` file (add `-o my_encrypted_file.html` to change the name of the output file):
-
-```
-staticrypt test.html MY_PASSPHRASE
-```
-
-Encrypt all html files in a directory and replace them with encrypted versions (`{}` will be replaced with each file name by the `find` command - if you wanted to move the encrypted files to a `encrypted/` directory, you could use `-o encrypted/{}`):
-
-```
-find . -type f -name "*.html" -exec staticrypt {} MY_PASSPHRASE -o {} \;
-```
-
-Encrypt all html files in a directory except the ones ending in `_encrypted.html`:
-
-```
-find . -type f -name "*.html" -not -name "*_encrypted.html" -exec staticrypt {} MY_PASSPHRASE \;
-```
-
 ### "Remember me" checkbox
 
-By default, the CLI will add a "Remember me" checkbox on the password prompt. If checked, when the user enters their passphrase its salted hashed value will be stored in localStorage. In case this value becomes compromised an attacker can decrypt the page, but this should hopefully protect against password reuse attack (of course please use a unique passphrase nonetheless).
+The CLI will add a "Remember me" checkbox on the password prompt by default (`--noremember` to disable). If the user checks it, the (salted + hashed) passphrase will be stored in their browser's localStorage and the page will attempt to auto-decrypt when they come back.
 
-This allows encrypting multiple page on a single domain with the same password: if you check "Remember me", you'll have to enter you password once then all the pages on that domain will automatically decrypt their content.
+If no value is provided the stored passphrase doesn't expire, you can also give it a value in days for how long should the store value be kept with `-r NUMBER_OF_DAYS`. If the user reconnects to the page after the expiration date the stored value will be cleared.
 
-If no value is provided the stored passphrase doesn't expire, you can also give it a value in days for how long should the store value be kept with `-r NUMBER_OF_DAYS`. If the user reconnects to the page after the expiration date the store value will be cleared.
+#### "Logging out"
 
-You can clear the values in localStorage (effectively "login out") at any time by appending `staticrypt_logout` to the URL query paramets (`mysite.com?staticrypt_logout`).
+You can clear StatiCrypt values in localStorage (effectively "logging out") at any time by appending `staticrypt_logout` to the URL query paramets (`mysite.com?staticrypt_logout`).
 
 #### Encrypting multiple pages
 
-If you want to encrypt multiple pages and have the "Remember me" checkbox work for all pages (so you have to enter your password on one page and then all other pages are automatically decrypted), you need to pass a `--salt MY_SALT` argument with the same salt for all encrypted pages. The salt isn't secret, so you don't have to worry about hiding it in the command prompt.
+This allows encrypting multiple page on a single domain with the same password: if you check "Remember me", you'll have to enter you password once then all the pages on that domain will automatically decrypt their content. Because the hashed value is stored in the browser's localStorage, this will only work if all the pages are on the same domain name.
 
-Remember to use the same salt if you're encrypting again at a later time, otherwise the users that have checked the "Remember me" box will be logged out when you deploy again (see [this comment](https://github.com/robinmoisson/staticrypt/issues/125#issuecomment-1053617845) for details). You find the salt used in any encrypted file if you've forgotten it, just search for `salt = ` in the encrypted HTML and you'll find it.
+#### Is it secure?
 
-Because the hashed value is stored in the browser's localStorage, this will only work if all the pages are on the same domain name.
+In case the value stored in browser becomes compromised an attacker can decrypt the page, but because it's stored salted and hashed this should still protect against password reuse attack if you've used the passphrase on other websites (of course, please use a unique passphrase nonetheless).
 
 ## FAQ
 
 ### Can I customize the password prompt?
 
-Yes! Just copy `cli/password_template.html`, modify it to suit your style and point to your template file with the `-f path/to/my/file.html` flag. Be careful to not break the encrypting javascript part, the variables replaced by staticrypt are between curly brackets: `{salt}`.
+Yes! Just copy `cli/password_template.html`, modify it to suit your style and point to your template file with the `-f path/to/my/file.html` flag. Be careful to not break the encrypting javascript part, the variables replaced by StatiCrypt are between curly brackets: `{salt}`.
 
 ### Can I prevent the "Remember me" checkbox?
 
@@ -119,13 +121,13 @@ If you don't want the checkbox to be included, you can add the `--noremember` fl
 
 Some adblockers used to see the `crypto-js.min.js` served by CDN, think that's a crypto miner and block it. If you don't want to include it and serve from a CDN instead, you can add `--embed false`.
 
-### Why does staticrypt create a config file?
+### Why does StatiCrypt create a config file?
 
 The "Remember me" feature stores the user password hashed and salted in the browser's localStorage, so it needs the salt to be the same each time you encrypt otherwise the user would be logged out when you encrypt the page again. The config file is a way to store the salt in between runs, so you don't have to remember it and pass it manually.
 
-When deciding what salt to use, staticrypt will first look for a `--salt` flag, then try to get the salt from the config file, and if it still doesn't find a salt it will generate a random one. It then saves the salt in the config file.
+When deciding what salt to use, StatiCrypt will first look for a `--salt` flag, then try to get the salt from the config file, and if it still doesn't find a salt it will generate a random one. It then saves the salt in the config file.
 
-If you don't want staticrypt to create or use the config file, you can set `--config none` to disable it.
+If you don't want StatiCrypt to create or use the config file, you can set `--config false` to disable it.
 
 The salt isn't secret, so you don't need to worry about hiding the config file.
 
@@ -139,6 +141,6 @@ If you find a serious security bug please open an issue, I'll try to fix it rela
 
 ## Alternatives
 
-https://github.com/MaxLaumeister/PageCrypt is a similar project (I think it predates staticrypt).
+https://github.com/MaxLaumeister/PageCrypt is a similar project (I think it predates StatiCrypt).
 
 https://github.com/tarpdalton/staticrypt/tree/webcrypto is a fork that uses the WebCrypto browser api to encrypt and decrypt the page, which removes the need for `crypto-js`. There's a PR open towards here which I haven't checked in detail yet. WebCrypto is only available in HTTPS context (which [is annoying people](https://github.com/w3c/webcrypto/issues/28)) so it won't work if you're on HTTP.
