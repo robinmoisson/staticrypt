@@ -7,6 +7,7 @@ StatiCrypt uses AES-256 to encrypt your HTML file with your passphrase and retur
 This means you can password protect the content of your static HTML file while still having the whole file completely public, without any back-end - serving it over Netlify, GitHub pages, etc.
 
 You can encrypt a file online in your browser (client side) at https://robinmoisson.github.io/staticrypt, or use the CLI to do it in your build process.
+If you want to host an encrypted single page website with Github Pages, you can find an easy-to-use template repository [here](https://github.com/a-nau/password-protected-website-template).
 
 ## HOW IT WORKS
 
