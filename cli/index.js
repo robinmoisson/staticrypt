@@ -2,10 +2,13 @@
 
 "use strict";
 
-const CryptoJS = require("crypto-js");
 const fs = require("fs");
 const path = require("path");
 const Yargs = require("yargs");
+const impl = require("../lib/impl-cryptojs");
+const codec = require("../lib/codec");
+const { generateRandomSalt } = impl;
+const { encode } = codec.init(impl);
 
 const SCRIPT_URL =
   "https://cdnjs.cloudflare.com/ajax/libs/crypto-js/3.1.9-1/crypto-js.min.js";
@@ -15,41 +18,24 @@ const SCRIPT_TAG =
   '" integrity="sha384-lp4k1VRKPU9eBnPePjnJ9M2RF3i7PC30gXs70+elCVfgwLwx1tv5+ctxdtwxqZa7" crossorigin="anonymous"></script>';
 
 /**
- * Salt and encrypt a msg with a password.
- * Inspired by https://github.com/adonespitogo
+ * A dead-simple alternative to webpack or rollup for inlining simple
+ * CommonJS modules in a browser <script>.
+ * - Removes all lines containing require().
+ * - Wraps the module in an immediately invoked function that returns `exports`.
  */
-function encrypt(msg, hashedPassphrase) {
-  var iv = CryptoJS.lib.WordArray.random(128 / 8);
+function transcludeModule(modulePath) {
+  const resolvedPath = path.join(__dirname, ...modulePath.split("/")) + ".js";
+  const moduleText = fs
+    .readFileSync(resolvedPath, "utf8")
+    .replaceAll(/^.*\brequire\(.*$\n/gm, "");
 
-  var encrypted = CryptoJS.AES.encrypt(msg, hashedPassphrase, {
-    iv: iv,
-    padding: CryptoJS.pad.Pkcs7,
-    mode: CryptoJS.mode.CBC,
-  });
-
-  // iv will be hex 16 in length (32 characters)
-  // we prepend it to the ciphertext for use in decryption
-  return iv.toString() + encrypted.toString();
-}
-
-/**
- * Salt and hash the passphrase so it can be stored in localStorage without opening a password reuse vulnerability.
- *
- * @param {string} passphrase
- * @param {string} salt
- * @returns string
- */
-function hashPassphrase(passphrase, salt) {
-  var hashedPassphrase = CryptoJS.PBKDF2(passphrase, salt, {
-    keySize: 256 / 32,
-    iterations: 1000,
-  });
-
-  return hashedPassphrase.toString();
-}
-
-function generateRandomSalt() {
-  return CryptoJS.lib.WordArray.random(128 / 8).toString();
+  return `
+((function(){
+  const exports = {};
+  ${moduleText}
+  return exports;
+})())
+  `.trim();
 }
 
 /**
@@ -228,15 +214,7 @@ try {
 }
 
 // encrypt input
-const hashedPassphrase = hashPassphrase(passphrase, salt);
-const encrypted = encrypt(contents, hashedPassphrase);
-// we use the hashed passphrase in the HMAC because this is effectively what will be used a passphrase (so we can store
-// it in localStorage safely, we don't use the clear text passphrase)
-const hmac = CryptoJS.HmacSHA256(
-  encrypted,
-  CryptoJS.SHA256(hashedPassphrase).toString()
-).toString();
-const encryptedMessage = hmac + encrypted;
+const encryptedMessage = encode(contents, passphrase, salt);
 
 // create crypto-js tag (embedded or not)
 let cryptoTag = SCRIPT_TAG;
@@ -255,10 +233,12 @@ if (namedArgs.embed) {
 }
 
 const data = {
+  codec_iif: transcludeModule("../lib/codec"),
   crypto_tag: cryptoTag,
   decrypt_button: namedArgs.decryptButton,
   embed: namedArgs.embed,
   encrypted: encryptedMessage,
+  impl_iif: transcludeModule("../lib/impl-cryptojs"),
   instructions: namedArgs.instructions,
   is_remember_enabled: namedArgs.noremember ? "false" : "true",
   output_file_path:
@@ -289,7 +269,7 @@ function genFile(data) {
     process.exit(1);
   }
 
-  const renderedTemplate = render(templateContents, data);
+  const renderedTemplate = codec.render(templateContents, data);
 
   try {
     fs.writeFileSync(data.output_file_path, renderedTemplate);
@@ -297,21 +277,4 @@ function genFile(data) {
     console.log("Failure: could not generate output file!");
     process.exit(1);
   }
-}
-
-/**
- * Replace the placeholder tags (between '{tag}') in 'tpl' string with provided data.
- *
- * @param tpl
- * @param data
- * @returns string
- */
-function render(tpl, data) {
-  return tpl.replace(/{(.*?)}/g, function (_, key) {
-    if (data && data[key] !== undefined) {
-      return data[key];
-    }
-
-    return "";
-  });
 }

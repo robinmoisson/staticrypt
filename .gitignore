@@ -2,3 +2,4 @@
 node_modules
 .staticrypt.json
 /www/password_template.html
+/www-out

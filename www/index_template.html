@@ -216,21 +216,26 @@ Filename changed to circumvent adblockers that mistake it for a crypto miner (se
 
 <script src="https://cdn.ckeditor.com/4.7.0/standard/ckeditor.js"></script>
 
+<script id="impl">
+    window.impl = {impl_iif}
+</script>
+
+<script id="codec">
+    window.codec = {codec_iif}
+</script>
+
 <script>
+    var decode = codec.init(impl).decode;
+
     // enable CKEDIRTOR
     CKEDITOR.replace('instructions');
 
     var htmlToDownload;
 
-    var renderTemplate = function (tpl, data) {
-        return tpl.replace(/{(.*?)}/g, function (_, key) {
-            if (data && data[key] !== undefined) {
-                return data[key];
-            }
-
-            return '';
-        });
-    };
+    var transcludeScript = function (id) {
+        return document.getElementById(id)
+            .innerText.replace(/window\.\w+ = /, '');
+    }
 
     /**
      * Fill the password prompt template with data provided.
@@ -240,7 +245,7 @@ Filename changed to circumvent adblockers that mistake it for a crypto miner (se
         var request = new XMLHttpRequest();
         request.open('GET', 'password_template.html', true);
         request.onload = function () {
-            var renderedTmpl = renderTemplate(request.responseText, data);
+            var renderedTmpl = codec.render(request.responseText, data);
 
             var downloadLink = document.querySelector('a.download');
             downloadLink.href = 'data:text/html,' + encodeURIComponent(renderedTmpl);
@@ -335,10 +340,12 @@ Filename changed to circumvent adblockers that mistake it for a crypto miner (se
             rememberMe = document.getElementById('remember_me').value;
 
         var data = {
+            codec_iif: transcludeScript('codec'),
             crypto_tag: '<script src="https://cdnjs.cloudflare.com/ajax/libs/crypto-js/3.1.9-1/crypto-js.min.js" integrity="sha384-lp4k1VRKPU9eBnPePjnJ9M2RF3i7PC30gXs70+elCVfgwLwx1tv5+ctxdtwxqZa7" crossorigin="anonymous"></scr' + 'ipt>',
             decrypt_button: decryptButton ? decryptButton : 'DECRYPT',
             encrypted: encryptedMsg,
             salt: salt,
+            impl_iif: transcludeScript('impl'),
             instructions: instructions ? instructions : '',
             is_remember_enabled: isRememberEnabled ? 'true' : 'false',
             passphrase_placeholder: passphrasePlaceholder ? passphrasePlaceholder : 'Passphrase',
@@ -395,7 +402,6 @@ Filename changed to circumvent adblockers that mistake it for a crypto miner (se
             return true;
         })
 </script>
-
 
 </body>
 </html>
