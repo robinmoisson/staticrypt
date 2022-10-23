@@ -215,157 +215,11 @@ Filename changed to circumvent adblockers that mistake it for a crypto miner (se
 <script src="https://cdn.ckeditor.com/4.7.0/standard/ckeditor.js"></script>
 
 <script id="impl">
-    window.impl = ((function(){
-  const exports = {};
-  
-/**
- * Salt and encrypt a msg with a password.
- * Inspired by https://github.com/adonespitogo
- */
-function encrypt(msg, hashedPassphrase) {
-  var iv = CryptoJS.lib.WordArray.random(128 / 8);
-
-  var encrypted = CryptoJS.AES.encrypt(msg, hashedPassphrase, {
-    iv: iv,
-    padding: CryptoJS.pad.Pkcs7,
-    mode: CryptoJS.mode.CBC,
-  });
-
-  // iv will be hex 16 in length (32 characters)
-  // we prepend it to the ciphertext for use in decryption
-  return iv.toString() + encrypted.toString();
-}
-exports.encrypt = encrypt;
-
-/**
- * Decrypt a salted msg using a password.
- * Inspired by https://github.com/adonespitogo
- *
- * @param {string} encryptedMsg
- * @param {string} hashedPassphrase
- * @returns {string}
- */
-function decrypt(encryptedMsg, hashedPassphrase) {
-  var iv = CryptoJS.enc.Hex.parse(encryptedMsg.substr(0, 32));
-  var encrypted = encryptedMsg.substring(32);
-
-  return CryptoJS.AES.decrypt(encrypted, hashedPassphrase, {
-    iv: iv,
-    padding: CryptoJS.pad.Pkcs7,
-    mode: CryptoJS.mode.CBC,
-  }).toString(CryptoJS.enc.Utf8);
-}
-exports.decrypt = decrypt;
-
-/**
- * Salt and hash the passphrase so it can be stored in localStorage without opening a password reuse vulnerability.
- *
- * @param {string} passphrase
- * @param {string} salt
- * @returns string
- */
-function hashPassphrase(passphrase, salt) {
-  var hashedPassphrase = CryptoJS.PBKDF2(passphrase, salt, {
-    keySize: 256 / 32,
-    iterations: 1000,
-  });
-
-  return hashedPassphrase.toString();
-}
-exports.hashPassphrase = hashPassphrase;
-
-function generateRandomSalt() {
-  return CryptoJS.lib.WordArray.random(128 / 8).toString();
-}
-exports.generateRandomSalt = generateRandomSalt;
-
-function signMessage(hashedPassphrase, message) {
-  return CryptoJS.HmacSHA256(
-    message,
-    CryptoJS.SHA256(hashedPassphrase).toString()
-  ).toString();
-}
-exports.signMessage = signMessage;
-
-  return exports;
-})())
+    window.impl = {impl_iif}
 </script>
 
 <script id="codec">
-    window.codec = ((function(){
-  const exports = {};
-  /**
- * This file includes functions shared across all crytography implementations in lib/
- * as well as cli and www clients.
- */
-function init(impl) {
-  const exports = {};
-  /**
-   * Top-level function for encoding a message.
-   * Includes passphrase hashing, encryption, and signing.
-   *
-   * @param {string} msg
-   * @param {string} passphase
-   * @param {sting} salt
-   * @returns {string} The encoded text
-   */
-  function encode(msg, passphrase, salt) {
-    const hashedPassphrase = impl.hashPassphrase(passphrase, salt);
-    const encrypted = impl.encrypt(msg, hashedPassphrase);
-    // we use the hashed passphrase in the HMAC because this is effectively what will be used a passphrase (so we can store
-    // it in localStorage safely, we don't use the clear text passphrase)
-    const hmac = impl.signMessage(hashedPassphrase, encrypted);
-    return hmac + encrypted;
-  }
-  exports.encode = encode;
-
-  /**
-   * Top-level function for decoding a message.
-   * Includes signature check, an decryption.
-   *
-   * @param {*} encoded
-   * @param {*} hashedPassphrase
-   * @returns {Object} {success: true, decoded: string} | {succss: false, message: string}
-   */
-  function decode(signedMsg, hashedPassphrase) {
-    const encryptedHMAC = signedMsg.substring(0, 64);
-    const encryptedMsg = signedMsg.substring(64);
-    const decryptedHMAC = impl.signMessage(hashedPassphrase, encryptedMsg);
-
-    if (decryptedHMAC !== encryptedHMAC) {
-      return { success: false, message: "Signature mismatch" };
-    }
-    return {
-      success: true,
-      decoded: impl.decrypt(encryptedMsg, hashedPassphrase),
-    };
-  }
-  exports.decode = decode;
-
-  return exports;
-}
-exports.init = init;
-
-/**
- * Replace the placeholder tags (between '{tag}') in 'tpl' string with provided data.
- *
- * @param tpl
- * @param data
- * @returns string
- */
-function render(tpl, data) {
-  return tpl.replace(/{(.*?)}/g, function (_, key) {
-    if (data && data[key] !== undefined) {
-      return data[key];
-    }
-
-    return "";
-  });
-}
-exports.render = render;
-
-  return exports;
-})())
+    window.codec = {codec_iif}
 </script>
 
 <script>
@@ -435,8 +289,8 @@ exports.render = render;
     /**
      * Salt and hash the passphrase so it can be stored in localStorage without opening a password reuse vulnerability.
      *
-     * @param  passphrase
-     * @returns }
+     * @param {string} passphrase
+     * @returns {{salt: string, hashedPassphrase: string}}
      */
     function hashPassphrase(passphrase) {
         var salt = CryptoJS.lib.WordArray.random(128 / 8).toString();
