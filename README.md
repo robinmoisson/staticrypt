@@ -131,6 +131,22 @@ If you don't want StatiCrypt to create or use the config file, you can set `--co
 
 The salt isn't secret, so you don't need to worry about hiding the config file.
 
+## Contributing
+
+### Build
+Built assets are committed to main. Run build before submitting a PR or publishing to npm.
+
+```
+# From staticrypt/
+$ cd cli
+$ npm install
+$ npm run build
+```
+
+### Test
+Testing is currently manual to keep dependencies low.
+[Build](#build), then open `example_encypted.html`.
+
 ## 🙏 Contribution
 
 Thank you: [@AaronCoplan](https://github.com/AaronCoplan) for bringing the CLI to life, [@epicfaace](https://github.com/epicfaace) & [@thomasmarr](https://github.com/thomasmarr) for sparking the caching of the passphrase in localStorage (allowing the "Remember me" checkbox)
