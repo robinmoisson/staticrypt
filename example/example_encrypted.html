@@ -168,12 +168,15 @@
     var impl = ((function(){
   const exports = {};
   
+var IV_BITS = 16 * 8;
+var HEX_BITS = 4;
+
 /**
  * Salt and encrypt a msg with a password.
  * Inspired by https://github.com/adonespitogo
  */
 function encrypt(msg, hashedPassphrase) {
-  var iv = CryptoJS.lib.WordArray.random(128 / 8);
+  var iv = CryptoJS.lib.WordArray.random(IV_BITS / 8);
 
   var encrypted = CryptoJS.AES.encrypt(msg, hashedPassphrase, {
     iv: iv,
@@ -183,7 +186,8 @@ function encrypt(msg, hashedPassphrase) {
 
   // iv will be hex 16 in length (32 characters)
   // we prepend it to the ciphertext for use in decryption
-  return iv.toString() + encrypted.toString();
+  var encoded = iv.toString() + encrypted.toString();
+  return Promise.resolve(encoded);
 }
 exports.encrypt = encrypt;
 
@@ -196,14 +200,17 @@ exports.encrypt = encrypt;
  * @returns {string}
  */
 function decrypt(encryptedMsg, hashedPassphrase) {
-  var iv = CryptoJS.enc.Hex.parse(encryptedMsg.substr(0, 32));
-  var encrypted = encryptedMsg.substring(32);
+  var ivLength = IV_BITS / HEX_BITS;
+  var iv = CryptoJS.enc.Hex.parse(encryptedMsg.substr(0, ivLength));
+  var encrypted = encryptedMsg.substring(ivLength);
 
-  return CryptoJS.AES.decrypt(encrypted, hashedPassphrase, {
+  const decrypted = CryptoJS.AES.decrypt(encrypted, hashedPassphrase, {
     iv: iv,
     padding: CryptoJS.pad.Pkcs7,
     mode: CryptoJS.mode.CBC,
   }).toString(CryptoJS.enc.Utf8);
+
+  return Promise.resolve(decrypted);
 }
 exports.decrypt = decrypt;
 
@@ -220,7 +227,7 @@ function hashPassphrase(passphrase, salt) {
     iterations: 1000,
   });
 
-  return hashedPassphrase.toString();
+  return Promise.resolve(hashedPassphrase.toString());
 }
 exports.hashPassphrase = hashPassphrase;
 
@@ -230,10 +237,11 @@ function generateRandomSalt() {
 exports.generateRandomSalt = generateRandomSalt;
 
 function signMessage(hashedPassphrase, message) {
-  return CryptoJS.HmacSHA256(
+  const signature = CryptoJS.HmacSHA256(
     message,
     CryptoJS.SHA256(hashedPassphrase).toString()
   ).toString();
+  return Promise.resolve(signature);
 }
 exports.signMessage = signMessage;
 
@@ -254,15 +262,18 @@ function init(impl) {
    * @param {string} msg
    * @param {string} passphase
    * @param {sting} salt
-   * @returns {string} The encoded text
+   * @returns {Promise<string>} The encoded text
    */
   function encode(msg, passphrase, salt) {
-    const hashedPassphrase = impl.hashPassphrase(passphrase, salt);
-    const encrypted = impl.encrypt(msg, hashedPassphrase);
-    // we use the hashed passphrase in the HMAC because this is effectively what will be used a passphrase (so we can store
-    // it in localStorage safely, we don't use the clear text passphrase)
-    const hmac = impl.signMessage(hashedPassphrase, encrypted);
-    return hmac + encrypted;
+    return impl.hashPassphrase(passphrase, salt).then(function(hashedPassphrase) {
+      return impl.encrypt(msg, hashedPassphrase).then(function(encrypted) {
+        return impl.signMessage(hashedPassphrase, encrypted).then(function(hmac) {
+          // we use the hashed passphrase in the HMAC because this is effectively what will be used a passphrase (so we can store
+          // it in localStorage safely, we don't use the clear text passphrase)
+          return hmac + encrypted;
+        });
+      });
+    });
   }
   exports.encode = encode;
 
@@ -272,20 +283,22 @@ function init(impl) {
    *
    * @param {*} encoded
    * @param {*} hashedPassphrase
-   * @returns {Object} {success: true, decoded: string} | {succss: false, message: string}
+   * @returns {Promise<Object>} {success: true, decoded: string} | {succss: false, message: string}
    */
   function decode(signedMsg, hashedPassphrase) {
     const encryptedHMAC = signedMsg.substring(0, 64);
     const encryptedMsg = signedMsg.substring(64);
-    const decryptedHMAC = impl.signMessage(hashedPassphrase, encryptedMsg);
-
-    if (decryptedHMAC !== encryptedHMAC) {
-      return { success: false, message: "Signature mismatch" };
-    }
-    return {
-      success: true,
-      decoded: impl.decrypt(encryptedMsg, hashedPassphrase),
-    };
+    return impl.signMessage(hashedPassphrase, encryptedMsg).then(function(decryptedHMAC) {
+      if (decryptedHMAC !== encryptedHMAC) {
+        return { success: false, message: "Signature mismatch" };
+      }
+      return impl.decrypt(encryptedMsg, hashedPassphrase).then(function(decoded) {
+        return {
+          success: true,
+          decoded: decoded,
+        };
+      });
+    });
   }
   exports.decode = decode;
 
@@ -316,7 +329,7 @@ exports.render = render;
     var decode = codec.init(impl).decode;
 
     // variables to be filled when generating the file
-    var encryptedMsg = '5b8ddda06f7972f55040c4e53ac58581408b427bb14d0856b3e8fa275836489fa2195f5c68889a2c9b81f3bad4d84683U2FsdGVkX1+ZRQKlbRyks/JsZcQ+tKL24t+BOrwQilIyt5/uiwboh274a5/NfJs+iJG7meL6uQlKNUKgVPNW7pL00Wvsj2PTZbve2YuB7Qq1QqZZ/jAM9IXPWAMKs9VoGBEvDw3BUhgiCVOq0ibTYFBz9LO5xcuI1Gwdnw7DNYE2/aadml4/eo4D3yQI7U61vbBo1KYjEGr9rBgoUHnkSw==',
+    var encryptedMsg = '8af5413a09610945eaf71ded7559ecaaa93c8414c8e39e3e4951cf8ade51c9a399c664369959d92b91ab900fc4f7f7d6U2FsdGVkX18uzOPNOJ7JLg2NQCum1dvLl7CO+XZCJU6JdN7QwWmx4aSJDqnWfu6lmttosCYmZFfbTg8eT/8NcVoP2O9dCRohqIBzXJpfnFiJ0SRSSxWF/vkImNJUOamBQyd+6ND41LEC7YmkzQAJpu4z7TIrTqXIv37a0wICxwmpFC4AO8SoIYvubRXXVDZipUJQetvK3ZBOCBF6OSZbag==',
         salt = 'b93bbaf35459951c47721d1f3eaeb5b9',
         isRememberEnabled = true,
         rememberDurationInDays = 0; // 0 means forever
@@ -332,15 +345,16 @@ exports.render = render;
      * @returns 
      */
     function decryptAndReplaceHtml(hashedPassphrase) {
-        var result = decode(encryptedMsg, hashedPassphrase);
-        if (!result.success) {
-            return false;
-        }
-        var plainHTML = result.decoded;
+        return decode(encryptedMsg, hashedPassphrase).then(function(result) {
+            if (!result.success) {
+                return false;
+            }
+            var plainHTML = result.decoded;
 
-        document.write(plainHTML);
-        document.close();
-        return true;
+            document.write(plainHTML);
+            document.close();
+            return true;
+        });
     }
 
     /**
@@ -378,13 +392,13 @@ exports.render = render;
 
             if (hashedPassphrase) {
                 // try to decrypt
-                var isDecryptionSuccessful = decryptAndReplaceHtml(hashedPassphrase);
-
-                // if the decryption is unsuccessful the password might be wrong - silently clear the saved data and let
-                // the user fill the password form again
-                if (!isDecryptionSuccessful) {
-                    return clearLocalStorage();
-                }
+                decryptAndReplaceHtml(hashedPassphrase).then(function(isDecryptionSuccessful) {
+                    // if the decryption is unsuccessful the password might be wrong - silently clear the saved data and let
+                    // the user fill the password form again
+                    if (!isDecryptionSuccessful) {
+                        return clearLocalStorage();
+                    }
+                });
             }
         }
     }
@@ -397,10 +411,12 @@ exports.render = render;
             shouldRememberPassphrase = document.getElementById('staticrypt-remember').checked;
 
         // decrypt and replace the whole page
-        var hashedPassphrase = impl.hashPassphrase(passphrase, salt);
-        var isDecryptionSuccessful = decryptAndReplaceHtml(hashedPassphrase);
-
-        if (isDecryptionSuccessful) {
+        impl.hashPassphrase(passphrase, salt).then(function(hashedPassphrase) {
+            return decryptAndReplaceHtml(hashedPassphrase);
+        }).then(function(isDecryptionSuccessful) {
+            if (!isDecryptionSuccessful) {
+                return alert('Bad passphrase!');
+            }
             // remember the hashedPassphrase and set its expiration if necessary
             if (isRememberEnabled && shouldRememberPassphrase) {
                 window.localStorage.setItem(rememberPassphraseKey, hashedPassphrase);
@@ -413,9 +429,7 @@ exports.render = render;
                     );
                 }
             }
-        } else {
-            alert('Bad passphrase!');
-        }
+        });
     });
 </script>
 </body>

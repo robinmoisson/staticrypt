@@ -225,7 +225,7 @@ Filename changed to circumvent adblockers that mistake it for a crypto miner (se
 </script>
 
 <script>
-    var decode = codec.init(impl).decode;
+    var encode = codec.init(impl).encode;
 
     // enable CKEDIRTOR
     CKEDITOR.replace('instructions');
@@ -271,24 +271,6 @@ Filename changed to circumvent adblockers that mistake it for a crypto miner (se
     };
 
     /**
-     * Salt and encrypt a msg with a password.
-     * Inspired by https://github.com/adonespitogo
-     */
-    function encrypt(msg, hashedPassphrase) {
-        var iv = CryptoJS.lib.WordArray.random(128 / 8);
-
-        var encrypted = CryptoJS.AES.encrypt(msg, hashedPassphrase, {
-            iv: iv,
-            padding: CryptoJS.pad.Pkcs7,
-            mode: CryptoJS.mode.CBC
-        });
-
-        // iv will be hex 16 in length (32 characters)
-        // we prepend it to the ciphertext for use in decryption
-        return iv.toString() + encrypted.toString();
-    }
-
-    /**
      * Salt and hash the passphrase so it can be stored in localStorage without opening a password reuse vulnerability.
      *
      * @param {string} passphrase
@@ -325,43 +307,39 @@ Filename changed to circumvent adblockers that mistake it for a crypto miner (se
         var hashedPassphrase = hashed.hashedPassphrase,
             salt = hashed.salt;
 
-        var encrypted = encrypt(unencrypted, hashedPassphrase),
-            // we use the hashed passphrase in the HMAC because this is effectively what will be used a passphrase (so
-            // we can store it localStorage safely, we don't use the clear text passphrase)
-            hmac = CryptoJS.HmacSHA256(encrypted, CryptoJS.SHA256(hashedPassphrase).toString()).toString(),
-            encryptedMsg = hmac + encrypted;
+        encode(unencrypted, hashedPassphrase).then(function(encryptedMsg) {
 
-        var decryptButton = document.getElementById('decrypt_button').value,
-            instructions = document.getElementById('instructions').value,
-            isRememberEnabled = document.getElementById('remember').checked,
-            pageTitle = document.getElementById('title').value.trim(),
-            passphrasePlaceholder = document.getElementById('passphrase_placeholder').value.trim(),
-            rememberDurationInDays = document.getElementById('remember_in_days').value || 0,
-            rememberMe = document.getElementById('remember_me').value;
+            var decryptButton = document.getElementById('decrypt_button').value,
+                instructions = document.getElementById('instructions').value,
+                isRememberEnabled = document.getElementById('remember').checked,
+                pageTitle = document.getElementById('title').value.trim(),
+                passphrasePlaceholder = document.getElementById('passphrase_placeholder').value.trim(),
+                rememberDurationInDays = document.getElementById('remember_in_days').value || 0,
+                rememberMe = document.getElementById('remember_me').value;
 
-        var data = {
-            codec_iif: transcludeScript('codec'),
-            crypto_tag: '<script src="https://cdnjs.cloudflare.com/ajax/libs/crypto-js/3.1.9-1/crypto-js.min.js" integrity="sha384-lp4k1VRKPU9eBnPePjnJ9M2RF3i7PC30gXs70+elCVfgwLwx1tv5+ctxdtwxqZa7" crossorigin="anonymous"></scr' + 'ipt>',
-            decrypt_button: decryptButton ? decryptButton : 'DECRYPT',
-            encrypted: encryptedMsg,
-            salt: salt,
-            impl_iif: transcludeScript('impl'),
-            instructions: instructions ? instructions : '',
-            is_remember_enabled: isRememberEnabled ? 'true' : 'false',
-            passphrase_placeholder: passphrasePlaceholder ? passphrasePlaceholder : 'Passphrase',
-            remember_duration_in_days: rememberDurationInDays.toString(),
-            remember_me: rememberMe ? rememberMe : 'Remember me',
-            title: pageTitle ? pageTitle : 'Protected Page',
-        };
+            var data = {
+                codec_iif: transcludeScript('codec'),
+                crypto_tag: '<script src="https://cdnjs.cloudflare.com/ajax/libs/crypto-js/3.1.9-1/crypto-js.min.js" integrity="sha384-lp4k1VRKPU9eBnPePjnJ9M2RF3i7PC30gXs70+elCVfgwLwx1tv5+ctxdtwxqZa7" crossorigin="anonymous"></scr' + 'ipt>',
+                decrypt_button: decryptButton ? decryptButton : 'DECRYPT',
+                encrypted: encryptedMsg,
+                salt: salt,
+                impl_iif: transcludeScript('impl'),
+                instructions: instructions ? instructions : '',
+                is_remember_enabled: isRememberEnabled ? 'true' : 'false',
+                passphrase_placeholder: passphrasePlaceholder ? passphrasePlaceholder : 'Passphrase',
+                remember_duration_in_days: rememberDurationInDays.toString(),
+                remember_me: rememberMe ? rememberMe : 'Remember me',
+                title: pageTitle ? pageTitle : 'Protected Page',
+            };
 
-        document.getElementById('encrypted_html_display').textContent = encrypted;
+            document.getElementById('encrypted_html_display').textContent = encrypted;
 
-        if (document.getElementById("embed-crypto").checked) {
-            setFileToDownloadWithEmbeddedCrypto(data);
-        } else {
-            setFileToDownload(data);
-        }
-
+            if (document.getElementById("embed-crypto").checked) {
+                setFileToDownloadWithEmbeddedCrypto(data);
+            } else {
+                setFileToDownload(data);
+            }
+        });
     });
 
     document.getElementById('toggle-extra-option')

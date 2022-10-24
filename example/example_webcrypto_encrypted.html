@@ -2,7 +2,7 @@
 <html class="staticrypt-html">
 <head>
     <meta charset="utf-8">
-    <title>{title}</title>
+    <title>Protected Page</title>
     <meta name="viewport" content="width=device-width, initial-scale=1">
 
     <!-- do not cache this page -->
@@ -132,8 +132,8 @@
 <div class="staticrypt-page">
     <div class="staticrypt-form">
         <div class="staticrypt-instructions">
-            <p class="staticrypt-title">{title}</p>
-            <p>{instructions}</p>
+            <p class="staticrypt-title">Protected Page</p>
+            <p>Enter "test" to unlock the page</p>
         </div>
 
         <hr class="staticrypt-hr">
@@ -142,17 +142,17 @@
             <input id="staticrypt-password"
                    type="password"
                    name="password"
-                   placeholder="{passphrase_placeholder}"
+                   placeholder="Passphrase"
                    autofocus/>
 
             <label id="staticrypt-remember-label" class="staticrypt-remember hidden">
                 <input id="staticrypt-remember"
                        type="checkbox"
                        name="remember"/>
-                {remember_me}
+                Remember me
             </label>
 
-            <input type="submit" class="staticrypt-decrypt-button" value="{decrypt_button}"/>
+            <input type="submit" class="staticrypt-decrypt-button" value="DECRYPT"/>
         </form>
     </div>
 
@@ -162,18 +162,281 @@
 </footer>
 
 
-{crypto_tag}
+<script src="https://cdnjs.cloudflare.com/ajax/libs/crypto-js/3.1.9-1/crypto-js.min.js" integrity="sha384-lp4k1VRKPU9eBnPePjnJ9M2RF3i7PC30gXs70+elCVfgwLwx1tv5+ctxdtwxqZa7" crossorigin="anonymous"></script>
 
 <script>
-    var impl = {impl_iif}
-    var codec = {codec_iif}
+    var impl = ((function(){
+  const exports = {};
+  const { subtle } = crypto;
+
+const IV_BITS = 16 * 8;
+const HEX_BITS = 4;
+// https://developer.mozilla.org/en-US/docs/Web/API/SubtleCrypto/encrypt#parameters
+const ENCRYPTION_ALGO = "AES-GCM";
+// https://developer.mozilla.org/en-US/docs/Web/API/SubtleCrypto/deriveBits#parameters
+
+/**
+ * Translates between utf8 encoded hexadecimal strings
+ * and Uint8Array bytes.
+ *
+ * Mirrors the API of CryptoJS.enc.Hex
+ */
+const HexEncoder = {
+  /**
+   * hex string -> bytes
+   * @param {string} hexString
+   * @returns {Uint8Array}
+   */
+  parse: function (hexString) {
+    if (hexString.length % 2 != 0) throw "Invalid hexString";
+    var arrayBuffer = new Uint8Array(hexString.length / 2);
+
+    for (var i = 0; i < hexString.length; i += 2) {
+      var byteValue = parseInt(hexString.substr(i, 2), 16);
+      if (byteValue == NaN) throw "Invalid hexString";
+      arrayBuffer[i / 2] = byteValue;
+    }
+    return arrayBuffer;
+  },
+
+  /**
+   * bytes -> hex string
+   * @param {Uint8Array} bytes
+   * @returns {string}
+   */
+  stringify: function (bytes) {
+    var hexBytes = [];
+
+    for (var i = 0; i < bytes.length; ++i) {
+      var byteString = bytes[i].toString(16);
+      if (byteString.length < 2) byteString = "0" + byteString;
+      hexBytes.push(byteString);
+    }
+    return hexBytes.join("");
+  },
+};
+
+/**
+ * Translates between utf8 strings and Uint8Array bytes.
+ */
+const UTF8Encoder = {
+  parse: function (str) {
+    return new TextEncoder("utf-8").encode(str);
+  },
+
+  stringify: function (bytes) {
+    return new TextDecoder("utf-8").decode(bytes);
+  },
+};
+
+/**
+ * Salt and encrypt a msg with a password.
+ * Inspired by https://github.com/adonespitogo
+ */
+async function encrypt(msg, hashedPassphrase) {
+  // Must be 16 bytes, unpredictable, and preferably cryptographically random. However, it need not be secret.
+  // https://developer.mozilla.org/en-US/docs/Web/API/SubtleCrypto/encrypt#parameters
+  const iv = crypto.getRandomValues(new Uint8Array(IV_BITS / 8));
+
+  const key = await subtle.importKey(
+    "raw",
+    HexEncoder.parse(hashedPassphrase),
+    ENCRYPTION_ALGO,
+    false,
+    ["encrypt"]
+  );
+  const encrypted = await subtle.encrypt(
+    {
+      name: ENCRYPTION_ALGO,
+      iv: iv,
+    },
+    key,
+    UTF8Encoder.parse(msg)
+  );
+  // iv will be 32 hex characters
+  // we prepend it to the ciphertext for use in decryption
+  return HexEncoder.stringify(iv) + 
+    HexEncoder.stringify(new Uint8Array(encrypted));
+}
+exports.encrypt = encrypt;
+
+/**
+ * Decrypt a salted msg using a password.
+ * Inspired by https://github.com/adonespitogo
+ *
+ * @param {string} encryptedMsg
+ * @param {string} hashedPassphrase
+ * @returns {string}
+ */
+async function decrypt(encryptedMsg, hashedPassphrase) {
+  /// APHCURSOR
+  const ivLength = IV_BITS / HEX_BITS;
+  var iv = HexEncoder.parse(encryptedMsg.substr(0, ivLength));
+  var encrypted = encryptedMsg.substring(ivLength);
+
+  const key = await subtle.importKey(
+    "raw",
+    HexEncoder.parse(hashedPassphrase),
+    ENCRYPTION_ALGO,
+    false,
+    ["decrypt"]
+  );
+
+  const outBuffer = await subtle.decrypt(
+    {
+      name: ENCRYPTION_ALGO,
+      iv: iv,
+    },
+    key,
+    HexEncoder.parse(encrypted)
+  );
+
+  return UTF8Encoder.stringify(new Uint8Array(outBuffer));
+}
+exports.decrypt = decrypt;
+
+/**
+ * Salt and hash the passphrase so it can be stored in localStorage without opening a password reuse vulnerability.
+ *
+ * @param {string} passphrase
+ * @param {string} salt
+ * @returns string
+ */
+async function hashPassphrase(passphrase, salt) {
+  const key = await subtle.importKey(
+    "raw",
+    UTF8Encoder.parse(passphrase),
+    "PBKDF2",
+    false,
+    ["deriveBits"]
+  );
+
+  const keyBytes = await subtle.deriveBits(
+    {
+      name: "PBKDF2",
+      hash: "SHA-256",
+      // iterations: 10000,
+      iterations: 10,
+      salt: UTF8Encoder.parse(salt),
+    },
+    key,
+    256
+  );
+  return HexEncoder.stringify(new Uint8Array(keyBytes));
+}
+exports.hashPassphrase = hashPassphrase;
+
+function generateRandomSalt() {
+  const bytes = crypto.getRandomValues(new Uint8Array(128 / 8));
+  return HexEncoder.stringify(new Uint8Array(bytes));
+}
+exports.generateRandomSalt = generateRandomSalt;
+
+async function signMessage(hashedPassphrase, message) {
+  const key = await subtle.importKey(
+    "raw",
+    HexEncoder.parse(hashedPassphrase),
+    {
+      name: "HMAC",
+      hash: "SHA-256",
+    },
+    false,
+    ["sign"]
+  );
+  const signature = await subtle.sign("HMAC", key, UTF8Encoder.parse(message));
+
+  return HexEncoder.stringify(new Uint8Array(signature));
+}
+exports.signMessage = signMessage;
+
+  return exports;
+})())
+    var codec = ((function(){
+  const exports = {};
+  /**
+ * This file includes functions shared across all crytography implementations in lib/
+ * as well as cli and www clients.
+ */
+function init(impl) {
+  const exports = {};
+  /**
+   * Top-level function for encoding a message.
+   * Includes passphrase hashing, encryption, and signing.
+   *
+   * @param {string} msg
+   * @param {string} passphase
+   * @param {sting} salt
+   * @returns {Promise<string>} The encoded text
+   */
+  function encode(msg, passphrase, salt) {
+    return impl.hashPassphrase(passphrase, salt).then(function(hashedPassphrase) {
+      return impl.encrypt(msg, hashedPassphrase).then(function(encrypted) {
+        return impl.signMessage(hashedPassphrase, encrypted).then(function(hmac) {
+          // we use the hashed passphrase in the HMAC because this is effectively what will be used a passphrase (so we can store
+          // it in localStorage safely, we don't use the clear text passphrase)
+          return hmac + encrypted;
+        });
+      });
+    });
+  }
+  exports.encode = encode;
+
+  /**
+   * Top-level function for decoding a message.
+   * Includes signature check, an decryption.
+   *
+   * @param {*} encoded
+   * @param {*} hashedPassphrase
+   * @returns {Promise<Object>} {success: true, decoded: string} | {succss: false, message: string}
+   */
+  function decode(signedMsg, hashedPassphrase) {
+    const encryptedHMAC = signedMsg.substring(0, 64);
+    const encryptedMsg = signedMsg.substring(64);
+    return impl.signMessage(hashedPassphrase, encryptedMsg).then(function(decryptedHMAC) {
+      if (decryptedHMAC !== encryptedHMAC) {
+        return { success: false, message: "Signature mismatch" };
+      }
+      return impl.decrypt(encryptedMsg, hashedPassphrase).then(function(decoded) {
+        return {
+          success: true,
+          decoded: decoded,
+        };
+      });
+    });
+  }
+  exports.decode = decode;
+
+  return exports;
+}
+exports.init = init;
+
+/**
+ * Replace the placeholder tags (between '{tag}') in 'tpl' string with provided data.
+ *
+ * @param tpl
+ * @param data
+ * @returns string
+ */
+function render(tpl, data) {
+  return tpl.replace(/{(.*?)}/g, function (_, key) {
+    if (data && data[key] !== undefined) {
+      return data[key];
+    }
+
+    return "";
+  });
+}
+exports.render = render;
+
+  return exports;
+})())
     var decode = codec.init(impl).decode;
 
     // variables to be filled when generating the file
-    var encryptedMsg = '{encrypted}',
-        salt = '{salt}',
-        isRememberEnabled = {is_remember_enabled},
-        rememberDurationInDays = {remember_duration_in_days}; // 0 means forever
+    var encryptedMsg = 'c229b0e74953f83916299b876450c507018407c5c97d1315dd14fd020a6bdcc3e703b144fed428952c9003ec59aa44d861cfa0141028d8d92642bfc29f8a2c78ee73a4ba7918d59b16e1b08a38ac541f20a92400990819587002dd94cabce3e22a37f52a4fc4a616043e4c297004001a7e60778d60dfdd298f40c80efb380b3e298027e2ccfeeb77639f9e1f616bc555fe478c875f0cf825e5de7ce7ea10e9bb325f8d6aec95ad59eb7f68c17784f86a8518e60d613f85a37ee0f1aa3b355c9609',
+        salt = 'b93bbaf35459951c47721d1f3eaeb5b9',
+        isRememberEnabled = true,
+        rememberDurationInDays = 0; // 0 means forever
 
     // constants
     var rememberPassphraseKey = 'staticrypt_passphrase',
@@ -182,8 +445,8 @@
     /**
      * Decrypt our encrypted page, replace the whole HTML.
      *
-     * @param {string} hashedPassphrase
-     * @returns {Promise<boolean>}
+     * @param  hashedPassphrase
+     * @returns 
      */
     function decryptAndReplaceHtml(hashedPassphrase) {
         return decode(encryptedMsg, hashedPassphrase).then(function(result) {

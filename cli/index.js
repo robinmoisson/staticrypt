@@ -5,10 +5,7 @@
 const fs = require("fs");
 const path = require("path");
 const Yargs = require("yargs");
-const impl = require("../lib/impl-cryptojs");
 const codec = require("../lib/codec");
-const { generateRandomSalt } = impl;
-const { encode } = codec.init(impl);
 
 const SCRIPT_URL =
   "https://cdnjs.cloudflare.com/ajax/libs/crypto-js/3.1.9-1/crypto-js.min.js";
@@ -145,8 +142,22 @@ const yargs = Yargs.usage("Usage: staticrypt <filename> <passphrase> [options]")
     type: "string",
     describe: "Title for output HTML page.",
     default: "Protected Page",
+  })
+  .option("implementation", {
+    alias: "impl",
+    describe:
+      'Choose between library-based CryptoJS and native WebCrypto. ' +
+      'Most browsers only support WebCrypto in secure contexts like localhost or HTTPS',
+    type: "string",
+    choices: ["cryptojs", "webcrypto"],
+    default: "cryptojs",
   });
 const namedArgs = yargs.argv;
+
+const impl = (namedArgs.impl === "cryptojs") ? 
+  require("../lib/impl-cryptojs") : require("../lib/impl-webcrypto");
+const {generateRandomSalt} = impl;
+const {encode} = codec.init(impl);
 
 // if the 's' flag is passed without parameter, generate a salt, display & exit
 if (isOptionSetByUser("s", yargs) && !namedArgs.salt) {
@@ -213,9 +224,6 @@ try {
   process.exit(1);
 }
 
-// encrypt input
-const encryptedMessage = encode(contents, passphrase, salt);
-
 // create crypto-js tag (embedded or not)
 let cryptoTag = SCRIPT_TAG;
 if (namedArgs.embed) {
@@ -232,27 +240,31 @@ if (namedArgs.embed) {
   }
 }
 
-const data = {
-  codec_iif: transcludeModule("../lib/codec"),
-  crypto_tag: cryptoTag,
-  decrypt_button: namedArgs.decryptButton,
-  embed: namedArgs.embed,
-  encrypted: encryptedMessage,
-  impl_iif: transcludeModule("../lib/impl-cryptojs"),
-  instructions: namedArgs.instructions,
-  is_remember_enabled: namedArgs.noremember ? "false" : "true",
-  output_file_path:
-    namedArgs.output !== null
-      ? namedArgs.output
-      : input.replace(/\.html$/, "") + "_encrypted.html",
-  passphrase_placeholder: namedArgs.passphrasePlaceholder,
-  remember_duration_in_days: namedArgs.remember,
-  remember_me: namedArgs.rememberLabel,
-  salt: salt,
-  title: namedArgs.title,
-};
+// encrypt input
+encode(contents, passphrase, salt).then((encryptedMessage) => {
+  const implModulePath = (namedArgs.impl === "cryptojs") ? "../lib/impl-cryptojs" : "../lib/impl-webcrypto";
+  const data = {
+    codec_iif: transcludeModule("../lib/codec"),
+    crypto_tag: cryptoTag,
+    decrypt_button: namedArgs.decryptButton,
+    embed: namedArgs.embed,
+    encrypted: encryptedMessage,
+    impl_iif: transcludeModule(implModulePath),
+    instructions: namedArgs.instructions,
+    is_remember_enabled: namedArgs.noremember ? "false" : "true",
+    output_file_path:
+      namedArgs.output !== null
+        ? namedArgs.output
+        : input.replace(/\.html$/, "") + "_encrypted.html",
+    passphrase_placeholder: namedArgs.passphrasePlaceholder,
+    remember_duration_in_days: namedArgs.remember,
+    remember_me: namedArgs.rememberLabel,
+    salt: salt,
+    title: namedArgs.title,
+  };
 
-genFile(data);
+  genFile(data);
+});
 
 /**
  * Fill the template with provided data and writes it to output file.

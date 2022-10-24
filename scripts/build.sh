@@ -2,13 +2,20 @@
 # NPM establishes a reliable working directory
 
 #
-# Example
+# Examples
 #
 npx . example/example.html test \
+    --implementation cryptojs \
     --no-embed \
     --salt b93bbaf35459951c47721d1f3eaeb5b9 \
     --instructions "Enter \"test\" to unlock the page"
 
+npx . example/example.html test \
+    --implementation webcrypto \
+    --output example/example_webcrypto_encrypted.html \
+    --no-embed \
+    --salt b93bbaf35459951c47721d1f3eaeb5b9 \
+    --instructions "Enter \"test\" to unlock the page" \
 
 #
 # WWW
