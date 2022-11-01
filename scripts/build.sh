@@ -6,5 +6,3 @@ npx . example/example.html test \
     --no-embed \
     --salt b93bbaf35459951c47721d1f3eaeb5b9 \
     --instructions "Enter \"test\" to unlock the page"
-
-cp lib/password_template.html www/

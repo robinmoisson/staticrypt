@@ -139,7 +139,7 @@ The salt isn't secret, so you don't need to worry about hiding the config file.
 - `example/` - This file is encrypted as part of the build. The encrypted file is committed both to make this library easy to explore and as a review-time sanity check.
 - `lib/` - Files shared across www and cli.
 - `scripts/` - Build, test, deploy, CI, etc. See `npm run-script`.
-- `www/` - The source for the in-browser encryption site hosted at https://robinmoisson.github.io/staticrypt.
+- `index.html` - The root of the in-browser encryption site hosted at https://robinmoisson.github.io/staticrypt. Kept in the root of the repo for easy deploys to GitHub Pages.
 
 ### Build
 Built assets are committed to main. Run build before submitting a PR or publishing to npm.

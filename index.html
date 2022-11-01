@@ -65,7 +65,7 @@
             </p>
             <p>
                 Download your encrypted string in a HTML page with a password prompt you can upload anywhere (see <a
-                    target="_blank" href="example_encrypted.html">example</a>).
+                    target="_blank" href="example/example_encrypted.html">example</a>).
             </p>
             <p>
                 The tool is also available as <a href="https://npmjs.com/package/staticrypt">a CLI on NPM</a> and is <a
@@ -208,11 +208,9 @@ Your encrypted string</pre>
 </div>
 
 <!--
-Crypto JS 3.1.9-1
-Copied as is from https://cdnjs.cloudflare.com/ajax/libs/crypto-js/3.1.9-1/crypto-js.js
 Filename changed to circumvent adblockers that mistake it for a crypto miner (see https://github.com/robinmoisson/staticrypt/issues/107)
 -->
-<script src="kryptojs-3.1.9-1-lib.js"></script>
+<script src="lib/kryptojs-3.1.9-1.min.js"></script>
 
 <script src="https://cdn.ckeditor.com/4.7.0/standard/ckeditor.js"></script>
 
@@ -238,7 +236,7 @@ Filename changed to circumvent adblockers that mistake it for a crypto miner (se
      */
     var setFileToDownload = function (data) {
         var request = new XMLHttpRequest();
-        request.open('GET', 'password_template.html', true);
+        request.open('GET', 'lib/password_template.html', true);
         request.onload = function () {
             var renderedTmpl = renderTemplate(request.responseText, data);
 
@@ -257,7 +255,7 @@ Filename changed to circumvent adblockers that mistake it for a crypto miner (se
      */
     var setFileToDownloadWithEmbeddedCrypto = function (data) {
         var request = new XMLHttpRequest();
-        request.open('GET', 'kryptojs-3.1.9-1-lib.js', true);
+        request.open('GET', 'lib/kryptojs-3.1.9-1.min.js', true);
         request.onload = function () {
             data['crypto_tag'] = '<script>' + request.responseText + '</scr' + 'ipt>';
             setFileToDownload(data);
