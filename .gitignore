@@ -1,6 +1,4 @@
 .idea
+.vscode/
 node_modules
 .staticrypt.json
-/cli/README.md
-/cli/LICENSE
-/cli/password_template.html

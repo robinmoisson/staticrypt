@@ -133,19 +133,26 @@ The salt isn't secret, so you don't need to worry about hiding the config file.
 
 ## Contributing
 
+### Source Directories
+
+- `cli/` - The command-line interface published to NPM.
+- `example/` - This file is encrypted as part of the build. The encrypted file is committed both to make this library easy to explore and as a review-time sanity check.
+- `lib/` - Files shared across www and cli.
+- `scripts/` - Build, test, deploy, CI, etc. See `npm run-script`.
+- `index.html` - The root of the in-browser encryption site hosted at https://robinmoisson.github.io/staticrypt. Kept in the root of the repo for easy deploys to GitHub Pages.
+
 ### Build
 Built assets are committed to main. Run build before submitting a PR or publishing to npm.
 
 ```
 # From staticrypt/
-$ cd cli
 $ npm install
 $ npm run build
 ```
 
 ### Test
 Testing is currently manual to keep dependencies low.
-[Build](#build), then open `example_encypted.html`.
+[Build](#build), then open `example/example_encypted.html`.
 
 ## 🙏 Contribution
 
