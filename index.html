@@ -65,7 +65,7 @@
             </p>
             <p>
                 Download your encrypted string in a HTML page with a password prompt you can upload anywhere (see <a
-                    target="_blank" href="example/example_encrypted.html">example</a>).
+                    target="_blank" href="../example/example_encrypted.html">example</a>).
             </p>
             <p>
                 The tool is also available as <a href="https://npmjs.com/package/staticrypt">a CLI on NPM</a> and is <a
@@ -210,12 +210,12 @@ Your encrypted string</pre>
 <!--
 Filename changed to circumvent adblockers that mistake it for a crypto miner (see https://github.com/robinmoisson/staticrypt/issues/107)
 -->
-<script src="lib/kryptojs-3.1.9-1.min.js"></script>
+<script src="../lib/kryptojs-3.1.9-1.min.js"></script>
 
 <script src="https://cdn.ckeditor.com/4.7.0/standard/ckeditor.js"></script>
 
-<script id="impl">
-    window.impl = ((function(){
+<script id="cryptoEngine">
+    window.cryptoEngine = ((function(){
   const exports = {};
   
 /**
@@ -295,26 +295,29 @@ exports.signMessage = signMessage;
     window.codec = ((function(){
   const exports = {};
   /**
- * This file includes functions shared across all crytography implementations in lib/
- * as well as cli and www clients.
+ * Initialize the codec with the provided cryptoEngine - this return functions to encode and decode messages.
+ *
+ * @param cryptoEngine - the engine to use for encryption / decryption
  */
-function init(impl) {
+function init(cryptoEngine) {
   const exports = {};
   /**
    * Top-level function for encoding a message.
    * Includes passphrase hashing, encryption, and signing.
    *
    * @param {string} msg
-   * @param {string} passphase
-   * @param {sting} salt
+   * @param {string} passphrase
+   * @param {string} salt
+   *
    * @returns {string} The encoded text
    */
   function encode(msg, passphrase, salt) {
-    const hashedPassphrase = impl.hashPassphrase(passphrase, salt);
-    const encrypted = impl.encrypt(msg, hashedPassphrase);
+    const hashedPassphrase = cryptoEngine.hashPassphrase(passphrase, salt);
+    const encrypted = cryptoEngine.encrypt(msg, hashedPassphrase);
     // we use the hashed passphrase in the HMAC because this is effectively what will be used a passphrase (so we can store
     // it in localStorage safely, we don't use the clear text passphrase)
-    const hmac = impl.signMessage(hashedPassphrase, encrypted);
+    const hmac = cryptoEngine.signMessage(hashedPassphrase, encrypted);
+
     return hmac + encrypted;
   }
   exports.encode = encode;
@@ -323,21 +326,22 @@ function init(impl) {
    * Top-level function for decoding a message.
    * Includes signature check, an decryption.
    *
-   * @param {*} encoded
-   * @param {*} hashedPassphrase
-   * @returns {Object} {success: true, decoded: string} | {succss: false, message: string}
+   * @param {string} signedMsg
+   * @param {string} hashedPassphrase
+   *
+   * @returns {Object} {success: true, decoded: string} | {success: false, message: string}
    */
   function decode(signedMsg, hashedPassphrase) {
     const encryptedHMAC = signedMsg.substring(0, 64);
     const encryptedMsg = signedMsg.substring(64);
-    const decryptedHMAC = impl.signMessage(hashedPassphrase, encryptedMsg);
+    const decryptedHMAC = cryptoEngine.signMessage(hashedPassphrase, encryptedMsg);
 
     if (decryptedHMAC !== encryptedHMAC) {
       return { success: false, message: "Signature mismatch" };
     }
     return {
       success: true,
-      decoded: impl.decrypt(encryptedMsg, hashedPassphrase),
+      decoded: cryptoEngine.decrypt(encryptedMsg, hashedPassphrase),
     };
   }
   exports.decode = decode;
@@ -346,37 +350,102 @@ function init(impl) {
 }
 exports.init = init;
 
+  return exports;
+})())
+</script>
+
+<script id="formater">
+    window.formater = ((function(){
+  const exports = {};
+  
 /**
- * Replace the placeholder tags (between '{tag}') in 'tpl' string with provided data.
+ * A dead-simple alternative to webpack or rollup for inlining simple
+ * CommonJS modules in a browser <script>.
+ * - Wraps the module in an immediately invoked function that returns `exports`.
  *
- * @param tpl
- * @param data
+ * @param {string} modulePath
+ */
+function convertCommonJSToBrowserJS(modulePath) {
+    const resolvedPath = path.join(__dirname, ...modulePath.split("/")) + ".js";
+    const moduleText = fs
+        .readFileSync(resolvedPath, "utf8")
+        .replaceAll(/^.*\brequire\(.*$\n/gm, "");
+
+    return `
+((function(){
+  const exports = {};
+  ${moduleText}
+  return exports;
+})())
+  `.trim();
+}
+exports.convertCommonJSToBrowserJS = convertCommonJSToBrowserJS;
+
+
+/**
+ * Replace the placeholder tags (between '{tag}') in the template string with provided data.
+ *
+ * @param {string} templateString
+ * @param {Object} data
+ *
  * @returns string
  */
-function render(tpl, data) {
-  return tpl.replace(/{(.*?)}/g, function (_, key) {
-    if (data && data[key] !== undefined) {
-      return data[key];
+function renderTemplate(templateString, data) {
+    return templateString.replace(/{(.*?)}/g, function (_, key) {
+        if (data && data[key] !== undefined) {
+            return data[key];
+        }
+
+        return "";
+    });
+}
+exports.renderTemplate = renderTemplate;
+
+/**
+ * Fill the template with provided data and writes it to output file.
+ *
+ * @param {Object} data
+ * @param {string} outputFilePath
+ * @param {string} inputFilePath
+ */
+function genFile(data, outputFilePath, inputFilePath) {
+    let templateContents;
+
+    try {
+        templateContents = fs.readFileSync(inputFilePath, "utf8");
+    } catch (e) {
+        exitEarly("Failure: could not read template!");
     }
 
-    return "";
-  });
+    const renderedTemplate = renderTemplate(templateContents, data);
+
+    try {
+        fs.writeFileSync(outputFilePath, renderedTemplate);
+    } catch (e) {
+        exitEarly("Failure: could not generate output file!");
+    }
 }
-exports.render = render;
+exports.genFile = genFile;
 
   return exports;
 })())
 </script>
 
 <script>
-    var decode = codec.init(impl).decode;
+    var encode = codec.init(cryptoEngine).encode;
 
     // enable CKEDIRTOR
     CKEDITOR.replace('instructions');
 
     var htmlToDownload;
 
-    var transcludeScript = function (id) {
+    /**
+     * Extract js code from <script> tag and return it as a string
+     *
+     * @param  id
+     * @returns 
+     */
+    var getScriptAsString = function (id) {
         return document.getElementById(id)
             .innerText.replace(/window\.\w+ = /, '');
     }
@@ -389,7 +458,7 @@ exports.render = render;
         var request = new XMLHttpRequest();
         request.open('GET', 'lib/password_template.html', true);
         request.onload = function () {
-            var renderedTmpl = codec.render(request.responseText, data);
+            var renderedTmpl = formater.renderTemplate(request.responseText, data);
 
             var downloadLink = document.querySelector('a.download');
             downloadLink.href = 'data:text/html,' + encodeURIComponent(renderedTmpl);
@@ -415,44 +484,6 @@ exports.render = render;
     };
 
     /**
-     * Salt and encrypt a msg with a password.
-     * Inspired by https://github.com/adonespitogo
-     */
-    function encrypt(msg, hashedPassphrase) {
-        var iv = CryptoJS.lib.WordArray.random(128 / 8);
-
-        var encrypted = CryptoJS.AES.encrypt(msg, hashedPassphrase, {
-            iv: iv,
-            padding: CryptoJS.pad.Pkcs7,
-            mode: CryptoJS.mode.CBC
-        });
-
-        // iv will be hex 16 in length (32 characters)
-        // we prepend it to the ciphertext for use in decryption
-        return iv.toString() + encrypted.toString();
-    }
-
-    /**
-     * Salt and hash the passphrase so it can be stored in localStorage without opening a password reuse vulnerability.
-     *
-     * @param  passphrase
-     * @returns }
-     */
-    function hashPassphrase(passphrase) {
-        var salt = CryptoJS.lib.WordArray.random(128 / 8).toString();
-
-        var hashedPassphrase = CryptoJS.PBKDF2(passphrase, salt, {
-            keySize: 256 / 32,
-            iterations: 1000
-        });
-
-        return {
-            salt: salt,
-            hashedPassphrase: hashedPassphrase.toString(),
-        };
-    }
-
-    /**
      * Handle form submission.
      */
     document.getElementById('encrypt_form').addEventListener('submit', function (e) {
@@ -465,15 +496,8 @@ exports.render = render;
         var unencrypted = document.getElementById('unencrypted_html').value,
             passphrase = document.getElementById('passphrase').value;
 
-        var hashed = hashPassphrase(passphrase);
-        var hashedPassphrase = hashed.hashedPassphrase,
-            salt = hashed.salt;
-
-        var encrypted = encrypt(unencrypted, hashedPassphrase),
-            // we use the hashed passphrase in the HMAC because this is effectively what will be used a passphrase (so
-            // we can store it localStorage safely, we don't use the clear text passphrase)
-            hmac = CryptoJS.HmacSHA256(encrypted, CryptoJS.SHA256(hashedPassphrase).toString()).toString(),
-            encryptedMsg = hmac + encrypted;
+        var salt = cryptoEngine.generateRandomSalt();
+        var encryptedMsg = encode(unencrypted, passphrase, salt);
 
         var decryptButton = document.getElementById('decrypt_button').value,
             instructions = document.getElementById('instructions').value,
@@ -484,21 +508,21 @@ exports.render = render;
             rememberMe = document.getElementById('remember_me').value;
 
         var data = {
-            codec_iif: transcludeScript('codec'),
             crypto_tag: '<script src="https://cdnjs.cloudflare.com/ajax/libs/crypto-js/3.1.9-1/crypto-js.min.js" integrity="sha384-lp4k1VRKPU9eBnPePjnJ9M2RF3i7PC30gXs70+elCVfgwLwx1tv5+ctxdtwxqZa7" crossorigin="anonymous"></scr' + 'ipt>',
             decrypt_button: decryptButton ? decryptButton : 'DECRYPT',
             encrypted: encryptedMsg,
-            salt: salt,
-            impl_iif: transcludeScript('impl'),
             instructions: instructions ? instructions : '',
             is_remember_enabled: isRememberEnabled ? 'true' : 'false',
+            js_codec: getScriptAsString('codec'),
+            js_crypto_engine: getScriptAsString('cryptoEngine'),
             passphrase_placeholder: passphrasePlaceholder ? passphrasePlaceholder : 'Passphrase',
             remember_duration_in_days: rememberDurationInDays.toString(),
             remember_me: rememberMe ? rememberMe : 'Remember me',
+            salt: salt,
             title: pageTitle ? pageTitle : 'Protected Page',
         };
 
-        document.getElementById('encrypted_html_display').textContent = encrypted;
+        document.getElementById('encrypted_html_display').textContent = encryptedMsg;
 
         if (document.getElementById("embed-crypto").checked) {
             setFileToDownloadWithEmbeddedCrypto(data);

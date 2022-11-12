@@ -165,7 +165,7 @@
 <script src="https://cdnjs.cloudflare.com/ajax/libs/crypto-js/3.1.9-1/crypto-js.min.js" integrity="sha384-lp4k1VRKPU9eBnPePjnJ9M2RF3i7PC30gXs70+elCVfgwLwx1tv5+ctxdtwxqZa7" crossorigin="anonymous"></script>
 
 <script>
-    var impl = ((function(){
+    var cryptoEngine = ((function(){
   const exports = {};
   
 /**
@@ -242,26 +242,29 @@ exports.signMessage = signMessage;
     var codec = ((function(){
   const exports = {};
   /**
- * This file includes functions shared across all crytography implementations in lib/
- * as well as cli and www clients.
+ * Initialize the codec with the provided cryptoEngine - this return functions to encode and decode messages.
+ *
+ * @param cryptoEngine - the engine to use for encryption / decryption
  */
-function init(impl) {
+function init(cryptoEngine) {
   const exports = {};
   /**
    * Top-level function for encoding a message.
    * Includes passphrase hashing, encryption, and signing.
    *
    * @param {string} msg
-   * @param {string} passphase
-   * @param {sting} salt
+   * @param {string} passphrase
+   * @param {string} salt
+   *
    * @returns {string} The encoded text
    */
   function encode(msg, passphrase, salt) {
-    const hashedPassphrase = impl.hashPassphrase(passphrase, salt);
-    const encrypted = impl.encrypt(msg, hashedPassphrase);
+    const hashedPassphrase = cryptoEngine.hashPassphrase(passphrase, salt);
+    const encrypted = cryptoEngine.encrypt(msg, hashedPassphrase);
     // we use the hashed passphrase in the HMAC because this is effectively what will be used a passphrase (so we can store
     // it in localStorage safely, we don't use the clear text passphrase)
-    const hmac = impl.signMessage(hashedPassphrase, encrypted);
+    const hmac = cryptoEngine.signMessage(hashedPassphrase, encrypted);
+
     return hmac + encrypted;
   }
   exports.encode = encode;
@@ -270,21 +273,22 @@ function init(impl) {
    * Top-level function for decoding a message.
    * Includes signature check, an decryption.
    *
-   * @param {*} encoded
-   * @param {*} hashedPassphrase
-   * @returns {Object} {success: true, decoded: string} | {succss: false, message: string}
+   * @param {string} signedMsg
+   * @param {string} hashedPassphrase
+   *
+   * @returns {Object} {success: true, decoded: string} | {success: false, message: string}
    */
   function decode(signedMsg, hashedPassphrase) {
     const encryptedHMAC = signedMsg.substring(0, 64);
     const encryptedMsg = signedMsg.substring(64);
-    const decryptedHMAC = impl.signMessage(hashedPassphrase, encryptedMsg);
+    const decryptedHMAC = cryptoEngine.signMessage(hashedPassphrase, encryptedMsg);
 
     if (decryptedHMAC !== encryptedHMAC) {
       return { success: false, message: "Signature mismatch" };
     }
     return {
       success: true,
-      decoded: impl.decrypt(encryptedMsg, hashedPassphrase),
+      decoded: cryptoEngine.decrypt(encryptedMsg, hashedPassphrase),
     };
   }
   exports.decode = decode;
@@ -293,30 +297,12 @@ function init(impl) {
 }
 exports.init = init;
 
-/**
- * Replace the placeholder tags (between '{tag}') in 'tpl' string with provided data.
- *
- * @param tpl
- * @param data
- * @returns string
- */
-function render(tpl, data) {
-  return tpl.replace(/{(.*?)}/g, function (_, key) {
-    if (data && data[key] !== undefined) {
-      return data[key];
-    }
-
-    return "";
-  });
-}
-exports.render = render;
-
   return exports;
 })())
-    var decode = codec.init(impl).decode;
+    var decode = codec.init(cryptoEngine).decode;
 
     // variables to be filled when generating the file
-    var encryptedMsg = 'b95277ccf1e06625c90a837647563f9a11a5a47c3d861af72bebfc18a73c58f0922e1bd59a6f8a209711ea9852710f57U2FsdGVkX1+jQJWwwAq6XYWLTlrJL+U9JmFyiQ81/qIb44gnibQJ2SVzUbbCDlnAYxNoVm3ky2CoYGyrqTxBVWg550CATCFWGBpeFIMxIPj0IsN5MVHwhZO+DnerhHcV9OwEdryI7J43XQ1ZX8MjsS9/f04lt9pjrNmIw+8aksAys5oQ7Uv65iJdbiHJCHrzLckfM4Al01053nA0RyfcNQ==',
+    var encryptedMsg = 'ff5ad376d50045dbd99489b68b5eaaca32904aa15ce3ec2a87e3e1ed4a4303b25d9a27ba3fb37cf8cc7a7ebdd075c1ccU2FsdGVkX1+/KUkAwOJH8g3jpasSyXB9awiVeP9zgYmhVwAYRie7BiUsNogQndwHPSSKM4QSfNCPLxrpCyEaPWgPa0+QzYWcMdlgL8GLfrg1h5mvSyQdIpLHLlH55m3DbvcjlITPY4kYY6pXevzhnEDzoDxXhSgLSTKU3NROGOusjQ8S4B4dzExJIq6kifuLceP8eAdHea6M2cmd99/dLQ==',
         salt = 'b93bbaf35459951c47721d1f3eaeb5b9',
         isRememberEnabled = true,
         rememberDurationInDays = 0; // 0 means forever
@@ -397,7 +383,7 @@ exports.render = render;
             shouldRememberPassphrase = document.getElementById('staticrypt-remember').checked;
 
         // decrypt and replace the whole page
-        var hashedPassphrase = impl.hashPassphrase(passphrase, salt);
+        var hashedPassphrase = cryptoEngine.hashPassphrase(passphrase, salt);
         var isDecryptionSuccessful = decryptAndReplaceHtml(hashedPassphrase);
 
         if (isDecryptionSuccessful) {
