@@ -168,7 +168,7 @@ let cryptoTag = SCRIPT_TAG;
 if (namedArgs.embed) {
   try {
     const embedContents = fs.readFileSync(
-      path.join(__dirname, "..", "kryptojs-3.1.9-1.min"),
+      path.join(__dirname, "..", "lib", "kryptojs-3.1.9-1.min.js"),
       "utf8"
     );
 
