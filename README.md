@@ -2,7 +2,7 @@
 
 # StatiCrypt
 
-StatiCrypt uses AES-256 to encrypt your HTML file with your passphrase and return a static page with a password prompt you can safely upload anywhere (see [example](https://robinmoisson.github.io/staticrypt/example.html)).
+StatiCrypt uses AES-256 to encrypt your HTML file with your passphrase and return a static page with a password prompt you can safely upload anywhere (see [example](https://robinmoisson.github.io/staticrypt/)).
 
 This means you can password protect the content of your static HTML file while still having the whole file completely public, without any back-end - serving it over Netlify, GitHub pages, etc.
 
