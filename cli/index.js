@@ -50,6 +50,11 @@ const yargs = Yargs.usage("Usage: staticrypt <filename> <passphrase> [options]")
     describe: "Special instructions to display to the user.",
     default: "",
   })
+  .option("label-error", {
+    type: "string",
+    describe: "Error message to display on entering wrong passphrase.",
+    default: "Bad password!",
+  })
   .option("noremember", {
     type: "boolean",
     describe: 'Set this flag to remove the "Remember me" checkbox.',
@@ -64,7 +69,7 @@ const yargs = Yargs.usage("Usage: staticrypt <filename> <passphrase> [options]")
   .option("passphrase-placeholder", {
     type: "string",
     describe: "Placeholder to use for the passphrase input.",
-    default: "Passphrase",
+    default: "Password",
   })
   .option("r", {
     alias: "remember",
@@ -187,6 +192,7 @@ const data = {
   is_remember_enabled: namedArgs.noremember ? "false" : "true",
   js_codec: convertCommonJSToBrowserJS("../lib/codec"),
   js_crypto_engine: convertCommonJSToBrowserJS("../lib/cryptoEngine/cryptojsEngine"),
+  label_error: namedArgs.labelError,
   passphrase_placeholder: namedArgs.passphrasePlaceholder,
   remember_duration_in_days: namedArgs.remember,
   remember_me: namedArgs.rememberLabel,
