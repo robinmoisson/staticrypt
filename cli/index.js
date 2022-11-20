@@ -2,10 +2,15 @@
 
 "use strict";
 
-const CryptoJS = require("crypto-js");
 const fs = require("fs");
 const path = require("path");
 const Yargs = require("yargs");
+const cryptoEngine = require("../lib/cryptoEngine/cryptojsEngine");
+const codec = require("../lib/codec");
+const { convertCommonJSToBrowserJS, genFile} = require("../lib/formater");
+const { exitEarly, isOptionSetByUser } = require("./helpers");
+const { generateRandomSalt } = cryptoEngine;
+const { encode } = codec.init(cryptoEngine);
 
 const SCRIPT_URL =
   "https://cdnjs.cloudflare.com/ajax/libs/crypto-js/3.1.9-1/crypto-js.min.js";
@@ -13,76 +18,6 @@ const SCRIPT_TAG =
   '<script src="' +
   SCRIPT_URL +
   '" integrity="sha384-lp4k1VRKPU9eBnPePjnJ9M2RF3i7PC30gXs70+elCVfgwLwx1tv5+ctxdtwxqZa7" crossorigin="anonymous"></script>';
-
-/**
- * Salt and encrypt a msg with a password.
- * Inspired by https://github.com/adonespitogo
- */
-function encrypt(msg, hashedPassphrase) {
-  var iv = CryptoJS.lib.WordArray.random(128 / 8);
-
-  var encrypted = CryptoJS.AES.encrypt(msg, hashedPassphrase, {
-    iv: iv,
-    padding: CryptoJS.pad.Pkcs7,
-    mode: CryptoJS.mode.CBC,
-  });
-
-  // iv will be hex 16 in length (32 characters)
-  // we prepend it to the ciphertext for use in decryption
-  return iv.toString() + encrypted.toString();
-}
-
-/**
- * Salt and hash the passphrase so it can be stored in localStorage without opening a password reuse vulnerability.
- *
- * @param {string} passphrase
- * @param {string} salt
- * @returns string
- */
-function hashPassphrase(passphrase, salt) {
-  var hashedPassphrase = CryptoJS.PBKDF2(passphrase, salt, {
-    keySize: 256 / 32,
-    iterations: 1000,
-  });
-
-  return hashedPassphrase.toString();
-}
-
-function generateRandomSalt() {
-  return CryptoJS.lib.WordArray.random(128 / 8).toString();
-}
-
-/**
- * Check if a particular option has been set by the user. Useful for distinguishing default value with flag without
- * parameter.
- *
- * Ex use case: '-s' means "give me a salt", '-s 1234' means "use 1234 as salt"
- *
- * From https://github.com/yargs/yargs/issues/513#issuecomment-221412008
- *
- * @param option
- * @param yargs
- * @returns {boolean}
- */
-function isOptionSetByUser(option, yargs) {
-  function searchForOption(option) {
-    return process.argv.indexOf(option) > -1;
-  }
-
-  if (searchForOption(`-${option}`) || searchForOption(`--${option}`)) {
-    return true;
-  }
-
-  // Handle aliases for same option
-  for (let aliasIndex in yargs.parsed.aliases[option]) {
-    const alias = yargs.parsed.aliases[option][aliasIndex];
-
-    if (searchForOption(`-${alias}`) || searchForOption(`--${alias}`))
-      return true;
-  }
-
-  return false;
-}
 
 const yargs = Yargs.usage("Usage: staticrypt <filename> <passphrase> [options]")
   .option("c", {
@@ -201,11 +136,10 @@ else {
 
 // validate the salt
 if (salt.length !== 32 || /[^a-f0-9]/.test(salt)) {
-  console.log(
+  exitEarly(
     "The salt should be a 32 character long hexadecimal string (only [0-9a-f] characters allowed)"
+      + "\nDetected salt: " + salt
   );
-  console.log("Detected salt: " + salt);
-  process.exit(1);
 }
 
 // write salt to config file
@@ -223,34 +157,24 @@ let contents;
 try {
   contents = fs.readFileSync(input, "utf8");
 } catch (e) {
-  console.log("Failure: input file does not exist!");
-  process.exit(1);
+  exitEarly("Failure: input file does not exist!");
 }
 
 // encrypt input
-const hashedPassphrase = hashPassphrase(passphrase, salt);
-const encrypted = encrypt(contents, hashedPassphrase);
-// we use the hashed passphrase in the HMAC because this is effectively what will be used a passphrase (so we can store
-// it in localStorage safely, we don't use the clear text passphrase)
-const hmac = CryptoJS.HmacSHA256(
-  encrypted,
-  CryptoJS.SHA256(hashedPassphrase).toString()
-).toString();
-const encryptedMessage = hmac + encrypted;
+const encryptedMessage = encode(contents, passphrase, salt);
 
 // create crypto-js tag (embedded or not)
 let cryptoTag = SCRIPT_TAG;
 if (namedArgs.embed) {
   try {
     const embedContents = fs.readFileSync(
-      path.join(__dirname, "..", "kryptojs-3.1.9-1.min"),
+      path.join(__dirname, "..", "lib", "kryptojs-3.1.9-1.min.js"),
       "utf8"
     );
 
     cryptoTag = "<script>" + embedContents + "</script>";
   } catch (e) {
-    console.log("Failure: embed file does not exist!");
-    process.exit(1);
+    exitEarly("Failure: embed file does not exist!");
   }
 }
 
@@ -261,10 +185,8 @@ const data = {
   encrypted: encryptedMessage,
   instructions: namedArgs.instructions,
   is_remember_enabled: namedArgs.noremember ? "false" : "true",
-  output_file_path:
-    namedArgs.output !== null
-      ? namedArgs.output
-      : input.replace(/\.html$/, "") + "_encrypted.html",
+  js_codec: convertCommonJSToBrowserJS("../lib/codec"),
+  js_crypto_engine: convertCommonJSToBrowserJS("../lib/cryptoEngine/cryptojsEngine"),
   passphrase_placeholder: namedArgs.passphrasePlaceholder,
   remember_duration_in_days: namedArgs.remember,
   remember_me: namedArgs.rememberLabel,
@@ -272,46 +194,8 @@ const data = {
   title: namedArgs.title,
 };
 
-genFile(data);
+const outputFilePath = namedArgs.output !== null
+    ? namedArgs.output
+    : input.replace(/\.html$/, "") + "_encrypted.html";
 
-/**
- * Fill the template with provided data and writes it to output file.
- *
- * @param data
- */
-function genFile(data) {
-  let templateContents;
-
-  try {
-    templateContents = fs.readFileSync(namedArgs.f, "utf8");
-  } catch (e) {
-    console.log("Failure: could not read template!");
-    process.exit(1);
-  }
-
-  const renderedTemplate = render(templateContents, data);
-
-  try {
-    fs.writeFileSync(data.output_file_path, renderedTemplate);
-  } catch (e) {
-    console.log("Failure: could not generate output file!");
-    process.exit(1);
-  }
-}
-
-/**
- * Replace the placeholder tags (between '{tag}') in 'tpl' string with provided data.
- *
- * @param tpl
- * @param data
- * @returns string
- */
-function render(tpl, data) {
-  return tpl.replace(/{(.*?)}/g, function (_, key) {
-    if (data && data[key] !== undefined) {
-      return data[key];
-    }
-
-    return "";
-  });
-}
+genFile(data, outputFilePath, namedArgs.f);

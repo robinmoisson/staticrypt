@@ -165,8 +165,144 @@
 <script src="https://cdnjs.cloudflare.com/ajax/libs/crypto-js/3.1.9-1/crypto-js.min.js" integrity="sha384-lp4k1VRKPU9eBnPePjnJ9M2RF3i7PC30gXs70+elCVfgwLwx1tv5+ctxdtwxqZa7" crossorigin="anonymous"></script>
 
 <script>
+    var cryptoEngine = ((function(){
+  const exports = {};
+  
+/**
+ * Salt and encrypt a msg with a password.
+ * Inspired by https://github.com/adonespitogo
+ */
+function encrypt(msg, hashedPassphrase) {
+  var iv = CryptoJS.lib.WordArray.random(128 / 8);
+
+  var encrypted = CryptoJS.AES.encrypt(msg, hashedPassphrase, {
+    iv: iv,
+    padding: CryptoJS.pad.Pkcs7,
+    mode: CryptoJS.mode.CBC,
+  });
+
+  // iv will be hex 16 in length (32 characters)
+  // we prepend it to the ciphertext for use in decryption
+  return iv.toString() + encrypted.toString();
+}
+exports.encrypt = encrypt;
+
+/**
+ * Decrypt a salted msg using a password.
+ * Inspired by https://github.com/adonespitogo
+ *
+ * @param {string} encryptedMsg
+ * @param {string} hashedPassphrase
+ * @returns {string}
+ */
+function decrypt(encryptedMsg, hashedPassphrase) {
+  var iv = CryptoJS.enc.Hex.parse(encryptedMsg.substr(0, 32));
+  var encrypted = encryptedMsg.substring(32);
+
+  return CryptoJS.AES.decrypt(encrypted, hashedPassphrase, {
+    iv: iv,
+    padding: CryptoJS.pad.Pkcs7,
+    mode: CryptoJS.mode.CBC,
+  }).toString(CryptoJS.enc.Utf8);
+}
+exports.decrypt = decrypt;
+
+/**
+ * Salt and hash the passphrase so it can be stored in localStorage without opening a password reuse vulnerability.
+ *
+ * @param {string} passphrase
+ * @param {string} salt
+ * @returns string
+ */
+function hashPassphrase(passphrase, salt) {
+  var hashedPassphrase = CryptoJS.PBKDF2(passphrase, salt, {
+    keySize: 256 / 32,
+    iterations: 1000,
+  });
+
+  return hashedPassphrase.toString();
+}
+exports.hashPassphrase = hashPassphrase;
+
+function generateRandomSalt() {
+  return CryptoJS.lib.WordArray.random(128 / 8).toString();
+}
+exports.generateRandomSalt = generateRandomSalt;
+
+function signMessage(hashedPassphrase, message) {
+  return CryptoJS.HmacSHA256(
+    message,
+    CryptoJS.SHA256(hashedPassphrase).toString()
+  ).toString();
+}
+exports.signMessage = signMessage;
+
+  return exports;
+})())
+    var codec = ((function(){
+  const exports = {};
+  /**
+ * Initialize the codec with the provided cryptoEngine - this return functions to encode and decode messages.
+ *
+ * @param cryptoEngine - the engine to use for encryption / decryption
+ */
+function init(cryptoEngine) {
+  const exports = {};
+  /**
+   * Top-level function for encoding a message.
+   * Includes passphrase hashing, encryption, and signing.
+   *
+   * @param {string} msg
+   * @param {string} passphrase
+   * @param {string} salt
+   *
+   * @returns {string} The encoded text
+   */
+  function encode(msg, passphrase, salt) {
+    const hashedPassphrase = cryptoEngine.hashPassphrase(passphrase, salt);
+    const encrypted = cryptoEngine.encrypt(msg, hashedPassphrase);
+    // we use the hashed passphrase in the HMAC because this is effectively what will be used a passphrase (so we can store
+    // it in localStorage safely, we don't use the clear text passphrase)
+    const hmac = cryptoEngine.signMessage(hashedPassphrase, encrypted);
+
+    return hmac + encrypted;
+  }
+  exports.encode = encode;
+
+  /**
+   * Top-level function for decoding a message.
+   * Includes signature check, an decryption.
+   *
+   * @param {string} signedMsg
+   * @param {string} hashedPassphrase
+   *
+   * @returns {Object} {success: true, decoded: string} | {success: false, message: string}
+   */
+  function decode(signedMsg, hashedPassphrase) {
+    const encryptedHMAC = signedMsg.substring(0, 64);
+    const encryptedMsg = signedMsg.substring(64);
+    const decryptedHMAC = cryptoEngine.signMessage(hashedPassphrase, encryptedMsg);
+
+    if (decryptedHMAC !== encryptedHMAC) {
+      return { success: false, message: "Signature mismatch" };
+    }
+    return {
+      success: true,
+      decoded: cryptoEngine.decrypt(encryptedMsg, hashedPassphrase),
+    };
+  }
+  exports.decode = decode;
+
+  return exports;
+}
+exports.init = init;
+
+  return exports;
+})())
+    var decode = codec.init(cryptoEngine).decode;
+
     // variables to be filled when generating the file
-    var encryptedMsg = '65a0577162396cc1bddae60b8f435291ff7a69644825b98bfc636a29089a28efbc9417689b983f2048bb776ca66eb25fU2FsdGVkX19n36H4ocM7GbaeFVganWX86ZTHEZk2w12z3z7rqWDW8OESK8MmGtbnPJetgyWi3jpz3iI+rE/gSilJkhQ2YR/4yCBintGLeh1hCgX+XPBEDT0w+ri4uqUWCxDUIvzyUhbnf1ZD2WsK9wmDHwRwF9YcucHXuyS7/GlUcVsYERzxxDd9frN6DbubNNbdY/QtG+vtmLSwHGZtwQ==',
+    var encryptedMsg = 'ff5ad376d50045dbd99489b68b5eaaca32904aa15ce3ec2a87e3e1ed4a4303b25d9a27ba3fb37cf8cc7a7ebdd075c1ccU2FsdGVkX1+/KUkAwOJH8g3jpasSyXB9awiVeP9zgYmhVwAYRie7BiUsNogQndwHPSSKM4QSfNCPLxrpCyEaPWgPa0+QzYWcMdlgL8GLfrg1h5mvSyQdIpLHLlH55m3DbvcjlITPY4kYY6pXevzhnEDzoDxXhSgLSTKU3NROGOusjQ8S4B4dzExJIq6kifuLceP8eAdHea6M2cmd99/dLQ==',
         salt = 'b93bbaf35459951c47721d1f3eaeb5b9',
         isRememberEnabled = true,
         rememberDurationInDays = 0; // 0 means forever
@@ -176,58 +312,21 @@
         rememberExpirationKey = 'staticrypt_expiration';
 
     /**
-     * Decrypt a salted msg using a password.
-     * Inspired by https://github.com/adonespitogo
-     *
-     * @param  encryptedMsg
-     * @param  hashedPassphrase
-     * @returns 
-     */
-    function decryptMsg(encryptedMsg, hashedPassphrase) {
-        var iv = CryptoJS.enc.Hex.parse(encryptedMsg.substr(0, 32))
-        var encrypted = encryptedMsg.substring(32);
-
-        return CryptoJS.AES.decrypt(encrypted, hashedPassphrase, {
-            iv: iv,
-            padding: CryptoJS.pad.Pkcs7,
-            mode: CryptoJS.mode.CBC
-        }).toString(CryptoJS.enc.Utf8);
-    }
-
-    /**
      * Decrypt our encrypted page, replace the whole HTML.
      *
      * @param  hashedPassphrase
      * @returns 
      */
     function decryptAndReplaceHtml(hashedPassphrase) {
-        var encryptedHMAC = encryptedMsg.substring(0, 64),
-            encryptedHTML = encryptedMsg.substring(64),
-            decryptedHMAC = CryptoJS.HmacSHA256(encryptedHTML, CryptoJS.SHA256(hashedPassphrase).toString()).toString();
-
-        if (decryptedHMAC !== encryptedHMAC) {
+        var result = decode(encryptedMsg, hashedPassphrase);
+        if (!result.success) {
             return false;
         }
-
-        var plainHTML = decryptMsg(encryptedHTML, hashedPassphrase);
+        var plainHTML = result.decoded;
 
         document.write(plainHTML);
         document.close();
-
         return true;
-    }
-
-    /**
-     * Salt and hash the passphrase so it can be stored in localStorage without opening a password reuse vulnerability.
-     *
-     * @param  passphrase
-     * @returns 
-     */
-    function hashPassphrase(passphrase) {
-        return CryptoJS.PBKDF2(passphrase, salt, {
-            keySize: 256 / 32,
-            iterations: 1000
-        }).toString();
     }
 
     /**
@@ -284,7 +383,7 @@
             shouldRememberPassphrase = document.getElementById('staticrypt-remember').checked;
 
         // decrypt and replace the whole page
-        var hashedPassphrase = hashPassphrase(passphrase);
+        var hashedPassphrase = cryptoEngine.hashPassphrase(passphrase, salt);
         var isDecryptionSuccessful = decryptAndReplaceHtml(hashedPassphrase);
 
         if (isDecryptionSuccessful) {

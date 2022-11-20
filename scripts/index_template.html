@@ -215,220 +215,15 @@ Filename changed to circumvent adblockers that mistake it for a crypto miner (se
 <script src="https://cdn.ckeditor.com/4.7.0/standard/ckeditor.js"></script>
 
 <script id="cryptoEngine">
-    window.cryptoEngine = ((function(){
-  const exports = {};
-  
-/**
- * Salt and encrypt a msg with a password.
- * Inspired by https://github.com/adonespitogo
- */
-function encrypt(msg, hashedPassphrase) {
-  var iv = CryptoJS.lib.WordArray.random(128 / 8);
-
-  var encrypted = CryptoJS.AES.encrypt(msg, hashedPassphrase, {
-    iv: iv,
-    padding: CryptoJS.pad.Pkcs7,
-    mode: CryptoJS.mode.CBC,
-  });
-
-  // iv will be hex 16 in length (32 characters)
-  // we prepend it to the ciphertext for use in decryption
-  return iv.toString() + encrypted.toString();
-}
-exports.encrypt = encrypt;
-
-/**
- * Decrypt a salted msg using a password.
- * Inspired by https://github.com/adonespitogo
- *
- * @param {string} encryptedMsg
- * @param {string} hashedPassphrase
- * @returns {string}
- */
-function decrypt(encryptedMsg, hashedPassphrase) {
-  var iv = CryptoJS.enc.Hex.parse(encryptedMsg.substr(0, 32));
-  var encrypted = encryptedMsg.substring(32);
-
-  return CryptoJS.AES.decrypt(encrypted, hashedPassphrase, {
-    iv: iv,
-    padding: CryptoJS.pad.Pkcs7,
-    mode: CryptoJS.mode.CBC,
-  }).toString(CryptoJS.enc.Utf8);
-}
-exports.decrypt = decrypt;
-
-/**
- * Salt and hash the passphrase so it can be stored in localStorage without opening a password reuse vulnerability.
- *
- * @param {string} passphrase
- * @param {string} salt
- * @returns string
- */
-function hashPassphrase(passphrase, salt) {
-  var hashedPassphrase = CryptoJS.PBKDF2(passphrase, salt, {
-    keySize: 256 / 32,
-    iterations: 1000,
-  });
-
-  return hashedPassphrase.toString();
-}
-exports.hashPassphrase = hashPassphrase;
-
-function generateRandomSalt() {
-  return CryptoJS.lib.WordArray.random(128 / 8).toString();
-}
-exports.generateRandomSalt = generateRandomSalt;
-
-function signMessage(hashedPassphrase, message) {
-  return CryptoJS.HmacSHA256(
-    message,
-    CryptoJS.SHA256(hashedPassphrase).toString()
-  ).toString();
-}
-exports.signMessage = signMessage;
-
-  return exports;
-})())
+    window.cryptoEngine = {js_crypto_engine}
 </script>
 
 <script id="codec">
-    window.codec = ((function(){
-  const exports = {};
-  /**
- * Initialize the codec with the provided cryptoEngine - this return functions to encode and decode messages.
- *
- * @param cryptoEngine - the engine to use for encryption / decryption
- */
-function init(cryptoEngine) {
-  const exports = {};
-  /**
-   * Top-level function for encoding a message.
-   * Includes passphrase hashing, encryption, and signing.
-   *
-   * @param {string} msg
-   * @param {string} passphrase
-   * @param {string} salt
-   *
-   * @returns {string} The encoded text
-   */
-  function encode(msg, passphrase, salt) {
-    const hashedPassphrase = cryptoEngine.hashPassphrase(passphrase, salt);
-    const encrypted = cryptoEngine.encrypt(msg, hashedPassphrase);
-    // we use the hashed passphrase in the HMAC because this is effectively what will be used a passphrase (so we can store
-    // it in localStorage safely, we don't use the clear text passphrase)
-    const hmac = cryptoEngine.signMessage(hashedPassphrase, encrypted);
-
-    return hmac + encrypted;
-  }
-  exports.encode = encode;
-
-  /**
-   * Top-level function for decoding a message.
-   * Includes signature check, an decryption.
-   *
-   * @param {string} signedMsg
-   * @param {string} hashedPassphrase
-   *
-   * @returns {Object} {success: true, decoded: string} | {success: false, message: string}
-   */
-  function decode(signedMsg, hashedPassphrase) {
-    const encryptedHMAC = signedMsg.substring(0, 64);
-    const encryptedMsg = signedMsg.substring(64);
-    const decryptedHMAC = cryptoEngine.signMessage(hashedPassphrase, encryptedMsg);
-
-    if (decryptedHMAC !== encryptedHMAC) {
-      return { success: false, message: "Signature mismatch" };
-    }
-    return {
-      success: true,
-      decoded: cryptoEngine.decrypt(encryptedMsg, hashedPassphrase),
-    };
-  }
-  exports.decode = decode;
-
-  return exports;
-}
-exports.init = init;
-
-  return exports;
-})())
+    window.codec = {js_codec}
 </script>
 
 <script id="formater">
-    window.formater = ((function(){
-  const exports = {};
-  
-/**
- * A dead-simple alternative to webpack or rollup for inlining simple
- * CommonJS modules in a browser <script>.
- * - Wraps the module in an immediately invoked function that returns `exports`.
- *
- * @param {string} modulePath
- */
-function convertCommonJSToBrowserJS(modulePath) {
-    const resolvedPath = path.join(__dirname, ...modulePath.split("/")) + ".js";
-    const moduleText = fs
-        .readFileSync(resolvedPath, "utf8")
-        .replaceAll(/^.*\brequire\(.*$\n/gm, "");
-
-    return `
-((function(){
-  const exports = {};
-  ${moduleText}
-  return exports;
-})())
-  `.trim();
-}
-exports.convertCommonJSToBrowserJS = convertCommonJSToBrowserJS;
-
-
-/**
- * Replace the placeholder tags (between '{tag}') in the template string with provided data.
- *
- * @param {string} templateString
- * @param {Object} data
- *
- * @returns string
- */
-function renderTemplate(templateString, data) {
-    return templateString.replace(/{(.*?)}/g, function (_, key) {
-        if (data && data[key] !== undefined) {
-            return data[key];
-        }
-
-        return "";
-    });
-}
-exports.renderTemplate = renderTemplate;
-
-/**
- * Fill the template with provided data and writes it to output file.
- *
- * @param {Object} data
- * @param {string} outputFilePath
- * @param {string} inputFilePath
- */
-function genFile(data, outputFilePath, inputFilePath) {
-    let templateContents;
-
-    try {
-        templateContents = fs.readFileSync(inputFilePath, "utf8");
-    } catch (e) {
-        exitEarly("Failure: could not read template!");
-    }
-
-    const renderedTemplate = renderTemplate(templateContents, data);
-
-    try {
-        fs.writeFileSync(outputFilePath, renderedTemplate);
-    } catch (e) {
-        exitEarly("Failure: could not generate output file!");
-    }
-}
-exports.genFile = genFile;
-
-  return exports;
-})())
+    window.formater = {js_formater}
 </script>
 
 <script>
@@ -442,8 +237,8 @@ exports.genFile = genFile;
     /**
      * Extract js code from <script> tag and return it as a string
      *
-     * @param  id
-     * @returns 
+     * @param {string} id
+     * @returns {string}
      */
     var getScriptAsString = function (id) {
         return document.getElementById(id)
