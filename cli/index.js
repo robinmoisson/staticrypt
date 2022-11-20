@@ -84,7 +84,7 @@ const yargs = Yargs.usage("Usage: staticrypt <filename> <passphrase> [options]")
     describe: 'Label to use for the "Remember me" checkbox.',
     default: "Remember me",
   })
-  // do not give a default option to this 'remember' parameter - we want to see when the flag is included with no
+  // do not give a default option to this parameter - we want to see when the flag is included with no
   // value and when it's not included at all
   .option("s", {
     alias: "salt",
@@ -92,6 +92,14 @@ const yargs = Yargs.usage("Usage: staticrypt <filename> <passphrase> [options]")
       'Set the salt manually. It should be set if you want use "Remember me" through multiple pages. It ' +
       "needs to be a 32 character long hexadecimal string.\nInclude the empty flag to generate a random salt you " +
       'can use: "statycrypt -s".',
+    type: "string",
+  })
+  // do not give a default option to this parameter - we want to see when the flag is included with no
+  // value and when it's not included at all
+  .option("share", {
+    describe:
+      'Get a link containing your hashed password that will auto-decrypt the page. Pass your URL as a value to append '
+        + '"?staticrypt_pwd=<hashed_pwd>", or leave empty to display the hash to append.',
     type: "string",
   })
   .option("t", {
@@ -156,6 +164,14 @@ if (isUsingconfigFile && config.salt !== salt) {
 // parse input
 const input = namedArgs._[0].toString(),
   passphrase = namedArgs._[1].toString();
+
+// display the share link with the hashed password if the --share flag is set
+if (isOptionSetByUser("share", yargs)) {
+    const url = namedArgs.share || "";
+    const hashedPassphrase = cryptoEngine.hashPassphrase(passphrase, salt);
+
+    console.log(url + "?staticrypt_pwd=" + hashedPassphrase);
+}
 
 // get the file content
 let contents;

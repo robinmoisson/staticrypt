@@ -349,7 +349,7 @@ exports.init = init;
     var decode = codec.init(cryptoEngine).decode;
 
     // variables to be filled when generating the file
-    var encryptedMsg = 'a0686ab0d1f652fd473e8f0a876c78ae62e4869bbc1cfaf913557165a0d917c95f0dafd66b6d96b99ebead24c65aeb7bU2FsdGVkX1+p3jQV07SFDxuUhlQ4LlOK4ai/CejVGCLUDDUMe3bgXU9EOh/HFiw6qc93Akgbwxppf5RE5j4e58Z/xgKXOrgbOBJKQ80b3KO6sLZiaq3CbrBpMVk/PF+o+xLxxTy07n8hwj7CvMfTtev5BoNxintzmNRS2VdZ8bVuHTcOWVkZw039Ups6RX1TSpFqJBvWguOnvdrmnnG8ZA==',
+    var encryptedMsg = '478627e72cfebfb4f084f81acf8deab7db7b07bf68df85054f6c6048c3eea0674520fcff67d494506f45f5c35883f4b0U2FsdGVkX19dot7XcHBLAjG0qZT6Fwy5aRIHtguHbX+6vD3gyK+UwhoDPtzxR9DRDMtOtfPirCuq2cHm1z1U6CwFAzeVTFXaaUZ8NeJmLUg+KoKEYAY0cld9hFft17qWjBMjLjTEPAmx22i4ZIqKkDOLHc6DMTSs2OQ7gw+4ym36KvL4G2zIJbVJ88p7N/UjfG+IcseGbyie4Dzc5h9v/Q==',
         salt = 'b93bbaf35459951c47721d1f3eaeb5b9',
         labelError = 'Bad password!',
         isRememberEnabled = true,
@@ -437,9 +437,24 @@ exports.init = init;
         return false;
     }
 
+    function decryptOnLoadFromQueryParam() {
+        var queryParams = new URLSearchParams(window.location.search);
+        var hashedPassphrase = queryParams.get("staticrypt_pwd");
+
+        if (hashedPassphrase) {
+            return decryptAndReplaceHtml(hashedPassphrase);
+        }
+
+        return false;
+    }
+
     // try to automatically decrypt on load if there is a saved password
     window.onload = function () {
-        var hasDecrypted = decryptOnLoadFromRememberMe();
+        var hasDecrypted = decryptOnLoadFromQueryParam();
+
+        if (!hasDecrypted) {
+            hasDecrypted = decryptOnLoadFromRememberMe();
+        }
 
         // if we didn't decrypt anything, show the password prompt. Otherwise the content has already been replaced, no
         // need to do anything
