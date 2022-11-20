@@ -4,7 +4,7 @@
 
 StatiCrypt uses AES-256 to encrypt your HTML file with your passphrase and return a static page including a password prompt and the javascript decryption logic you can safely upload anywhere (see [what the page looks like](https://robinmoisson.github.io/staticrypt/example/example_encrypted.html)).
 
-This means you can **password protect the content of your _public_ static HTML file, without any back-end** - serving it over Netlify, GitHub pages, etc. (see [how it works](#how-can-we-password-protect-html-without-a-back-end?)).
+This means you can **password protect the content of your _public_ static HTML file, without any back-end** - serving it over Netlify, GitHub pages, etc. (see [how it works](#how-staticrypt-works)).
 
 You can encrypt a file online in your browser (client side) at https://robinmoisson.github.io/staticrypt, or use the CLI to do it in your build process.
 
@@ -12,25 +12,32 @@ You can encrypt a file online in your browser (client side) at https://robinmois
 
 Staticrypt is available through npm as a CLI, install with `npm install -g staticrypt` (with or without the `-g` flag). If without the `-g` flag, you can call the command with `npx staticrypt ...`.
 
-### Example usage
+### Examples
 
 > These will create a `.staticrypt.json` file in the current directory, see the FAQ as to why. You can prevent it by setting the `--config` flag to "false".
 
-Encrypt `test.html` and create a `test_encrypted.html` file (add `-o my_encrypted_file.html` to change the name of the output file):
+**Encrypt a file:** Encrypt `test.html` and create a `test_encrypted.html` file (add `-o my_encrypted_file.html` to change the name of the output file):
 
-```
+```bash
 staticrypt test.html MY_PASSPHRASE
 ```
 
-Encrypt all html files in a directory and replace them with encrypted versions (`{}` will be replaced with each file name by the `find` command - if you wanted to move the encrypted files to a `encrypted/` directory, you could use `-o encrypted/{}`):
+**Encrypt a file and get a shareble link containing the hashed password** - you can include your file URL or leave blank:
 
+```bash
+staticrypt test.html MY_PASSPHRASE --share https://example.com/test_encrypted.html
+# => https://example.com/test_encrypted.html?staticrypt_pwd=5bfbf1343c7257cd7be23ecd74bb37fa2c76d041042654f358b6255baeab898f
 ```
+
+**Encrypt all html files in a directory** and replace them with encrypted versions (`{}` will be replaced with each file name by the `find` command - if you wanted to move the encrypted files to a `encrypted/` directory, you could use `-o encrypted/{}`):
+
+```bash
 find . -type f -name "*.html" -exec staticrypt {} MY_PASSPHRASE -o {} \;
 ```
 
-Encrypt all html files in a directory except the ones ending in `_encrypted.html`:
+**Encrypt all html files in a directory except** the ones ending in `_encrypted.html`:
 
-```
+```bash
 find . -type f -name "*.html" -not -name "*_encrypted.html" -exec staticrypt {} MY_PASSPHRASE \;
 ```
 
@@ -144,7 +151,23 @@ In case the value stored in browser becomes compromised an attacker can decrypt 
 
 ## Contributing
 
-### Source Directories
+### 🙏 Thank you!
+
+- [@AaronCoplan](https://github.com/AaronCoplan) for bringing the CLI to life
+- [@epicfaace](https://github.com/epicfaace) & [@thomasmarr](https://github.com/thomasmarr) for sparking the caching of the passphrase in localStorage (allowing the "Remember me" checkbox)
+- [@hurrymaplelad](https://github.com/hurrymaplelad) for refactoring a lot of the code and making the project much more pleasant to work with
+
+### Opening PRs and issues
+
+You're free to open PRs if you're ok with having no response for a (possibly very) long time and me possibly ending up getting inspiration from your proposal but merging something different myself (I'll try to credit you though). Apologies in advance for the delay, and thank you!
+
+It's fine to open issues with suggestions and bug reports.
+
+If you find a serious security bug please open an issue, I'll try to fix it relatively quickly.
+
+### Guidelines to contributing
+
+#### Source Directories
 
 - `cli/` - The command-line interface published to NPM.
 - `example/` - This file is encrypted as part of the build. The encrypted file is committed both to make this library easy to explore and as a review-time sanity check.
@@ -152,7 +175,7 @@ In case the value stored in browser becomes compromised an attacker can decrypt 
 - `scripts/` - Build, test, deploy, CI, etc. See `npm run-script`.
 - `index.html` - The root of the in-browser encryption site hosted at https://robinmoisson.github.io/staticrypt. Kept in the root of the repo for easy deploys to GitHub Pages.
 
-### Build
+#### Build
 Built assets are committed to main. Run build before submitting a PR or publishing to npm.
 
 ```
@@ -161,19 +184,11 @@ $ npm install
 $ npm run build
 ```
 
-### Test
+#### Test
 Testing is currently manual to keep dependencies low.
 [Build](#build), then open `example/example_encypted.html`.
 
-## 🙏 Contribution
-
-Thank you: [@AaronCoplan](https://github.com/AaronCoplan) for bringing the CLI to life, [@epicfaace](https://github.com/epicfaace) & [@thomasmarr](https://github.com/thomasmarr) for sparking the caching of the passphrase in localStorage (allowing the "Remember me" checkbox)
-
-**Opening PRs:** You're free to open PRs if you're ok with having no response for a (possibly very) long time and me possibly ending up getting inspiration from your proposal but merging something different myself (I'll try to credit you though). Apologies in advance for the delay, and thank you!
-
-If you find a serious security bug please open an issue, I'll try to fix it relatively quickly.
-
-## Alternatives
+## Alternatives to StatiCrypt
 
 https://github.com/MaxLaumeister/PageCrypt is a similar project (I think it predates StatiCrypt).
 
