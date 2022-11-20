@@ -11,7 +11,7 @@
     "staticrypt": "./cli/index.js"
   },
   "dependencies": {
-    "crypto-js": ">=3.1.9-1",
+    "crypto-js": "3.1.9-1",
     "yargs": ">=10.0.3"
   },
   "author": "Robin Moisson (https://github.com/robinmoisson)",
