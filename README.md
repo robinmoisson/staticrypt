@@ -188,8 +188,16 @@ $ npm run build
 Testing is currently manual to keep dependencies low.
 [Build](#build), then open `example/example_encypted.html`.
 
-## Alternatives to StatiCrypt
+## Community and alternatives
 
-https://github.com/MaxLaumeister/PageCrypt is a similar project (I think it predates StatiCrypt).
+Here are some other projects and community resources you might find interesting (this is included as an informative section, I haven't personally vetted any of those).
 
-https://github.com/tarpdalton/staticrypt/tree/webcrypto is a fork that uses the WebCrypto browser api to encrypt and decrypt the page, which removes the need for `crypto-js`. There's a PR open towards here which I haven't checked in detail yet. WebCrypto is only available in HTTPS context (which [is annoying people](https://github.com/w3c/webcrypto/issues/28)) so it won't work if you're on HTTP.
+### Alternatives to StatiCrypt
+
+[MaxLaumeister/PageCrypt](https://github.com/MaxLaumeister/PageCrypt) is a project with similar features in a different style (I think it was created before StatiCrypt).
+
+### Based on StatiCrypt
+
+**WebCrypto:** https://github.com/tarpdalton/staticrypt/tree/webcrypto is a fork that uses the WebCrypto browser api to encrypt and decrypt the page, which removes the need for `crypto-js`. There's a PR open towards here which I haven't checked in detail yet. WebCrypto is only available in HTTPS context (which [is annoying people](https://github.com/w3c/webcrypto/issues/28)) so it won't work if you're on HTTP.
+
+**Template to host an encrypted single page website with Github Pages:** [a-nau/password-protected-website-template](https://github.com/a-nau/password-protected-website-template) is a demonstration of how to build a protected page on Github Pages, integrating with Github Actions
