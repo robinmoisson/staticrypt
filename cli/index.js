@@ -5,10 +5,14 @@
 const fs = require("fs");
 const path = require("path");
 const Yargs = require("yargs");
+
+// parse .env file into process.env
+require('dotenv').config();
+
 const cryptoEngine = require("../lib/cryptoEngine/cryptojsEngine");
 const codec = require("../lib/codec");
 const { convertCommonJSToBrowserJS, genFile} = require("../lib/formater");
-const { exitEarly, isOptionSetByUser } = require("./helpers");
+const { exitEarly, isOptionSetByUser, getPassword, getFileContent, getSalt} = require("./helpers");
 const { generateRandomSalt } = cryptoEngine;
 const { encode } = codec.init(cryptoEngine);
 
@@ -19,7 +23,7 @@ const SCRIPT_TAG =
   SCRIPT_URL +
   '" integrity="sha384-lp4k1VRKPU9eBnPePjnJ9M2RF3i7PC30gXs70+elCVfgwLwx1tv5+ctxdtwxqZa7" crossorigin="anonymous"></script>';
 
-const yargs = Yargs.usage("Usage: staticrypt <filename> <passphrase> [options]")
+const yargs = Yargs.usage("Usage: staticrypt <filename> [<passphrase>] [options]")
   .option("c", {
     alias: "config",
     type: "string",
@@ -117,10 +121,15 @@ if (isOptionSetByUser("s", yargs) && !namedArgs.salt) {
 }
 
 // validate the number of arguments
-if (namedArgs._.length !== 2) {
+const positionalArguments = namedArgs._;
+if (positionalArguments.length > 2 || positionalArguments.length === 0) {
   Yargs.showHelp();
   process.exit(1);
 }
+
+// parse input
+const inputFilepath = positionalArguments[0].toString(),
+  password = getPassword(positionalArguments);
 
 // get config file
 const isUsingconfigFile = namedArgs.config.toLowerCase() !== "false";
@@ -130,22 +139,8 @@ if (isUsingconfigFile && fs.existsSync(configPath)) {
   config = JSON.parse(fs.readFileSync(configPath, "utf8"));
 }
 
-/**
- * Get the salt to use
- */
-let salt;
-// either a salt was provided by the user through the flag --salt
-if (!!namedArgs.salt) {
-  salt = String(namedArgs.salt).toLowerCase();
-}
-// or we try to read the salt from config file
-else if (!!config.salt) {
-  salt = config.salt;
-}
-// or we generate a salt
-else {
-  salt = generateRandomSalt();
-}
+// get the salt
+const salt = getSalt(namedArgs, config);
 
 // validate the salt
 if (salt.length !== 32 || /[^a-f0-9]/.test(salt)) {
@@ -161,28 +156,19 @@ if (isUsingconfigFile && config.salt !== salt) {
   fs.writeFileSync(configPath, JSON.stringify(config, null, 4));
 }
 
-// parse input
-const input = namedArgs._[0].toString(),
-  passphrase = namedArgs._[1].toString();
-
 // display the share link with the hashed password if the --share flag is set
 if (isOptionSetByUser("share", yargs)) {
     const url = namedArgs.share || "";
-    const hashedPassphrase = cryptoEngine.hashPassphrase(passphrase, salt);
+    const hashedPassphrase = cryptoEngine.hashPassphrase(password, salt);
 
     console.log(url + "?staticrypt_pwd=" + hashedPassphrase);
 }
 
 // get the file content
-let contents;
-try {
-  contents = fs.readFileSync(input, "utf8");
-} catch (e) {
-  exitEarly("Failure: input file does not exist!");
-}
+const contents = getFileContent(inputFilepath);
 
 // encrypt input
-const encryptedMessage = encode(contents, passphrase, salt);
+const encryptedMessage = encode(contents, password, salt);
 
 // create crypto-js tag (embedded or not)
 let cryptoTag = SCRIPT_TAG;
@@ -218,6 +204,6 @@ const data = {
 
 const outputFilePath = namedArgs.output !== null
     ? namedArgs.output
-    : input.replace(/\.html$/, "") + "_encrypted.html";
+    : inputFilepath.replace(/\.html$/, "") + "_encrypted.html";
 
 genFile(data, outputFilePath, namedArgs.f);

@@ -2,3 +2,4 @@
 .vscode/
 node_modules
 .staticrypt.json
+.env

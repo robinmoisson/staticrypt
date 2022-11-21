@@ -349,7 +349,7 @@ exports.init = init;
     var decode = codec.init(cryptoEngine).decode;
 
     // variables to be filled when generating the file
-    var encryptedMsg = '56dea7d61318f40686a20af181fb5d14ce025164d56770ddc61e4078def3d7fa69239fbb3c84b1fe941343cf41100ba6U2FsdGVkX1+4r6JJlpkeR9aAipKLcWURUBxGgPpqDEAR7vAJu1wnAztHaNch1IemKHPOJ+Oy9Mi30xuAfl14RUbSn/nIpReEzVNWVdTQsetFPs+uSDdlayJF1I9CwSkmp0MnQB+d85QWh3xDQpdZ/+fWaRdXPIhhvavpkThFAeJatSezVbA2Xx4CNJWfzc2ekin7uoEAizHk+qUAefRCbA==',
+    var encryptedMsg = '30d59eebfa6443549af9f78e49525e458bd5d4ee783cb2fc5a61882f62769d8ec467ba45c6c10554321b4ff338b9baacU2FsdGVkX1/M666zWrcMkpw3mxNzMVp8DMjVCvC7R6wGFtZMgA17LV7KuFWo9vqiCoqz52rvljIuZ65Uq5xFJxKGZAAhXfiKrfNnlhcoEsqrdLH/RVRqC2VKPwlM+6OyMd2GB5FV79kWJW9xlnrUjpokIbq7OqIfKooQ8hSKsJFqHNJFYzLNuGMtvERC23jgSFXSKoCACBPXsSgqCdrxbQ==',
         salt = 'b93bbaf35459951c47721d1f3eaeb5b9',
         labelError = 'Bad password!',
         isRememberEnabled = true,
@@ -461,6 +461,7 @@ exports.init = init;
         if (!hasDecrypted) {
             document.getElementById("staticrypt_loading").classList.add("hidden");
             document.getElementById("staticrypt_content").classList.remove("hidden");
+            document.getElementById("staticrypt-password").focus();
         }
     }
 

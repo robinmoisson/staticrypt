@@ -22,6 +22,13 @@ Staticrypt is available through npm as a CLI, install with `npm install -g stati
 staticrypt test.html MY_PASSPHRASE
 ```
 
+**Encrypt a file with the passphrase in an environment variable:** set your passphrase in the `STATICRYPT_PASSWORD` environment variable ([`.env` files](https://www.npmjs.com/package/dotenv#usage) are supported):
+
+```bash
+# the passphrase is in the STATICRYPT_PASSWORD env variable
+staticrypt test.html
+```
+
 **Encrypt a file and get a shareble link containing the hashed password** - you can include your file URL or leave blank:
 
 ```bash
@@ -43,7 +50,9 @@ find . -type f -name "*.html" -not -name "*_encrypted.html" -exec staticrypt {} 
 
 ### CLI Reference
 
-    Usage: staticrypt <filename> <passphrase> [options]
+The passphrase argument is optional if `STATICRYPT_PASSWORD` is set in the environment or `.env` file.
+
+    Usage: staticrypt <filename> [<passphrase>] [options]
 
     Options:
           --help                    Show help                              [boolean]
