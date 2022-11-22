@@ -24,24 +24,6 @@
             font-weight: normal;
         }
     </style>
-
-    <script>
-        (function (i, s, o, g, r, a, m) {
-            i['GoogleAnalyticsObject'] = r;
-            i[r] = i[r] || function () {
-                (i[r].q = i[r].q || []).push(arguments)
-            }, i[r].l = 1 * new Date();
-            a = s.createElement(o),
-                m = s.getElementsByTagName(o)[0];
-            a.async = 1;
-            a.src = g;
-            m.parentNode.insertBefore(a, m)
-        })(window, document, 'script', 'https://www.google-analytics.com/analytics.js', 'ga');
-
-        ga('create', 'UA-73629908-2', 'auto');
-        ga('send', 'pageview');
-
-    </script>
 </head>
 
 <body>
@@ -246,6 +228,25 @@ Filename changed to circumvent adblockers that mistake it for a crypto miner (se
     }
 
     /**
+     * Register something happened - this uses a simple Supabase function to implement a counter, and allows use to drop
+     * google analytics.
+     *
+     * @param {string} action
+     */
+    function trackEvent(action) {
+        var xhr = new XMLHttpRequest();
+        xhr.open('POST', 'https://zlgpaemmniviswibzuwt.supabase.co/rest/v1/rpc/increment_analytics', true);
+        xhr.setRequestHeader('Content-type', 'application/json; charset=UTF-8')
+        xhr.setRequestHeader('apikey', 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InpsZ3BhZW1tbml2aXN3aWJ6dXd0Iiwicm9sZSI6ImFub24iLCJpYXQiOjE2NjkxMjM0OTcsImV4cCI6MTk4NDY5OTQ5N30.wNoVDHG7F6INx-IPotMs3fL1nudfaF2qvQDgG-1PhNI')
+        xhr.setRequestHeader('Authorization', 'Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InpsZ3BhZW1tbml2aXN3aWJ6dXd0Iiwicm9sZSI6ImFub24iLCJpYXQiOjE2NjkxMjM0OTcsImV4cCI6MTk4NDY5OTQ5N30.wNoVDHG7F6INx-IPotMs3fL1nudfaF2qvQDgG-1PhNI')
+        xhr.send(
+            JSON.stringify({
+                action_input: action
+            }
+        ));
+    }
+
+    /**
      * Fill the password prompt template with data provided.
      * @param data
      */
@@ -278,11 +279,18 @@ Filename changed to circumvent adblockers that mistake it for a crypto miner (se
         request.send();
     };
 
+    // register page load
+    window.onload = function () {
+        trackEvent('show_index');
+    };
+
     /**
      * Handle form submission.
      */
     document.getElementById('encrypt_form').addEventListener('submit', function (e) {
         e.preventDefault();
+
+        trackEvent('generate_encrypted');
 
         // update instruction textarea value with CKEDITOR content
         // (see https://stackoverflow.com/questions/3147670/ckeditor-update-textarea)
@@ -324,7 +332,6 @@ Filename changed to circumvent adblockers that mistake it for a crypto miner (se
         } else {
             setFileToDownload(data);
         }
-
     });
 
     document.getElementById('toggle-extra-option')
@@ -351,6 +358,10 @@ Filename changed to circumvent adblockers that mistake it for a crypto miner (se
      */
     document.getElementById('download-link')
         .addEventListener('click', function (e) {
+            // only register the click event if there is actually a generated file
+            if (htmlToDownload) {
+                trackEvent('download_encrypted');
+            }
 
             var isIE = (navigator.userAgent.indexOf("MSIE") !== -1) || (!!document.documentMode === true); // >= 10
             var isEdge = navigator.userAgent.indexOf("Edge") !== -1;
