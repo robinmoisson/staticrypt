@@ -2,15 +2,23 @@
 
 # StatiCrypt
 
-StatiCrypt uses AES-256 to encrypt your HTML file with your passphrase and return a static page including a password prompt and the javascript decryption logic you can safely upload anywhere (see [what the page looks like](https://robinmoisson.github.io/staticrypt/example/example_encrypted.html)).
+StatiCrypt uses AES-256 to encrypt your HTML file with your passphrase and return a static page including a password prompt and the javascript decryption logic that you can safely upload anywhere (see [what the page looks like](https://robinmoisson.github.io/staticrypt/example/example_encrypted.html)).
 
-This means you can **password protect the content of your _public_ static HTML file, without any back-end** - serving it over Netlify, GitHub pages, etc. (see [how it works](#how-staticrypt-works)).
+This means you can **password protect the content of your _public_ static HTML file, without any back-end** - serving it over Netlify, GitHub pages, etc. (see the detail of [how it works](#how-staticrypt-works)).
 
 You can encrypt a file online in your browser (client side) at https://robinmoisson.github.io/staticrypt, or use the CLI to do it in your build process.
 
 ## CLI
 
-Staticrypt is available through npm as a CLI, install with `npm install -g staticrypt` (with or without the `-g` flag). If without the `-g` flag, you can call the command with `npx staticrypt ...`.
+### Installation
+
+Staticrypt is available through npm as a CLI, install with
+
+```bash
+npm install staticrypt
+```
+
+You can then run it with `npx staticrypt ...`. You can also intall globally with `npm -g staticrypt` and then just call `staticrypt ...`.
 
 ### Examples
 
@@ -106,17 +114,15 @@ StatiCrypt uses the [crypto-js](https://github.com/brix/crypto-js) library to ge
 
 So it basically encrypts your page and puts everything with a user-friendly way to use a password in the new file.
 
-You can report thoughts and issues to the [GitHub project](https://robinmoisson.github.io/staticrypt) but be warned I might be quite slow to respond (though the community might help). If a serious security issue is reported I'll try to fix it quickly.
-
 ## FAQ
 
 ### Is it secure?
 
-The protected file has been encrypted with AES-256 (CBC), a very popular encryption algorithm, and you can now upload your file in any public place without anyone being able to read it. 
+Simple answer: your file content has been encrypted with AES-256 (CBC), a popular and strong encryption algorithm, you can now upload it in any public place and no-one will be able to read it without the password. So yes, if you used a good password it should be pretty secure.
 
-Actual security always depends on a number of factors - because your full encrypted file is accessible in browser, brute-force/dictionary attacks would be trivial to do at a really fast pace: **use a long, unusual passphrase**.
+That being said, actual security always depends on a number of factors and on the threat model you want to protect against. Because your full encrypted file is accessible client side, brute-force/dictionary attacks would be trivial to do at a really fast pace: **use a long, unusual passphrase**. You can read a discussion on CBC mode and how appropriate it is in the context of StatiCrypt in #19. 
 
-**Important disclaimer:** I am not a cryptographer, and though the concept is simple and I try my best to implement it correctly it is easy to unknowingly weaken cryptography in subtle ways. If you are an at-risk activist profile or have sensitive banking or crypto data to protect, you might want to use something else!
+**Disclaimer:** I am not a cryptographer, and though the concept is simple and I try my best to implement it correctly it is easy to unknowingly weaken cryptography in subtle ways. Adjust accordingly: if you are an at-risk activist or have sensitive crypto data to protect, you might want to use something else.
 
 ### Can I customize the password prompt?
 
@@ -176,26 +182,26 @@ If you find a serious security bug please open an issue, I'll try to fix it rela
 
 ### Guidelines to contributing
 
-#### Source Directories
+#### Source map
 
 - `cli/` - The command-line interface published to NPM.
-- `example/` - This file is encrypted as part of the build. The encrypted file is committed both to make this library easy to explore and as a review-time sanity check.
+- `example/` - Example encrypted files, used as an example in the public website and for manual testing.
 - `lib/` - Files shared across www and cli.
 - `scripts/` - Build, test, deploy, CI, etc. See `npm run-script`.
 - `index.html` - The root of the in-browser encryption site hosted at https://robinmoisson.github.io/staticrypt. Kept in the root of the repo for easy deploys to GitHub Pages.
 
 #### Build
+
 Built assets are committed to main. Run build before submitting a PR or publishing to npm.
 
 ```
-# From staticrypt/
-$ npm install
-$ npm run build
+npm install
+npm run build
 ```
 
 #### Test
-Testing is currently manual to keep dependencies low.
-[Build](#build), then open `example/example_encypted.html`.
+
+The testing is done manually for now - run [build](#build), then open `example/example_encypted.html` and check everything works correctly.
 
 ## Community and alternatives
 
