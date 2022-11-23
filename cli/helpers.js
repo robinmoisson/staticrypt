@@ -1,6 +1,8 @@
 const fs = require("fs");
 
 const cryptoEngine = require("../lib/cryptoEngine/cryptojsEngine");
+const path = require("path");
+const {renderTemplate} = require("../lib/formater.js");
 const { generateRandomSalt } = cryptoEngine;
 
 /**
@@ -99,3 +101,59 @@ function getSalt(namedArgs, config) {
     return generateRandomSalt();
 }
 exports.getSalt = getSalt;
+
+/**
+ * A dead-simple alternative to webpack or rollup for inlining simple
+ * CommonJS modules in a browser <script>.
+ * - Removes all lines containing require().
+ * - Wraps the module in an immediately invoked function that returns `exports`.
+ *
+ * @param {string} modulePath - path from staticrypt root directory
+ */
+function convertCommonJSToBrowserJS(modulePath) {
+    const rootDirectory = path.join(__dirname, '..');
+    const resolvedPath = path.join(rootDirectory, ...modulePath.split("/")) + ".js";
+
+    if (!fs.existsSync(resolvedPath)) {
+        exitEarly(`Failure: could not find module to convert at path "${resolvedPath}"`);
+    }
+
+    const moduleText = fs
+        .readFileSync(resolvedPath, "utf8")
+        .replaceAll(/^.*\brequire\(.*$\n/gm, "");
+
+    return `
+((function(){
+  const exports = {};
+  ${moduleText}
+  return exports;
+})())
+  `.trim();
+}
+exports.convertCommonJSToBrowserJS = convertCommonJSToBrowserJS;
+
+/**
+ * Fill the template with provided data and writes it to output file.
+ *
+ * @param {Object} data
+ * @param {string} outputFilePath
+ * @param {string} inputFilePath
+ */
+function genFile(data, outputFilePath, inputFilePath) {
+    let templateContents;
+
+    try {
+        templateContents = fs.readFileSync(inputFilePath, "utf8");
+    } catch (e) {
+        exitEarly("Failure: could not read template!");
+    }
+
+    const renderedTemplate = renderTemplate(templateContents, data);
+
+    try {
+        fs.writeFileSync(outputFilePath, renderedTemplate);
+    } catch (e) {
+        exitEarly("Failure: could not generate output file!");
+    }
+}
+exports.genFile = genFile;

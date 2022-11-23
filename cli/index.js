@@ -11,8 +11,7 @@ require('dotenv').config();
 
 const cryptoEngine = require("../lib/cryptoEngine/cryptojsEngine");
 const codec = require("../lib/codec");
-const { convertCommonJSToBrowserJS, genFile} = require("../lib/formater");
-const { exitEarly, isOptionSetByUser, getPassword, getFileContent, getSalt} = require("./helpers");
+const { convertCommonJSToBrowserJS, exitEarly, isOptionSetByUser, genFile, getPassword, getFileContent, getSalt} = require("./helpers");
 const { generateRandomSalt } = cryptoEngine;
 const { encode } = codec.init(cryptoEngine);
 
@@ -192,8 +191,8 @@ const data = {
   encrypted: encryptedMessage,
   instructions: namedArgs.instructions,
   is_remember_enabled: namedArgs.noremember ? "false" : "true",
-  js_codec: convertCommonJSToBrowserJS("../lib/codec"),
-  js_crypto_engine: convertCommonJSToBrowserJS("../lib/cryptoEngine/cryptojsEngine"),
+  js_codec: convertCommonJSToBrowserJS("lib/codec"),
+  js_crypto_engine: convertCommonJSToBrowserJS("lib/cryptoEngine/cryptojsEngine"),
   label_error: namedArgs.labelError,
   passphrase_placeholder: namedArgs.passphrasePlaceholder,
   remember_duration_in_days: namedArgs.remember,
