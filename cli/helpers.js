@@ -120,7 +120,7 @@ function convertCommonJSToBrowserJS(modulePath) {
 
     const moduleText = fs
         .readFileSync(resolvedPath, "utf8")
-        .replaceAll(/^.*\brequire\(.*$\n/gm, "");
+        .replace(/^.*\brequire\(.*$\n/gm, "");
 
     return `
 ((function(){

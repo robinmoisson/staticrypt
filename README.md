@@ -40,6 +40,7 @@ staticrypt test.html
 **Encrypt a file and get a shareble link containing the hashed password** - you can include your file URL or leave blank:
 
 ```bash
+# you can also pass '--share' without specifying the URL to get the `?staticrypt_pwd=...` 
 staticrypt test.html MY_PASSPHRASE --share https://example.com/test_encrypted.html
 # => https://example.com/test_encrypted.html?staticrypt_pwd=5bfbf1343c7257cd7be23ecd74bb37fa2c76d041042654f358b6255baeab898f
 ```
@@ -108,7 +109,7 @@ The passphrase argument is optional if `STATICRYPT_PASSWORD` is set in the envir
 
 ## HOW STATICRYPT WORKS
 
-So, how can we password protect html without a back-end?
+So, how can you password protect html without a back-end?
 
 StatiCrypt uses the [crypto-js](https://github.com/brix/crypto-js) library to generate a static, password protected page that can be decrypted in-browser. You can then just send or upload the generated page to a place serving static content (github pages, for example) and you're done: the page will prompt users for password, and the javascript will decrypt and load your HTML, all done in browser.
 
@@ -120,9 +121,9 @@ So it basically encrypts your page and puts everything with a user-friendly way 
 
 Simple answer: your file content has been encrypted with AES-256 (CBC), a popular and strong encryption algorithm, you can now upload it in any public place and no-one will be able to read it without the password. So yes, if you used a good password it should be pretty secure.
 
-That being said, actual security always depends on a number of factors and on the threat model you want to protect against. Because your full encrypted file is accessible client side, brute-force/dictionary attacks would be trivial to do at a really fast pace: **use a long, unusual passphrase**. You can read a discussion on CBC mode and how appropriate it is in the context of StatiCrypt in #19. 
+That being said, actual security always depends on a number of factors and on the threat model you want to protect against. Because your full encrypted file is accessible client side, brute-force/dictionary attacks would be trivial to do at a really fast pace: **use a long, unusual password**. You can read a discussion on CBC mode and how appropriate it is in the context of StatiCrypt in [#19](https://github.com/robinmoisson/staticrypt/issues/19).
 
-**Disclaimer:** I am not a cryptographer, and though the concept is simple and I try my best to implement it correctly it is easy to unknowingly weaken cryptography in subtle ways. Adjust accordingly: if you are an at-risk activist or have sensitive crypto data to protect, you might want to use something else.
+**Also, disclaimer:** I am not a cryptographer - the concept is simple and I try my best to implement it correctly but please adjust accordingly: if you are an at-risk activist or have sensitive crypto data to protect, you might want to use something else.
 
 ### Can I customize the password prompt?
 
