@@ -127,7 +127,7 @@ That being said, actual security always depends on a number of factors and on th
 
 ### Can I customize the password prompt?
 
-Yes! Just copy `cli/password_template.html`, modify it to suit your style and point to your template file with the `-f path/to/my/file.html` flag. Be careful to not break the encrypting javascript part, the variables replaced by StatiCrypt are between curly brackets: `{salt}`.
+Yes! Just copy `lib/password_template.html`, modify it to suit your style and point to your template file with the `-f path/to/my/file.html` flag. Be careful to not break the encrypting javascript part, the variables replaced by StatiCrypt are between curly brackets: `{salt}`.
 
 ### Can I remove the "Remember me" checkbox?
 
