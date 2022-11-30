@@ -65,7 +65,7 @@ function getPassword(positionalArguments) {
         exitEarly("Missing password: please provide an argument or set the STATICRYPT_PASSWORD environment variable in the environment or .env file");
     }
 
-    return positionalArguments[1];
+    return positionalArguments[1].toString();
 }
 exports.getPassword = getPassword;
 
