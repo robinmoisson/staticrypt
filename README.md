@@ -75,10 +75,10 @@ The passphrase argument is optional if `STATICRYPT_PASSWORD` is set in the envir
                                                            [boolean] [default: true]
       -f, --file-template           Path to custom HTML template with passphrase
                                     prompt.
-                   [string] [default: "/geek/staticrypt/lib/password_template.html"]
+                                   [string] [default: "/lib/password_template.html"]
       -i, --instructions            Special instructions to display to the user.
                                                               [string] [default: ""]
-          --label-error             Error message to display on entering the wrong
+          --label-error             Error message to display on entering wrong
                                     passphrase.  [string] [default: "Bad password!"]
           --noremember              Set this flag to remove the "Remember me"
                                     checkbox.             [boolean] [default: false]
@@ -94,24 +94,24 @@ The passphrase argument is optional if `STATICRYPT_PASSWORD` is set in the envir
           --remember-label          Label to use for the "Remember me" checkbox.
                                                    [string] [default: "Remember me"]
       -s, --salt                    Set the salt manually. It should be set if you
-                                want to use "Remember me" through multiple pages.
-                                    It needs to be a 32-character-long hexadecimal
-                                    string.
+                                    want to use "Remember me" through multiple
+                                    pages. It needs to be a 32-character-long
+                                    hexadecimal string.
                                     Include the empty flag to generate a random salt
                                     you can use: "statycrypt -s".           [string]
           --share                   Get a link containing your hashed password that
                                     will auto-decrypt the page. Pass your URL as a
                                     value to append "?staticrypt_pwd=<hashed_pwd>",
-                                    or leave it empty to display the hash to append.
+                                    or leave empty to display the hash to append.
                                                                             [string]
-      -t, --title                   Title for an output HTML page.
-                                                [string] [default: "Protected Page"]
+      -t, --title                   Title for the output HTML page.
+
 
 ## HOW STATICRYPT WORKS
 
 So, how can you password protect html without a back-end?
 
-StatiCrypt uses the [crypto-js](https://github.com/brix/crypto-js) library to generate a static, password protected page that can be decrypted in-browser. You can then just send or upload the generated page to a place serving static content (github pages, for example) and you're done: the page will prompt users for a password, and the javascript will decrypt and load your HTML, all done in a browser.
+StatiCrypt uses the [crypto-js](https://github.com/brix/crypto-js) library to generate a static, password protected page that can be decrypted in-browser. You can then just send or upload the generated page to a place serving static content (github pages, for example) and you're done: the page will prompt users for a password, and the javascript will decrypt and load your HTML, all done in the browser.
 
 So it basically encrypts your page and puts everything in a user-friendly way to use a password in the new file.
 

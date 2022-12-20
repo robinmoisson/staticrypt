@@ -66,7 +66,7 @@ const yargs = Yargs.usage("Usage: staticrypt <filename> [<passphrase>] [options]
   .option("o", {
     alias: "output",
     type: "string",
-    describe: "File name / path for generated encrypted file.",
+    describe: "File name/path for the generated encrypted file.",
     default: null,
   })
   .option("passphrase-placeholder", {
@@ -92,8 +92,8 @@ const yargs = Yargs.usage("Usage: staticrypt <filename> [<passphrase>] [options]
   .option("s", {
     alias: "salt",
     describe:
-      'Set the salt manually. It should be set if you want use "Remember me" through multiple pages. It ' +
-      "needs to be a 32 character long hexadecimal string.\nInclude the empty flag to generate a random salt you " +
+      'Set the salt manually. It should be set if you want to use "Remember me" through multiple pages. It ' +
+      "needs to be a 32-character-long hexadecimal string.\nInclude the empty flag to generate a random salt you " +
       'can use: "statycrypt -s".',
     type: "string",
   })
@@ -108,7 +108,7 @@ const yargs = Yargs.usage("Usage: staticrypt <filename> [<passphrase>] [options]
   .option("t", {
     alias: "title",
     type: "string",
-    describe: "Title for output HTML page.",
+    describe: "Title for the output HTML page.",
     default: "Protected Page",
   });
 const namedArgs = yargs.argv;
