@@ -47,7 +47,7 @@
             </p>
             <p>
                 Download your encrypted string in a HTML page with a password prompt you can upload anywhere (see <a
-                    target="_blank" href="../example/example_encrypted.html">example</a>).
+                    target="_blank" href="example/example_encrypted.html">example</a>).
             </p>
             <p>
                 The tool is also available as <a href="https://npmjs.com/package/staticrypt">a CLI on NPM</a> and is <a
@@ -348,7 +348,7 @@ exports.init = init;
  * @returns string
  */
 function renderTemplate(templateString, data) {
-    return templateString.replace(/{(.*?)}/g, function (_, key) {
+    return templateString.replace(/{\s*(\w+)\s*}/g, function (_, key) {
         if (data && data[key] !== undefined) {
             return data[key];
         }
