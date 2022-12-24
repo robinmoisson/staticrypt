@@ -1,4 +1,4 @@
-![password prompt preview](preview.png)
+<p align="center"><img src="preview.png" alt="password prompt preview" width="480"/></p>
 
 # StatiCrypt
 
