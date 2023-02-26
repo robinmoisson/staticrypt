@@ -3,7 +3,11 @@ const fs = require("fs");
 const cryptoEngine = require("../lib/cryptoEngine/cryptojsEngine");
 const path = require("path");
 const {renderTemplate} = require("../lib/formater.js");
+const Yargs = require("yargs");
 const { generateRandomSalt } = cryptoEngine;
+
+const PASSWORD_TEMPLATE_DEFAULT_PATH = path.join(__dirname, "..", "lib", "password_template.html");
+
 
 /**
  * @param {string} message
@@ -133,20 +137,27 @@ function convertCommonJSToBrowserJS(modulePath) {
 exports.convertCommonJSToBrowserJS = convertCommonJSToBrowserJS;
 
 /**
+ * @param {string} filePath
+ * @param {string} errorName
+ * @returns {string}
+ */
+function readFile(filePath, errorName = file) {
+    try {
+        return fs.readFileSync(filePath, "utf8");
+    } catch (e) {
+        exitEarly(`Failure: could not read ${errorName}!`);
+    }
+}
+
+/**
  * Fill the template with provided data and writes it to output file.
  *
  * @param {Object} data
  * @param {string} outputFilePath
- * @param {string} inputFilePath
+ * @param {string} templateFilePath
  */
-function genFile(data, outputFilePath, inputFilePath) {
-    let templateContents;
-
-    try {
-        templateContents = fs.readFileSync(inputFilePath, "utf8");
-    } catch (e) {
-        exitEarly("Failure: could not read template!");
-    }
+function genFile(data, outputFilePath, templateFilePath) {
+    const templateContents = readFile(templateFilePath, "template");
 
     const renderedTemplate = renderTemplate(templateContents, data);
 
@@ -157,3 +168,122 @@ function genFile(data, outputFilePath, inputFilePath) {
     }
 }
 exports.genFile = genFile;
+
+/**
+ * TODO: remove in next major version
+ *
+ * This method checks whether the password template support the security fix increasing PBKDF2 iterations. Users using
+ * an old custom password_template might have logic that doesn't benefit from the fix.
+ *
+ * @param {string} templatePathParameter
+ * @returns {boolean}
+ */
+function isCustomPasswordTemplateLegacy(templatePathParameter) {
+    // if the user uses the default template, it's up to date
+    if (templatePathParameter === PASSWORD_TEMPLATE_DEFAULT_PATH) {
+        return false;
+    }
+
+    const customTemplateContent = readFile(templatePathParameter, "template");
+
+    // if the template injects the crypto engine, it's up to date
+    if (customTemplateContent.includes("js_crypto_engine")) {
+        return false;
+    }
+
+    return true;
+}
+exports.isCustomPasswordTemplateLegacy = isCustomPasswordTemplateLegacy;
+
+function parseCommandLineArguments() {
+    return Yargs.usage("Usage: staticrypt <filename> [<passphrase>] [options]")
+        .option("c", {
+            alias: "config",
+            type: "string",
+            describe: 'Path to the config file. Set to "false" to disable.',
+            default: ".staticrypt.json",
+        })
+        .option("decrypt-button", {
+            type: "string",
+            describe: 'Label to use for the decrypt button. Default: "DECRYPT".',
+            default: "DECRYPT",
+        })
+        .option("e", {
+            alias: "embed",
+            type: "boolean",
+            describe:
+                "Whether or not to embed crypto-js in the page (or use an external CDN).",
+            default: true,
+        })
+        .option("f", {
+            alias: "file-template",
+            type: "string",
+            describe: "Path to custom HTML template with passphrase prompt.",
+            default: PASSWORD_TEMPLATE_DEFAULT_PATH,
+        })
+        .option("i", {
+            alias: "instructions",
+            type: "string",
+            describe: "Special instructions to display to the user.",
+            default: "",
+        })
+        .option("label-error", {
+            type: "string",
+            describe: "Error message to display on entering wrong passphrase.",
+            default: "Bad password!",
+        })
+        .option("noremember", {
+            type: "boolean",
+            describe: 'Set this flag to remove the "Remember me" checkbox.',
+            default: false,
+        })
+        .option("o", {
+            alias: "output",
+            type: "string",
+            describe: "File name/path for the generated encrypted file.",
+            default: null,
+        })
+        .option("passphrase-placeholder", {
+            type: "string",
+            describe: "Placeholder to use for the passphrase input.",
+            default: "Password",
+        })
+        .option("r", {
+            alias: "remember",
+            type: "number",
+            describe:
+                'Expiration in days of the "Remember me" checkbox that will save the (salted + hashed) passphrase ' +
+                'in localStorage when entered by the user. Default: "0", no expiration.',
+            default: 0,
+        })
+        .option("remember-label", {
+            type: "string",
+            describe: 'Label to use for the "Remember me" checkbox.',
+            default: "Remember me",
+        })
+        // do not give a default option to this parameter - we want to see when the flag is included with no
+        // value and when it's not included at all
+        .option("s", {
+            alias: "salt",
+            describe:
+                'Set the salt manually. It should be set if you want to use "Remember me" through multiple pages. It ' +
+                "needs to be a 32-character-long hexadecimal string.\nInclude the empty flag to generate a random salt you " +
+                'can use: "statycrypt -s".',
+            type: "string",
+        })
+        // do not give a default option to this parameter - we want to see when the flag is included with no
+        // value and when it's not included at all
+        .option("share", {
+            describe:
+                'Get a link containing your hashed password that will auto-decrypt the page. Pass your URL as a value to append '
+                + '"?staticrypt_pwd=<hashed_pwd>", or leave empty to display the hash to append.',
+            type: "string",
+        })
+        .option("t", {
+            alias: "title",
+            type: "string",
+            describe: "Title for the output HTML page.",
+            default: "Protected Page",
+        });
+}
+exports.parseCommandLineArguments = parseCommandLineArguments;
