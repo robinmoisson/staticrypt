@@ -61,7 +61,7 @@ find . -type f -name "*.html" -not -name "*_encrypted.html" -exec staticrypt {} 
 
 The password argument is optional if `STATICRYPT_PASSWORD` is set in the environment or `.env` file.
 
-    Usage: staticrypt <filename> [<passphrase>] [options]
+    Usage: staticrypt <filename> [<password>] [options]
 
     Options:
           --help                    Show help                              [boolean]
@@ -73,24 +73,23 @@ The password argument is optional if `STATICRYPT_PASSWORD` is set in the environ
       -e, --embed                   Whether or not to embed crypto-js in the page
                                     (or use an external CDN).
                                                            [boolean] [default: true]
-      -f, --file-template           Path to custom HTML template with passphrase
+      -f, --file-template           Path to custom HTML template with password
                                     prompt.
-                                   [string] [default: "/lib/password_template.html"]
+                   [string] [default: "/code/staticrypt/lib/password_template.html"]
       -i, --instructions            Special instructions to display to the user.
                                                               [string] [default: ""]
           --label-error             Error message to display on entering wrong
-                                    passphrase.  [string] [default: "Bad password!"]
+                                    password.    [string] [default: "Bad password!"]
           --noremember              Set this flag to remove the "Remember me"
                                     checkbox.             [boolean] [default: false]
       -o, --output                  File name/path for the generated encrypted file.
                                                             [string] [default: null]
-          --passphrase-placeholder  Placeholder to use for the passphrase input.
+          --passphrase-placeholder  Placeholder to use for the password input.
                                                       [string] [default: "Password"]
       -r, --remember                Expiration in days of the "Remember me" checkbox
-                                    that will save the (salted + hashed) passphrase
-                                    in localStorage when entered by the user.
-                                    Default: "0", no expiration.
-                                                               [number] [default: 0]
+                                    that will save the (salted + hashed) password in
+                                    localStorage when entered by the user. Default:
+                                    "0", no expiration.        [number] [default: 0]
           --remember-label          Label to use for the "Remember me" checkbox.
                                                    [string] [default: "Remember me"]
       -s, --salt                    Set the salt manually. It should be set if you
@@ -104,7 +103,10 @@ The password argument is optional if `STATICRYPT_PASSWORD` is set in the environ
                                     value to append "?staticrypt_pwd=<hashed_pwd>",
                                     or leave empty to display the hash to append.
                                                                             [string]
+          --short                   Hide the "short password" warning.
+                                                          [boolean] [default: false]
       -t, --title                   Title for the output HTML page.
+                                                [string] [default: "Protected Page"]
 
 
 ## HOW STATICRYPT WORKS

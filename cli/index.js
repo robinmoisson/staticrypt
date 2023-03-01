@@ -47,10 +47,11 @@ const inputFilepath = positionalArguments[0].toString(),
 if (password.length < 16 && !namedArgs.short) {
   console.log(
       `WARNING: Your password is less than 16 characters (length: ${password.length}). Brute-force attacks are easy to `
-      + `try on public files, and you are most safe when using a long password. You can hide this warning by increasing `
-      + `the length or adding the '--short' flag.\n`
-      + `Here's a strong generated password you could use: `
+      + `try on public files, and you are most safe when using a long password.\n\n`
+      + `👉️ Here's a strong generated password you could use: `
       + generateRandomString(21)
+      + "\n\nThe file was encrypted with your password. You can hide this warning by increasing your password length or"
+      + " adding the '--short' flag."
   )
 }
 
@@ -97,9 +98,9 @@ const isLegacy = isCustomPasswordTemplateLegacy(namedArgs.f);
 if (isLegacy) {
     console.log(
         "#################################\n\n" +
-        "[StatiCrypt] SECURITY WARNING: You are using an old version of the password template, which has been found to " +
+        "SECURITY WARNING [StatiCrypt]: You are using an old version of the password template, which has been found to " +
         "be less secure. Please update your custom password_template logic to match version 2.2.0 or higher." +
-        "\nYou can find the template here: https://github.com/robinmoisson/staticrypt/blob/main/lib/password_template.html" +
+        "\nYou can find instructions here: https://github.com/robinmoisson/staticrypt/issues/161" +
         "\n\n#################################"
     );
 }
