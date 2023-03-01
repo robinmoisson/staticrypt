@@ -43,7 +43,7 @@
             </h1>
             <p>
                 Based on the <a href="https://github.com/brix/crypto-js">crypto-js library</a>, StatiCrypt uses AES-256
-                to encrypt your string with your passphrase in your browser (client side).
+                to encrypt your string with your long password in your browser (client side).
             </p>
             <p>
                 Download your encrypted string in a HTML page with a password prompt you can upload anywhere (see <a
@@ -62,8 +62,8 @@
             </h4>
             <div id="concept" class="hidden">
                 <p>
-                    <b class="text-danger">Disclaimer</b> if you have extra sensitive banking data, you should probably
-                    use something else!
+                    <b class="text-danger">Disclaimer</b> if you are an at-risk activist, or have extra sensitive
+                    banking data, you should probably use something else!
                 </p>
                 <p>
                     StatiCrypt generates a static, password protected page that can be decrypted in-browser:
@@ -72,13 +72,14 @@
                 </p>
                 <p>
                     It basically encrypts your page and puts everything with a user-friendly way to use a password
-                    in the new file.
-                    <br>AES-256 is state of the art but <b>brute-force/dictionary attacks would be trivial to
-                    do at a really fast pace: use a long, unusual passphrase!</b>
+                    in the new file. AES-256 is state of the art but <b>brute-force/dictionary attacks would be easy to
+                    do at a really fast pace: use a long, unusual password!</b>
+                    <br/> => To be safe, we recommend 16+ alphanum characters, and using a password manager like the
+                    open-source <a href="http://bitwarden.com">Bitwarden</a>.
                 </p>
                 <p>
                     Feel free to contribute or report any thought to the
-                    <a href="https://github.com/robinmoisson/staticrypt">GitHub project</a>!
+                    <a href="https://github.com/robinmoisson/staticrypt">GitHub project</a>.
                 </p>
             </div>
             <br>
@@ -88,9 +89,9 @@
         <div class="col-xs-12">
             <form id="encrypt_form">
                 <div class="form-group">
-                    <label for="passphrase">Passphrase</label>
+                    <label for="passphrase">Password</label>
                     <input type="password" class="form-control" id="passphrase"
-                           placeholder="Passphrase (choose a long one!)">
+                           placeholder="Password (choose a long one!)">
                 </div>
 
                 <div class="form-group">

@@ -2,7 +2,7 @@
 
 # StatiCrypt
 
-StatiCrypt uses AES-256 to encrypt your HTML file with your passphrase and return a static page including a password prompt and the javascript decryption logic that you can safely upload anywhere (see [what the page looks like](https://robinmoisson.github.io/staticrypt/example/example_encrypted.html)).
+StatiCrypt uses AES-256 to encrypt your HTML file with your long password and return a static page including a password prompt and the javascript decryption logic that you can safely upload anywhere (see [what the page looks like](https://robinmoisson.github.io/staticrypt/example/example_encrypted.html)).
 
 This means you can **password protect the content of your _public_ static HTML file, without any back-end** - serving it over Netlify, GitHub pages, etc. (see the detail of [how it works](#how-staticrypt-works)).
 
@@ -27,13 +27,13 @@ You can then run it with `npx staticrypt ...`. You can also install globally wit
 **Encrypt a file:** Encrypt `test.html` and create a `test_encrypted.html` file (add `-o my_encrypted_file.html` to change the name of the output file):
 
 ```bash
-staticrypt test.html MY_PASSPHRASE
+staticrypt test.html MY_LONG_PASSWORD
 ```
 
-**Encrypt a file with the passphrase in an environment variable:** set your passphrase in the `STATICRYPT_PASSWORD` environment variable ([`.env` files](https://www.npmjs.com/package/dotenv#usage) are supported):
+**Encrypt a file with the password in an environment variable:** set your long password in the `STATICRYPT_PASSWORD` environment variable ([`.env` files](https://www.npmjs.com/package/dotenv#usage) are supported):
 
 ```bash
-# the passphrase is in the STATICRYPT_PASSWORD env variable
+# the password is in the STATICRYPT_PASSWORD env variable
 staticrypt test.html
 ```
 
@@ -41,27 +41,27 @@ staticrypt test.html
 
 ```bash
 # you can also pass '--share' without specifying the URL to get the `?staticrypt_pwd=...` 
-staticrypt test.html MY_PASSPHRASE --share https://example.com/test_encrypted.html
+staticrypt test.html MY_LONG_PASSWORD --share https://example.com/test_encrypted.html
 # => https://example.com/test_encrypted.html?staticrypt_pwd=5bfbf1343c7257cd7be23ecd74bb37fa2c76d041042654f358b6255baeab898f
 ```
 
 **Encrypt all html files in a directory** and replace them with encrypted versions (`{}` will be replaced with each file name by the `find` command - if you wanted to move the encrypted files to an `encrypted/` directory, you could use `-o encrypted/{}`):
 
 ```bash
-find . -type f -name "*.html" -exec staticrypt {} MY_PASSPHRASE -o {} \;
+find . -type f -name "*.html" -exec staticrypt {} MY_LONG_PASSWORD -o {} \;
 ```
 
 **Encrypt all html files in a directory except** the ones ending in `_encrypted.html`:
 
 ```bash
-find . -type f -name "*.html" -not -name "*_encrypted.html" -exec staticrypt {} MY_PASSPHRASE \;
+find . -type f -name "*.html" -not -name "*_encrypted.html" -exec staticrypt {} MY_LONG_PASSWORD \;
 ```
 
 ### CLI Reference
 
-The passphrase argument is optional if `STATICRYPT_PASSWORD` is set in the environment or `.env` file.
+The password argument is optional if `STATICRYPT_PASSWORD` is set in the environment or `.env` file.
 
-    Usage: staticrypt <filename> [<passphrase>] [options]
+    Usage: staticrypt <filename> [<password>] [options]
 
     Options:
           --help                    Show help                              [boolean]
@@ -73,24 +73,23 @@ The passphrase argument is optional if `STATICRYPT_PASSWORD` is set in the envir
       -e, --embed                   Whether or not to embed crypto-js in the page
                                     (or use an external CDN).
                                                            [boolean] [default: true]
-      -f, --file-template           Path to custom HTML template with passphrase
+      -f, --file-template           Path to custom HTML template with password
                                     prompt.
-                                   [string] [default: "/lib/password_template.html"]
+                   [string] [default: "/code/staticrypt/lib/password_template.html"]
       -i, --instructions            Special instructions to display to the user.
                                                               [string] [default: ""]
           --label-error             Error message to display on entering wrong
-                                    passphrase.  [string] [default: "Bad password!"]
+                                    password.    [string] [default: "Bad password!"]
           --noremember              Set this flag to remove the "Remember me"
                                     checkbox.             [boolean] [default: false]
       -o, --output                  File name/path for the generated encrypted file.
                                                             [string] [default: null]
-          --passphrase-placeholder  Placeholder to use for the passphrase input.
+          --passphrase-placeholder  Placeholder to use for the password input.
                                                       [string] [default: "Password"]
       -r, --remember                Expiration in days of the "Remember me" checkbox
-                                    that will save the (salted + hashed) passphrase
-                                    in localStorage when entered by the user.
-                                    Default: "0", no expiration.
-                                                               [number] [default: 0]
+                                    that will save the (salted + hashed) password in
+                                    localStorage when entered by the user. Default:
+                                    "0", no expiration.        [number] [default: 0]
           --remember-label          Label to use for the "Remember me" checkbox.
                                                    [string] [default: "Remember me"]
       -s, --salt                    Set the salt manually. It should be set if you
@@ -104,7 +103,10 @@ The passphrase argument is optional if `STATICRYPT_PASSWORD` is set in the envir
                                     value to append "?staticrypt_pwd=<hashed_pwd>",
                                     or leave empty to display the hash to append.
                                                                             [string]
+          --short                   Hide the "short password" warning.
+                                                          [boolean] [default: false]
       -t, --title                   Title for the output HTML page.
+                                                [string] [default: "Protected Page"]
 
 
 ## HOW STATICRYPT WORKS
@@ -119,9 +121,11 @@ So it basically encrypts your page and puts everything in a user-friendly way to
 
 ### Is it secure?
 
-Simple answer: your file content has been encrypted with AES-256 (CBC), a popular and strong encryption algorithm, you can now upload it in any public place and no one will be able to read it without the password. So yes, if you used a good password it should be pretty secure.
+Simple answer: your file content has been encrypted with AES-256 (CBC), a popular and strong encryption algorithm, you can now upload it in any public place and no one will be able to read it without the password. So if you used a long, strong password, then yes it should be pretty secure.
 
-That being said, actual security always depends on a number of factors and on the threat model you want to protect against. Because your full encrypted file is accessible client side, brute-force/dictionary attacks would be trivial to do at a really fast pace: **use a long, unusual password**. You can read a discussion on CBC mode and how appropriate it is in the context of StatiCrypt in [#19](https://github.com/robinmoisson/staticrypt/issues/19).
+That being said, actual security always depends on a number of factors and on the threat model you want to protect against. Because your full encrypted file is accessible client side, brute-force/dictionary attacks would be easy to do at a really fast pace: **use a long, unusual password**. We recommend 16+ alphanum characters, [Bitwarden](https://bitwarden.com/) is a great open-source password manager if you don't have one already. 
+
+On the technical aspects: we use AES in CBC mode (see a discussion on why it's appropriate for StatiCrypt in [#19](https://github.com/robinmoisson/staticrypt/issues/19)) and 15k PBKDF2 iterations (it will be 600k when we'll switch to WebCrypto, read a detailed report on why these numbers in [#159](https://github.com/robinmoisson/staticrypt/issues/159)).
 
 **Also, disclaimer:** I am not a cryptographer - the concept is simple and I try my best to implement it correctly but please adjust accordingly: if you are an at-risk activist or have sensitive crypto data to protect, you might want to use something else.
 
@@ -149,9 +153,9 @@ The salt isn't secret, so you don't need to worry about hiding the config file.
 
 ### How does the "Remember me" checkbox work?
 
-The CLI will add a "Remember me" checkbox on the password prompt by default (`--noremember` to disable). If the user checks it, the (salted + hashed) passphrase will be stored in their browser's localStorage and the page will attempt to auto-decrypt when they come back.
+The CLI will add a "Remember me" checkbox on the password prompt by default (`--noremember` to disable). If the user checks it, the (salted + hashed) password will be stored in their browser's localStorage and the page will attempt to auto-decrypt when they come back.
 
-If no value is provided the stored passphrase doesn't expire, you can also give it a value in days for how long should the store value be kept with `-r NUMBER_OF_DAYS`. If the user reconnects to the page after the expiration date the stored value will be cleared.
+If no value is provided the stored password doesn't expire, you can also give it a value in days for how long should the store value be kept with `-r NUMBER_OF_DAYS`. If the user reconnects to the page after the expiration date the stored value will be cleared.
 
 #### "Logging out"
 
@@ -163,14 +167,14 @@ This allows encrypting multiple page on a single domain with the same password: 
 
 #### Is the "Remember me" checkbox secure?
 
-In case the value stored in the browser becomes compromised an attacker can decrypt the page, but because it's stored salted and hashed this should still protect against password reuse attacks if you've used the passphrase on other websites (of course, please use a unique passphrase nonetheless).
+In case the value stored in the browser becomes compromised an attacker can decrypt the page, but because it's stored salted and hashed this should still protect against password reuse attacks if you've used the password on other websites (of course, please use a long, unique password nonetheless).
 
 ## Contributing
 
 ### 🙏 Thank you!
 
 - [@AaronCoplan](https://github.com/AaronCoplan) for bringing the CLI to life
-- [@epicfaace](https://github.com/epicfaace) & [@thomasmarr](https://github.com/thomasmarr) for sparking the caching of the passphrase in localStorage (allowing the "Remember me" checkbox)
+- [@epicfaace](https://github.com/epicfaace) & [@thomasmarr](https://github.com/thomasmarr) for sparking the caching of the password in localStorage (allowing the "Remember me" checkbox)
 - [@hurrymaplelad](https://github.com/hurrymaplelad) for refactoring a lot of the code and making the project much more pleasant to work with
 
 ### Opening PRs and issues
