@@ -13,7 +13,7 @@ const cryptoEngine = require("../lib/cryptoEngine/cryptojsEngine");
 const codec = require("../lib/codec");
 const { convertCommonJSToBrowserJS, exitEarly, isOptionSetByUser, genFile, getPassword, getFileContent, getSalt} = require("./helpers");
 const { isCustomPasswordTemplateLegacy, parseCommandLineArguments} = require("./helpers.js");
-const { generateRandomSalt } = cryptoEngine;
+const { generateRandomSalt, generateRandomString } = cryptoEngine;
 const { encode } = codec.init(cryptoEngine);
 
 const SCRIPT_URL =
@@ -43,6 +43,16 @@ if (positionalArguments.length > 2 || positionalArguments.length === 0) {
 // parse input
 const inputFilepath = positionalArguments[0].toString(),
   password = getPassword(positionalArguments);
+
+if (password.length < 16 && !namedArgs.short) {
+  console.log(
+      `WARNING: Your password is less than 16 characters (length: ${password.length}). Brute-force attacks are easy to `
+      + `try on public files, and you are most safe when using a long password. You can hide this warning by increasing `
+      + `the length or adding the '--short' flag.\n`
+      + `Here's a strong generated password you could use: `
+      + generateRandomString(21)
+  )
+}
 
 // get config file
 const isUsingconfigFile = namedArgs.config.toLowerCase() !== "false";

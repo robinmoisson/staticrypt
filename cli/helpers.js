@@ -196,7 +196,7 @@ function isCustomPasswordTemplateLegacy(templatePathParameter) {
 exports.isCustomPasswordTemplateLegacy = isCustomPasswordTemplateLegacy;
 
 function parseCommandLineArguments() {
-    return Yargs.usage("Usage: staticrypt <filename> [<passphrase>] [options]")
+    return Yargs.usage("Usage: staticrypt <filename> [<password>] [options]")
         .option("c", {
             alias: "config",
             type: "string",
@@ -218,7 +218,7 @@ function parseCommandLineArguments() {
         .option("f", {
             alias: "file-template",
             type: "string",
-            describe: "Path to custom HTML template with passphrase prompt.",
+            describe: "Path to custom HTML template with password prompt.",
             default: PASSWORD_TEMPLATE_DEFAULT_PATH,
         })
         .option("i", {
@@ -229,7 +229,7 @@ function parseCommandLineArguments() {
         })
         .option("label-error", {
             type: "string",
-            describe: "Error message to display on entering wrong passphrase.",
+            describe: "Error message to display on entering wrong password.",
             default: "Bad password!",
         })
         .option("noremember", {
@@ -245,14 +245,14 @@ function parseCommandLineArguments() {
         })
         .option("passphrase-placeholder", {
             type: "string",
-            describe: "Placeholder to use for the passphrase input.",
+            describe: "Placeholder to use for the password input.",
             default: "Password",
         })
         .option("r", {
             alias: "remember",
             type: "number",
             describe:
-                'Expiration in days of the "Remember me" checkbox that will save the (salted + hashed) passphrase ' +
+                'Expiration in days of the "Remember me" checkbox that will save the (salted + hashed) password ' +
                 'in localStorage when entered by the user. Default: "0", no expiration.',
             default: 0,
         })
@@ -278,6 +278,11 @@ function parseCommandLineArguments() {
                 'Get a link containing your hashed password that will auto-decrypt the page. Pass your URL as a value to append '
                 + '"?staticrypt_pwd=<hashed_pwd>", or leave empty to display the hash to append.',
             type: "string",
+        })
+        .option("short", {
+            describe: 'Hide the "short password" warning.',
+            type: "boolean",
+            default: false,
         })
         .option("t", {
             alias: "title",
