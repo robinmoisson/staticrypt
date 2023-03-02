@@ -17,15 +17,17 @@ If you'd like to warn me privately of a vulnerabilty, you can write me at robin.
 
 If it's a more of a suggestion, or something that can be discussed openly without negative impact, you can also open an issue. Discussions on the security model and choices of StatiCrypt are very welcome!
 
-In case of a severe vulnerability I'll try to get back to you quickly to acknowledge I got the message, and to get a fix out relatively quickly as well.
+In case of a severe vulnerability I'll try to get back to you quickly to acknowledge I got the message, and to get a fix out relatively quickly as well. 
 
-There are periods in my life where I'm offline for weeks at a time, so unfortunately I can't guarantee a specific response speed. Just know this might be what's happening if I'm completely unresponsive... It shouldn't last more than a month though.
+There are periods in my life where I'm offline for weeks at a time, so unfortunately I can't guarantee a specific response speed at all times. Just know this might be what's happening if I'm completely unresponsive... It shouldn't last more than a month though.
+
 
 And finally if you're reporting anything security related: thank you very much for making StatiCrypt safer, your benevolence is very much appreciated! 🙏
 
 
 My public key:
 
+```
 -----BEGIN PGP PUBLIC KEY BLOCK-----
 
 mQINBGP7Nw0BEADTAxpYuydugSjQ4OtfzFwLqIG0lRZG8dCQVSFXEaPL2IjRis/j
@@ -91,3 +93,4 @@ KIw9dJ4rFhfpwy4DqgDkYN74vTMd+naVnqrKmrOrItjTwpIcMcNgyQhmlsGytAkR
 m4zPXCE1QrrgPtbBL6GXiE5z
 =Ab3R
 -----END PGP PUBLIC KEY BLOCK-----
+```
