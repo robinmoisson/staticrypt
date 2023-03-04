@@ -211,9 +211,13 @@ function parseCommandLineArguments() {
         .option("e", {
             alias: "embed",
             type: "boolean",
-            describe:
-                "Whether or not to embed crypto-js in the page (or use an external CDN).",
+            describe: "Whether or not to embed crypto-js in the page (or use an external CDN).",
             default: true,
+        })
+        .option("engine", {
+            type: "string",
+            describe: "The crypto engine to use. Possible values: 'cryptojs', 'webcrypto'.",
+            default: "cryptojs",
         })
         .option("f", {
             alias: "file-template",

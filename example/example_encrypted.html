@@ -184,48 +184,135 @@
 </div>
 
 
-<script src="https://cdnjs.cloudflare.com/ajax/libs/crypto-js/3.1.9-1/crypto-js.min.js" integrity="sha384-lp4k1VRKPU9eBnPePjnJ9M2RF3i7PC30gXs70+elCVfgwLwx1tv5+ctxdtwxqZa7" crossorigin="anonymous"></script>
+
 
 <script>
-    var cryptoEngine = ((function(){
+    const cryptoEngine = ((function(){
   const exports = {};
-  
+  const { subtle } = crypto;
+
+const IV_BITS = 16 * 8;
+const HEX_BITS = 4;
+const ENCRYPTION_ALGO = "AES-CBC";
+
+/**
+ * Translates between utf8 encoded hexadecimal strings
+ * and Uint8Array bytes.
+ *
+ * Mirrors the API of CryptoJS.enc.Hex
+ */
+const HexEncoder = {
+    /**
+     * hex string -> bytes
+     * @param {string} hexString
+     * @returns {Uint8Array}
+     */
+    parse: function (hexString) {
+        if (hexString.length % 2 !== 0) throw "Invalid hexString";
+        const arrayBuffer = new Uint8Array(hexString.length / 2);
+
+        for (let i = 0; i < hexString.length; i += 2) {
+            const byteValue = parseInt(hexString.substring(i, i + 2), 16);
+            if (isNaN(byteValue)) {
+                throw "Invalid hexString";
+            }
+            arrayBuffer[i / 2] = byteValue;
+        }
+        return arrayBuffer;
+    },
+
+    /**
+     * bytes -> hex string
+     * @param {Uint8Array} bytes
+     * @returns {string}
+     */
+    stringify: function (bytes) {
+        const hexBytes = [];
+
+        for (let i = 0; i < bytes.length; ++i) {
+            let byteString = bytes[i].toString(16);
+            if (byteString.length < 2) {
+                byteString = "0" + byteString;
+            }
+            hexBytes.push(byteString);
+        }
+        return hexBytes.join("");
+    },
+};
+
+/**
+ * Translates between utf8 strings and Uint8Array bytes.
+ */
+const UTF8Encoder = {
+    parse: function (str) {
+        return new TextEncoder().encode(str);
+    },
+
+    stringify: function (bytes) {
+        return new TextDecoder().decode(bytes);
+    },
+};
+
 /**
  * Salt and encrypt a msg with a password.
- * Inspired by https://github.com/adonespitogo
  */
-function encrypt(msg, hashedPassphrase) {
-  var iv = CryptoJS.lib.WordArray.random(128 / 8);
+async function encrypt(msg, hashedPassphrase) {
+    // Must be 16 bytes, unpredictable, and preferably cryptographically random. However, it need not be secret.
+    // https://developer.mozilla.org/en-US/docs/Web/API/SubtleCrypto/encrypt#parameters
+    const iv = crypto.getRandomValues(new Uint8Array(IV_BITS / 8));
 
-  var encrypted = CryptoJS.AES.encrypt(msg, hashedPassphrase, {
-    iv: iv,
-    padding: CryptoJS.pad.Pkcs7,
-    mode: CryptoJS.mode.CBC,
-  });
+    const key = await subtle.importKey(
+        "raw",
+        HexEncoder.parse(hashedPassphrase),
+        ENCRYPTION_ALGO,
+        false,
+        ["encrypt"]
+    );
 
-  // iv will be hex 16 in length (32 characters)
-  // we prepend it to the ciphertext for use in decryption
-  return iv.toString() + encrypted.toString();
+    const encrypted = await subtle.encrypt(
+        {
+            name: ENCRYPTION_ALGO,
+            iv: iv,
+        },
+        key,
+        UTF8Encoder.parse(msg)
+    );
+
+    // iv will be 32 hex characters, we prepend it to the ciphertext for use in decryption
+    return HexEncoder.stringify(iv) + HexEncoder.stringify(new Uint8Array(encrypted));
 }
 exports.encrypt = encrypt;
 
 /**
  * Decrypt a salted msg using a password.
- * Inspired by https://github.com/adonespitogo
  *
  * @param {string} encryptedMsg
  * @param {string} hashedPassphrase
- * @returns {string}
+ * @returns {Promise<string>}
  */
-function decrypt(encryptedMsg, hashedPassphrase) {
-  var iv = CryptoJS.enc.Hex.parse(encryptedMsg.substr(0, 32));
-  var encrypted = encryptedMsg.substring(32);
+async function decrypt(encryptedMsg, hashedPassphrase) {
+    const ivLength = IV_BITS / HEX_BITS;
+    const iv = HexEncoder.parse(encryptedMsg.substring(0, ivLength));
+    const encrypted = encryptedMsg.substring(ivLength);
 
-  return CryptoJS.AES.decrypt(encrypted, hashedPassphrase, {
-    iv: iv,
-    padding: CryptoJS.pad.Pkcs7,
-    mode: CryptoJS.mode.CBC,
-  }).toString(CryptoJS.enc.Utf8);
+    const key = await subtle.importKey(
+        "raw",
+        HexEncoder.parse(hashedPassphrase),
+        ENCRYPTION_ALGO,
+        false,
+        ["decrypt"]
+    );
+
+    const outBuffer = await subtle.decrypt(
+        {
+            name: ENCRYPTION_ALGO,
+            iv: iv,
+        },
+        key,
+        HexEncoder.parse(encrypted)
+    );
+
+    return UTF8Encoder.stringify(new Uint8Array(outBuffer));
 }
 exports.decrypt = decrypt;
 
@@ -234,15 +321,15 @@ exports.decrypt = decrypt;
  *
  * @param {string} passphrase
  * @param {string} salt
- * @returns string
+ * @returns {Promise<string>}
  */
-function hashPassphrase(passphrase, salt) {
-  // we hash the passphrase in two steps: first 1k iterations, then we add iterations. This is because we used to use 1k,
-  // so for backwards compatibility with remember-me/autodecrypt links, we need to support going from that to more
-  // iterations
-  var hashedPassphrase = hashLegacyRound(passphrase, salt);
+async function hashPassphrase(passphrase, salt) {
+    // we hash the passphrase in two steps: first 1k iterations, then we add iterations. This is because we used to use 1k,
+    // so for backwards compatibility with remember-me/autodecrypt links, we need to support going from that to more
+    // iterations
+    const hashedPassphrase = await hashLegacyRound(passphrase, salt);
 
-  return hashSecondRound(hashedPassphrase, salt);
+    return hashSecondRound(hashedPassphrase, salt);
 }
 exports.hashPassphrase = hashPassphrase;
 
@@ -252,13 +339,10 @@ exports.hashPassphrase = hashPassphrase;
  *
  * @param {string} passphrase
  * @param {string} salt
- * @returns {string}
+ * @returns {Promise<string>}
  */
 function hashLegacyRound(passphrase, salt) {
-  return CryptoJS.PBKDF2(passphrase, salt, {
-    keySize: 256 / 32,
-    iterations: 1000,
-  }).toString();
+    return pbkdf2(passphrase, salt, 1000, "SHA-1");
 }
 exports.hashLegacyRound = hashLegacyRound;
 
@@ -268,38 +352,87 @@ exports.hashLegacyRound = hashLegacyRound;
  *
  * @param hashedPassphrase
  * @param salt
- * @returns {string}
+ * @returns {Promise<string>}
  */
 function hashSecondRound(hashedPassphrase, salt) {
-  return CryptoJS.PBKDF2(hashedPassphrase, salt, {
-    keySize: 256 / 32,
-    iterations: 14000,
-    hasher: CryptoJS.algo.SHA256,
-  }).toString();
+    return pbkdf2(hashedPassphrase, salt, 14000, "SHA-256");
 }
 exports.hashSecondRound = hashSecondRound;
 
+/**
+ * Salt and hash the passphrase so it can be stored in localStorage without opening a password reuse vulnerability.
+ *
+ * @param {string} passphrase
+ * @param {string} salt
+ * @param {int} iterations
+ * @param {string} hashAlgorithm
+ * @returns {Promise<string>}
+ */
+async function pbkdf2(passphrase, salt, iterations, hashAlgorithm) {
+    const key = await subtle.importKey(
+        "raw",
+        UTF8Encoder.parse(passphrase),
+        "PBKDF2",
+        false,
+        ["deriveBits"]
+    );
+
+    const keyBytes = await subtle.deriveBits(
+        {
+            name: "PBKDF2",
+            hash: hashAlgorithm,
+            iterations,
+            salt: UTF8Encoder.parse(salt),
+        },
+        key,
+        256
+    );
+
+    return HexEncoder.stringify(new Uint8Array(keyBytes));
+}
+exports.hashPassphrase = hashPassphrase;
+
 function generateRandomSalt() {
-  return CryptoJS.lib.WordArray.random(128 / 8).toString();
+    const bytes = crypto.getRandomValues(new Uint8Array(128 / 8));
+
+    return HexEncoder.stringify(new Uint8Array(bytes));
 }
 exports.generateRandomSalt = generateRandomSalt;
 
-function getRandomAlphanum() {
-    var possibleCharacters = "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789";
+async function signMessage(hashedPassphrase, message) {
+    const key = await subtle.importKey(
+        "raw",
+        HexEncoder.parse(hashedPassphrase),
+        {
+            name: "HMAC",
+            hash: "SHA-256",
+        },
+        false,
+        ["sign"]
+    );
+    const signature = await subtle.sign("HMAC", key, UTF8Encoder.parse(message));
 
-    var byteArray;
-    var parsedInt;
+    return HexEncoder.stringify(new Uint8Array(signature));
+}
+exports.signMessage = signMessage;
+
+
+function getRandomAlphanum() {
+    const possibleCharacters = "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789";
+
+    let byteArray;
+    let parsedInt;
 
     // Keep generating new random bytes until we get a value that falls
     // within a range that can be evenly divided by possibleCharacters.length
     do {
-        byteArray = CryptoJS.lib.WordArray.random(1);
+        byteArray = crypto.getRandomValues(new Uint8Array(1));
         // extract the lowest byte to get an int from 0 to 255 (probably unnecessary, since we're only generating 1 byte)
-        parsedInt = byteArray.words[0] & 0xff;
+        parsedInt = byteArray[0] & 0xff;
     } while (parsedInt >= 256 - (256 % possibleCharacters.length));
 
     // Take the modulo of the parsed integer to get a random number between 0 and totalLength - 1
-    var randomIndex = parsedInt % possibleCharacters.length;
+    const randomIndex = parsedInt % possibleCharacters.length;
 
     return possibleCharacters[randomIndex];
 }
@@ -311,27 +444,20 @@ function getRandomAlphanum() {
  * @returns {string}
  */
 function generateRandomString(length) {
-    var randomString = '';
+    let randomString = '';
 
-    for (var i = 0; i < length; i++) {
-      randomString += getRandomAlphanum();
+    for (let i = 0; i < length; i++) {
+        randomString += getRandomAlphanum();
     }
 
     return randomString;
 }
 exports.generateRandomString = generateRandomString;
 
-function signMessage(hashedPassphrase, message) {
-  return CryptoJS.HmacSHA256(
-    message,
-    CryptoJS.SHA256(hashedPassphrase).toString()
-  ).toString();
-}
-exports.signMessage = signMessage;
 
   return exports;
 })())
-    var codec = ((function(){
+    const codec = ((function(){
   const exports = {};
   /**
  * Initialize the codec with the provided cryptoEngine - this return functions to encode and decode messages.
@@ -356,15 +482,17 @@ function init(cryptoEngine) {
    *
    * @returns {string} The encoded text
    */
-  function encode(msg, password, salt, isLegacy = false) {
+  async function encode(msg, password, salt, isLegacy = false) {
     // TODO: remove in the next major version bump. This is to not break backwards compatibility with the old way of hashing
     const hashedPassphrase = isLegacy
-        ? cryptoEngine.hashLegacyRound(password, salt)
-        : cryptoEngine.hashPassphrase(password, salt);
-    const encrypted = cryptoEngine.encrypt(msg, hashedPassphrase);
+        ? await cryptoEngine.hashLegacyRound(password, salt)
+        : await cryptoEngine.hashPassphrase(password, salt);
+
+
+    const encrypted = await cryptoEngine.encrypt(msg, hashedPassphrase);
     // we use the hashed password in the HMAC because this is effectively what will be used a password (so we can store
     // it in localStorage safely, we don't use the clear text password)
-    const hmac = cryptoEngine.signMessage(hashedPassphrase, encrypted);
+    const hmac = await cryptoEngine.signMessage(hashedPassphrase, encrypted);
 
     return hmac + encrypted;
   }
@@ -380,10 +508,10 @@ function init(cryptoEngine) {
    *
    * @returns {Object} {success: true, decoded: string} | {success: false, message: string}
    */
-  function decode(signedMsg, hashedPassphrase, backwardCompatibleHashedPassword = '') {
+  async function decode(signedMsg, hashedPassphrase, backwardCompatibleHashedPassword = '') {
     const encryptedHMAC = signedMsg.substring(0, 64);
     const encryptedMsg = signedMsg.substring(64);
-    const decryptedHMAC = cryptoEngine.signMessage(hashedPassphrase, encryptedMsg);
+    const decryptedHMAC = await cryptoEngine.signMessage(hashedPassphrase, encryptedMsg);
 
     if (decryptedHMAC !== encryptedHMAC) {
       // TODO: remove in next major version bump. This is to not break backwards compatibility with the old 1k
@@ -392,7 +520,7 @@ function init(cryptoEngine) {
       if (!backwardCompatibleHashedPassword) {
         return decode(
             signedMsg,
-            cryptoEngine.hashSecondRound(hashedPassphrase, backwardCompatibleSalt),
+            await cryptoEngine.hashSecondRound(hashedPassphrase, backwardCompatibleSalt),
             hashedPassphrase
         );
       }
@@ -417,7 +545,7 @@ function init(cryptoEngine) {
 
     return {
       success: true,
-      decoded: cryptoEngine.decrypt(encryptedMsg, hashedPassphrase),
+      decoded: await cryptoEngine.decrypt(encryptedMsg, hashedPassphrase),
     };
   }
   exports.decode = decode;
@@ -428,31 +556,31 @@ exports.init = init;
 
   return exports;
 })())
-    var decode = codec.init(cryptoEngine).decode;
+    const decode = codec.init(cryptoEngine).decode;
 
     // variables to be filled when generating the file
-    var encryptedMsg = '060d759ada624841e032ea6cae0702adcbc1d451c01abe34997ed26a84ed4744d441fa6762ebd5a8c57cc5072f604a85U2FsdGVkX1+kxAZ7tF7tajh5NbDHIVUiC4CzLCa9H8BoTKgapvg9mXDGaIDkmRmk3nLDt1I+lMB8vgy/nr2E04CUTvaAJFFua9EZwMzTa6VNWELRJEOrbzESZ8P++2sZyVYUGinfB8ZbBdEZHPErPc6f7ZcksLTmCki+W4cpOEfYF9HBHjsMqu7BVvBCW5NXBajFzasDS327SrLay10VXA==',
+    const encryptedMsg = '69480424a5fcc19909363e39d8434a0f706b32183e0771f2be1e746cdadfef879e9866b997f75e85a60ddfb7483e571eeba89134dea2f77a4b1123fb2825e8d32132045ea5a98b491fb29b20142643c98a2bc24e90d936f58dea6c67a2a692c9066e4d0cce5f01da8b433a5338224327edda47dadf43a6ffc45185f26f4c2438a68af464f3a69cb586fbb71cf4ef353a66d474fafa848bf736c683c986bb86b8e23dfcf6f3dbef170cacaae3591f9004f6f44b4dcc597d5696adfbb0781a4c32',
         salt = 'b93bbaf35459951c47721d1f3eaeb5b9',
         labelError = 'Bad password!',
         isRememberEnabled = true,
         rememberDurationInDays = 0; // 0 means forever
 
     // constants
-    var rememberPassphraseKey = 'staticrypt_passphrase',
+    const rememberPassphraseKey = 'staticrypt_passphrase',
         rememberExpirationKey = 'staticrypt_expiration';
 
     /**
      * Decrypt our encrypted page, replace the whole HTML.
      *
      * @param  hashedPassphrase
-     * @returns 
+     * @returns {Promise<boolean>}
      */
-    function decryptAndReplaceHtml(hashedPassphrase) {
-        var result = decode(encryptedMsg, hashedPassphrase);
+    async function decryptAndReplaceHtml(hashedPassphrase) {
+        const result = await decode(encryptedMsg, hashedPassphrase);
         if (!result.success) {
             return false;
         }
-        var plainHTML = result.decoded;
+        const plainHTML = result.decoded;
 
         document.write(plainHTML);
         document.close();
@@ -471,9 +599,9 @@ exports.init = init;
      * To be called on load: check if we want to try to decrypt and replace the HTML with the decrypted content, and
      * try to do it if needed.
      *
-     * @returns  true if we derypted and replaced the whole page, false otherwise
+     * @returns {Promise<boolean>} true if we derypted and replaced the whole page, false otherwise
      */
-    function decryptOnLoadFromRememberMe() {
+    async function decryptOnLoadFromRememberMe() {
         if (!isRememberEnabled) {
             return false;
         }
@@ -482,7 +610,7 @@ exports.init = init;
         document.getElementById('staticrypt-remember-label').classList.remove('hidden');
 
         // if we are login out, clear the storage and terminate
-        var queryParams = new URLSearchParams(window.location.search);
+        const queryParams = new URLSearchParams(window.location.search);
 
         if (queryParams.has("staticrypt_logout")) {
             clearLocalStorage();
@@ -491,7 +619,7 @@ exports.init = init;
 
         // if there is expiration configured, check if we're not beyond the expiration
         if (rememberDurationInDays && rememberDurationInDays > 0) {
-            var expiration = localStorage.getItem(rememberExpirationKey),
+            const expiration = localStorage.getItem(rememberExpirationKey),
                 isExpired = expiration && new Date().getTime() > parseInt(expiration);
 
             if (isExpired) {
@@ -500,11 +628,11 @@ exports.init = init;
             }
         }
 
-        var hashedPassphrase = localStorage.getItem(rememberPassphraseKey);
+        const hashedPassphrase = localStorage.getItem(rememberPassphraseKey);
 
         if (hashedPassphrase) {
             // try to decrypt
-            var isDecryptionSuccessful = decryptAndReplaceHtml(hashedPassphrase);
+            const isDecryptionSuccessful = await decryptAndReplaceHtml(hashedPassphrase);
 
             // if the decryption is unsuccessful the password might be wrong - silently clear the saved data and let
             // the user fill the password form again
@@ -520,8 +648,8 @@ exports.init = init;
     }
 
     function decryptOnLoadFromQueryParam() {
-        var queryParams = new URLSearchParams(window.location.search);
-        var hashedPassphrase = queryParams.get("staticrypt_pwd");
+        const queryParams = new URLSearchParams(window.location.search);
+        const hashedPassphrase = queryParams.get("staticrypt_pwd");
 
         if (hashedPassphrase) {
             return decryptAndReplaceHtml(hashedPassphrase);
@@ -531,11 +659,11 @@ exports.init = init;
     }
 
     // try to automatically decrypt on load if there is a saved password
-    window.onload = function () {
-        var hasDecrypted = decryptOnLoadFromQueryParam();
+    window.onload = async function () {
+        let hasDecrypted = await decryptOnLoadFromQueryParam();
 
         if (!hasDecrypted) {
-            hasDecrypted = decryptOnLoadFromRememberMe();
+            hasDecrypted = await decryptOnLoadFromRememberMe();
         }
 
         // if we didn't decrypt anything, show the password prompt. Otherwise the content has already been replaced, no
@@ -548,15 +676,15 @@ exports.init = init;
     }
 
     // handle password form submission
-    document.getElementById('staticrypt-form').addEventListener('submit', function (e) {
+    document.getElementById('staticrypt-form').addEventListener('submit', async function (e) {
         e.preventDefault();
 
-        var passphrase = document.getElementById('staticrypt-password').value,
+        const passphrase = document.getElementById('staticrypt-password').value,
             shouldRememberPassphrase = document.getElementById('staticrypt-remember').checked;
 
         // decrypt and replace the whole page
-        var hashedPassphrase = cryptoEngine.hashPassphrase(passphrase, salt);
-        var isDecryptionSuccessful = decryptAndReplaceHtml(hashedPassphrase);
+        const hashedPassphrase = await cryptoEngine.hashPassphrase(passphrase, salt);
+        const isDecryptionSuccessful = await decryptAndReplaceHtml(hashedPassphrase);
 
         if (isDecryptionSuccessful) {
             // remember the hashedPassphrase and set its expiration if necessary

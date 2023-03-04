@@ -3,7 +3,8 @@
 
 # encrypt the example file
 npx . example/example.html test \
-    --no-embed \
+    --engine webcrypto \
+    --short \
     --salt b93bbaf35459951c47721d1f3eaeb5b9 \
     --instructions "Enter \"test\" to unlock the page"
 

@@ -4,28 +4,29 @@
 
 const fs = require("fs");
 const path = require("path");
-const Yargs = require("yargs");
 
 // parse .env file into process.env
 require('dotenv').config();
 
-const cryptoEngine = require("../lib/cryptoEngine/cryptojsEngine");
+const cryptojsEngine = require("../lib/cryptoEngine/cryptojsEngine");
+const webcryptoEngine = require("../lib/cryptoEngine/webcryptoEngine");
 const codec = require("../lib/codec");
 const { convertCommonJSToBrowserJS, exitEarly, isOptionSetByUser, genFile, getPassword, getFileContent, getSalt} = require("./helpers");
 const { isCustomPasswordTemplateLegacy, parseCommandLineArguments} = require("./helpers.js");
-const { generateRandomSalt, generateRandomString } = cryptoEngine;
-const { encode } = codec.init(cryptoEngine);
 
-const SCRIPT_URL =
-  "https://cdnjs.cloudflare.com/ajax/libs/crypto-js/3.1.9-1/crypto-js.min.js";
-const SCRIPT_TAG =
-  '<script src="' +
-  SCRIPT_URL +
-  '" integrity="sha384-lp4k1VRKPU9eBnPePjnJ9M2RF3i7PC30gXs70+elCVfgwLwx1tv5+ctxdtwxqZa7" crossorigin="anonymous"></script>';
+const CRYPTOJS_SCRIPT_TAG =
+  '<script src="https://cdnjs.cloudflare.com/ajax/libs/crypto-js/3.1.9-1/crypto-js.min.js" ' +
+    'integrity="sha384-lp4k1VRKPU9eBnPePjnJ9M2RF3i7PC30gXs70+elCVfgwLwx1tv5+ctxdtwxqZa7" crossorigin="anonymous"></script>';
 
 // parse arguments
 const yargs = parseCommandLineArguments();
 const namedArgs = yargs.argv;
+
+// set the crypto engine
+const isWebcrypto = namedArgs.engine === "webcrypto";
+const cryptoEngine = isWebcrypto ? webcryptoEngine : cryptojsEngine;
+const { generateRandomSalt, generateRandomString } = cryptoEngine;
+const { encode } = codec.init(cryptoEngine);
 
 // if the 's' flag is passed without parameter, generate a salt, display & exit
 if (isOptionSetByUser("s", yargs) && !namedArgs.salt) {
@@ -105,12 +106,11 @@ if (isLegacy) {
     );
 }
 
-// encrypt input
-const encryptedMessage = encode(contents, password, salt, isLegacy);
-
 // create crypto-js tag (embedded or not)
-let cryptoTag = SCRIPT_TAG;
-if (namedArgs.embed) {
+let cryptoTag = CRYPTOJS_SCRIPT_TAG;
+if (isWebcrypto) {
+  cryptoTag = "";
+} else if (namedArgs.embed) {
   try {
     const embedContents = fs.readFileSync(
       path.join(__dirname, "..", "lib", "kryptojs-3.1.9-1.min.js"),
@@ -123,27 +123,37 @@ if (namedArgs.embed) {
   }
 }
 
-const data = {
-  crypto_tag: cryptoTag,
-  decrypt_button: namedArgs.decryptButton,
-  embed: namedArgs.embed,
-  encrypted: encryptedMessage,
-  instructions: namedArgs.instructions,
-  is_remember_enabled: namedArgs.noremember ? "false" : "true",
-  // TODO: remove on next major version bump. This is a hack to pass the salt to the injected js_codec in a backward
-  //  compatible way (not requiring to update the password_template).
-  js_codec: convertCommonJSToBrowserJS("lib/codec").replace('##SALT##', salt),
-  js_crypto_engine: convertCommonJSToBrowserJS("lib/cryptoEngine/cryptojsEngine"),
-  label_error: namedArgs.labelError,
-  passphrase_placeholder: namedArgs.passphrasePlaceholder,
-  remember_duration_in_days: namedArgs.remember,
-  remember_me: namedArgs.rememberLabel,
-  salt: salt,
-  title: namedArgs.title,
-};
+const cryptoEngineString = isWebcrypto
+    ? convertCommonJSToBrowserJS("lib/cryptoEngine/webcryptoEngine")
+    : convertCommonJSToBrowserJS("lib/cryptoEngine/cryptojsEngine");
 
-const outputFilepath = namedArgs.output !== null
-    ? namedArgs.output
-    : inputFilepath.replace(/\.html$/, "") + "_encrypted.html";
 
-genFile(data, outputFilepath, namedArgs.f);
+// encrypt input
+encode(contents, password, salt, isLegacy).then((encryptedMessage) => {
+  const data = {
+    crypto_tag: cryptoTag,
+    decrypt_button: namedArgs.decryptButton,
+    // TODO: deprecated option here for backward compat, remove on next major version bump
+    embed: isWebcrypto ? false : namedArgs.embed,
+    encrypted: encryptedMessage,
+    instructions: namedArgs.instructions,
+    is_remember_enabled: namedArgs.noremember ? "false" : "true",
+    // TODO: remove on next major version bump. This is a hack to pass the salt to the injected js_codec in a backward
+    //  compatible way (not requiring to update the password_template).
+    js_codec: convertCommonJSToBrowserJS("lib/codec").replace('##SALT##', salt),
+    js_crypto_engine: cryptoEngineString,
+    label_error: namedArgs.labelError,
+    passphrase_placeholder: namedArgs.passphrasePlaceholder,
+    remember_duration_in_days: namedArgs.remember,
+    remember_me: namedArgs.rememberLabel,
+    salt: salt,
+    title: namedArgs.title,
+  };
+
+  const outputFilepath = namedArgs.output !== null
+      ? namedArgs.output
+      : inputFilepath.replace(/\.html$/, "") + "_encrypted.html";
+
+  genFile(data, outputFilepath, namedArgs.f);
+
+});
