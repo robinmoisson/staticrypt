@@ -22,7 +22,9 @@ You can then run it with `npx staticrypt ...`. You can also install globally wit
 
 ### Examples
 
-> These will create a `.staticrypt.json` file in the current directory, see the FAQ as to why. You can prevent it by setting the `--config` flag to "false".
+> If you're viewing your file over HTTPS or localhost, you can add the `--engine webcrypto` flag to use the WebCrypto engine, which is more secure here. Otherwise the CryptoJS engine will be used.
+> 
+> These examples will create a `.staticrypt.json` file in the current directory, see the FAQ as to why. You can prevent it by setting the `--config` flag to "false".
 
 **Encrypt a file:** Encrypt `test.html` and create a `test_encrypted.html` file (add `-o my_encrypted_file.html` to change the name of the output file):
 
@@ -73,6 +75,10 @@ The password argument is optional if `STATICRYPT_PASSWORD` is set in the environ
       -e, --embed                   Whether or not to embed crypto-js in the page
                                     (or use an external CDN).
                                                            [boolean] [default: true]
+          --engine                  The crypto engine to use. WebCrypto uses 600k
+                                    iterations and is more secure, CryptoJS 15k.
+                                    Possible values: 'cryptojs', 'webcrypto'.
+                                                      [string] [default: "cryptojs"]
       -f, --file-template           Path to custom HTML template with password
                                     prompt.
                    [string] [default: "/code/staticrypt/lib/password_template.html"]
@@ -113,7 +119,7 @@ The password argument is optional if `STATICRYPT_PASSWORD` is set in the environ
 
 So, how can you password protect html without a back-end?
 
-StatiCrypt uses the [crypto-js](https://github.com/brix/crypto-js) library to generate a static, password protected page that can be decrypted in-browser. You can then just send or upload the generated page to a place serving static content (github pages, for example) and you're done: the page will prompt users for a password, and the javascript will decrypt and load your HTML, all done in the browser.
+StatiCrypt uses the [crypto-js](https://github.com/brix/crypto-js) library or WebCrypto to generate a static, password protected page that can be decrypted in-browser. You can then just send or upload the generated page to a place serving static content (github pages, for example) and you're done: the page will prompt users for a password, and the javascript will decrypt and load your HTML, all done in the browser.
 
 So it basically encrypts your page and puts everything in a user-friendly way to use a password in the new file.
 
@@ -137,7 +143,17 @@ Yes! Just copy `lib/password_template.html`, modify it to suit your style and po
 
 If you don't want the checkbox to be included, you can add the `--noremember` flag to disable it.
 
-### Why do we embed the whole crypto-js library in each encrypted file by default?
+### Should I use the WebCrypto or CryptoJS engine?
+
+CryptoJS is the JS library that StatiCrypt used at first to do its crypto operations. WebCrypto is a browser API which exposes crypto methods, without having to rely on an external library.
+
+WebCrypto is faster, which allows us to do more hashing rounds and make StatiCrypt more robust against brute-force attacks - if you can, **you should use WebCrypto**. The only limitation is it's only available in HTTPS context (which [is annoying people](https://github.com/w3c/webcrypto/issues/28)) or on localhost and on non-ancient browsers, so if you need that you can use `--engine cryptojs` which works everywhere. WebCrypto will be the only available option in our next major version.
+
+> **Will it break share links/remember-me?** If you encrypted a file with the CryptoJS engine and shared auto-decrypt links, or activated the remember-me flag, then switch to WebCrypto, the change is backward compatible and the file should still autodecrypt. The reverse isn't true - don't create an auto-decrypt link with WebCrypto then encrypt your file with CryptoJS.
+> 
+> This is because we use more hashing rounds with the faster WebCrypto, making it more secure, but we can't remove hashing rounds to convert back (which is the whole point of a hash).
+
+### Why do we embed the whole crypto-js library in each encrypted file when using the CryptoJS engine by default?
 
 Some adblockers used to see the `crypto-js.min.js` served by CDN, think that's a crypto miner and block it. If you don't want to include it and serve from a CDN instead, you can add `--embed false`.
 
@@ -217,7 +233,5 @@ Here are some other projects and community resources you might find interesting 
 [MaxLaumeister/PageCrypt](https://github.com/MaxLaumeister/PageCrypt) is a project with similar features in a different style (I think it was created before StatiCrypt).
 
 ### Based on StatiCrypt
-
-**WebCrypto:** https://github.com/tarpdalton/staticrypt/tree/webcrypto is a fork that uses the WebCrypto browser api to encrypt and decrypt the page, which removes the need for `crypto-js`. There's a PR open towards here which I haven't checked in detail yet. WebCrypto is only available in HTTPS context (which [is annoying people](https://github.com/w3c/webcrypto/issues/28)) so it won't work if you're on HTTP.
 
 **Template to host an encrypted single page website with Github Pages:** [a-nau/password-protected-website-template](https://github.com/a-nau/password-protected-website-template) is a demonstration of how to build a protected page on Github Pages, integrating with Github Actions

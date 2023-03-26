@@ -42,8 +42,7 @@
                 <small>Password protect a static HTML page</small>
             </h1>
             <p>
-                Based on the <a href="https://github.com/brix/crypto-js">crypto-js library</a>, StatiCrypt uses AES-256
-                to encrypt your string with your long password in your browser (client side).
+                StatiCrypt uses AES-256 with WebCrypto to encrypt your html string with your long password, in your browser (client side).
             </p>
             <p>
                 Download your encrypted string in a HTML page with a password prompt you can upload anywhere (see <a
@@ -69,6 +68,14 @@
                     StatiCrypt generates a static, password protected page that can be decrypted in-browser:
                     just send or upload the generated page to a place serving static content (github pages, for example)
                     and you're done: the javascript will prompt users for password, decrypt the page and load your HTML.
+                </p>
+                <p>
+                    The page is encrypted with AES-256 in CBC mode (see why this mode is appropriate for StatiCrypt in
+                    <a href="https://github.com/robinmoisson/staticrypt/issues/19">#19</a>). The password is hashed with
+                    PBKDF2 (599k iterations with SHA-256, plus 1k with SHA-1 for legacy reasons (see
+                    <a href="https://github.com/robinmoisson/staticrypt/issues/159">#159</a>), for the added
+                    <a href="https://cheatsheetseries.owasp.org/cheatsheets/Password_Storage_Cheat_Sheet.html#pbkdf2">recommended
+                        total</a> of 600k) and used to encrypt the page.
                 </p>
                 <p>
                     It basically encrypts your page and puts everything with a user-friendly way to use a password
@@ -156,19 +163,6 @@
                     <div class="form-group">
                         <label for="decrypt_button">Decrypt button label</label>
                         <input type="text" class="form-control" id="decrypt_button" placeholder="Default: 'DECRYPT'">
-                    </div>
-
-                    <div class="form-group">
-                        <label class="no-style">
-                            <input type="checkbox" id="embed-crypto" checked>
-                            Embed crypto-js into your file
-                            <small>
-                                <abbr class="text-muted"
-                                      title="Leave checked to include crypto-js into your file so you can decrypt it offline. Uncheck to load crypto-js from a CDN.">
-                                    (?)
-                                </abbr>
-                            </small>
-                        </label>
                     </div>
                 </div>
 
@@ -335,12 +329,13 @@ exports.decrypt = decrypt;
  * @returns {Promise<string>}
  */
 async function hashPassphrase(passphrase, salt) {
-    // we hash the passphrase in two steps: first 1k iterations, then we add iterations. This is because we used to use 1k,
-    // so for backwards compatibility with remember-me/autodecrypt links, we need to support going from that to more
-    // iterations
-    const hashedPassphrase = await hashLegacyRound(passphrase, salt);
+    // we hash the passphrase in multiple steps, each adding more iterations. This is because we used to allow less
+    // iterations, so for backward compatibility reasons, we need to support going from that to more iterations.
+    let hashedPassphrase = await hashLegacyRound(passphrase, salt);
 
-    return hashSecondRound(hashedPassphrase, salt);
+    hashedPassphrase = await hashSecondRound(hashedPassphrase, salt);
+
+    return hashThirdRound(hashedPassphrase, salt);
 }
 exports.hashPassphrase = hashPassphrase;
 
@@ -369,6 +364,19 @@ function hashSecondRound(hashedPassphrase, salt) {
     return pbkdf2(hashedPassphrase, salt, 14000, "SHA-256");
 }
 exports.hashSecondRound = hashSecondRound;
+
+/**
+ * Add a third round of iterations to bring total number to 600k. This is because we used to use 1k, then 15k, so for
+ * backwards compatibility with remember-me/autodecrypt links, we need to support going from that to more iterations.
+ *
+ * @param hashedPassphrase
+ * @param salt
+ * @returns {Promise<string>}
+ */
+function hashThirdRound(hashedPassphrase, salt) {
+    return pbkdf2(hashedPassphrase, salt, 585000, "SHA-256");
+}
+exports.hashThirdRound = hashThirdRound;
 
 /**
  * Salt and hash the passphrase so it can be stored in localStorage without opening a password reuse vulnerability.
@@ -401,7 +409,6 @@ async function pbkdf2(passphrase, salt, iterations, hashAlgorithm) {
 
     return HexEncoder.stringify(new Uint8Array(keyBytes));
 }
-exports.hashPassphrase = hashPassphrase;
 
 function generateRandomSalt() {
     const bytes = crypto.getRandomValues(new Uint8Array(128 / 8));
@@ -479,10 +486,6 @@ exports.generateRandomString = generateRandomString;
  * @param cryptoEngine - the engine to use for encryption / decryption
  */
 function init(cryptoEngine) {
-  // TODO: remove on next major version bump. This is a hack to make the salt available in all functions here in a
-  //  backward compatible way (not requiring to  change the password_template).
-  const backwardCompatibleSalt = '##SALT##';
-
   const exports = {};
 
   /**
@@ -492,15 +495,11 @@ function init(cryptoEngine) {
    * @param {string} msg
    * @param {string} password
    * @param {string} salt
-   * @param {boolean} isLegacy - whether to use the legacy hashing algorithm (1k iterations) or not
    *
    * @returns {string} The encoded text
    */
-  async function encode(msg, password, salt, isLegacy = false) {
-    // TODO: remove in the next major version bump. This is to not break backwards compatibility with the old way of hashing
-    const hashedPassphrase = isLegacy
-        ? await cryptoEngine.hashLegacyRound(password, salt)
-        : await cryptoEngine.hashPassphrase(password, salt);
+  async function encode(msg, password, salt) {
+    const hashedPassphrase = await cryptoEngine.hashPassphrase(password, salt);
 
 
     const encrypted = await cryptoEngine.encrypt(msg, hashedPassphrase);
@@ -518,43 +517,40 @@ function init(cryptoEngine) {
    *
    * @param {string} signedMsg
    * @param {string} hashedPassphrase
-   * @param {string} backwardCompatibleHashedPassword
+   * @param {string} salt
+   * @param {int} backwardCompatibleAttempt
+   * @param {string} originalPassphrase
    *
    * @returns {Object} {success: true, decoded: string} | {success: false, message: string}
    */
-  async function decode(signedMsg, hashedPassphrase, backwardCompatibleHashedPassword = '') {
+  async function decode(
+      signedMsg,
+      hashedPassphrase,
+      salt,
+      backwardCompatibleAttempt = 0,
+      originalPassphrase = ''
+  ) {
     const encryptedHMAC = signedMsg.substring(0, 64);
     const encryptedMsg = signedMsg.substring(64);
     const decryptedHMAC = await cryptoEngine.signMessage(hashedPassphrase, encryptedMsg);
 
     if (decryptedHMAC !== encryptedHMAC) {
-      // TODO: remove in next major version bump. This is to not break backwards compatibility with the old 1k
-      //  iterations in PBKDF2 - if the key we try isn't working, it might be because it's a remember-me/autodecrypt
-      //  link key, generated with 1k iterations. Try again with the updated iteration count.
-      if (!backwardCompatibleHashedPassword) {
-        return decode(
-            signedMsg,
-            await cryptoEngine.hashSecondRound(hashedPassphrase, backwardCompatibleSalt),
-            hashedPassphrase
-        );
+      // we have been raising the number of iterations in the hashing algorithm multiple times, so to support the old
+      // remember-me/autodecrypt links we need to try bringing the old hashes up to speed.
+      originalPassphrase = originalPassphrase || hashedPassphrase;
+      if (backwardCompatibleAttempt === 0) {
+        const updatedHashedPassphrase = await cryptoEngine.hashThirdRound(originalPassphrase, salt);
+
+        return decode(signedMsg, updatedHashedPassphrase, salt, backwardCompatibleAttempt + 1, originalPassphrase);
+      }
+      if (backwardCompatibleAttempt === 1) {
+        let updatedHashedPassphrase = await cryptoEngine.hashSecondRound(originalPassphrase, salt);
+        updatedHashedPassphrase = await cryptoEngine.hashThirdRound(updatedHashedPassphrase, salt);
+
+        return decode(signedMsg, updatedHashedPassphrase, salt, backwardCompatibleAttempt + 1, originalPassphrase);
       }
 
       return { success: false, message: "Signature mismatch" };
-    }
-
-    // TODO: remove in next major version bump. If we're trying to double hash for backward compatibility reasons,
-    //  and the attempt is successful, we check if we should update the stored password in localStorage. This avoids
-    //  having to compute the upgrade each time.
-    if (backwardCompatibleHashedPassword) {
-      if (window && window.localStorage) {
-        const storedPassword = window.localStorage.getItem('staticrypt_passphrase');
-
-        // check the stored password is actually the backward compatible one, so we don't save the new one and trigger
-        // the "remember-me" by mistake, leaking the password
-        if (storedPassword === backwardCompatibleHashedPassword) {
-          window.localStorage.setItem('staticrypt_passphrase', hashedPassphrase);
-        }
-      }
     }
 
     return {
@@ -600,12 +596,12 @@ exports.renderTemplate = renderTemplate;
 </script>
 
 <script>
-    var encode = codec.init(cryptoEngine).encode;
+    const encode = codec.init(cryptoEngine).encode;
 
     // enable CKEDIRTOR
     CKEDITOR.replace('instructions');
 
-    var htmlToDownload;
+    let htmlToDownload;
 
     /**
      * Extract js code from <script> tag and return it as a string
@@ -613,19 +609,19 @@ exports.renderTemplate = renderTemplate;
      * @param  id
      * @returns 
      */
-    var getScriptAsString = function (id) {
+    function getScriptAsString(id) {
         return document.getElementById(id)
             .innerText.replace(/window\.\w+ = /, '');
     }
 
     /**
      * Register something happened - this uses a simple Supabase function to implement a counter, and allows use to drop
-     * google analytics.
+     * google analytics. We don't store the IP or any personal information.
      *
      * @param  action
      */
     function trackEvent(action) {
-        var xhr = new XMLHttpRequest();
+        const xhr = new XMLHttpRequest();
         xhr.open('POST', 'https://zlgpaemmniviswibzuwt.supabase.co/rest/v1/rpc/increment_analytics', true);
         xhr.setRequestHeader('Content-type', 'application/json; charset=UTF-8')
         xhr.setRequestHeader('apikey', 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InpsZ3BhZW1tbml2aXN3aWJ6dXd0Iiwicm9sZSI6ImFub24iLCJpYXQiOjE2NjkxMjM0OTcsImV4cCI6MTk4NDY5OTQ5N30.wNoVDHG7F6INx-IPotMs3fL1nudfaF2qvQDgG-1PhNI')
@@ -641,34 +637,20 @@ exports.renderTemplate = renderTemplate;
      * Fill the password prompt template with data provided.
      * @param data
      */
-    var setFileToDownload = function (data) {
-        var request = new XMLHttpRequest();
+    function setFileToDownload (data) {
+        const request = new XMLHttpRequest();
         request.open('GET', 'lib/password_template.html', true);
         request.onload = function () {
-            var renderedTmpl = formater.renderTemplate(request.responseText, data);
+            const renderedTmpl = formater.renderTemplate(request.responseText, data);
 
-            var downloadLink = document.querySelector('a.download');
+            const downloadLink = document.querySelector('a.download');
             downloadLink.href = 'data:text/html,' + encodeURIComponent(renderedTmpl);
             downloadLink.removeAttribute('disabled');
 
             htmlToDownload = renderedTmpl;
         };
         request.send();
-    };
-
-    /**
-     * Download crypto-js lib to embed it in the generated file, update the file when done.
-     * @param data
-     */
-    var setFileToDownloadWithEmbeddedCrypto = function (data) {
-        var request = new XMLHttpRequest();
-        request.open('GET', 'lib/kryptojs-3.1.9-1.min.js', true);
-        request.onload = function () {
-            data['crypto_tag'] = '<script>' + request.responseText + '</scr' + 'ipt>';
-            setFileToDownload(data);
-        };
-        request.send();
-    };
+    }
 
     // register page load
     window.onload = function () {
@@ -678,7 +660,7 @@ exports.renderTemplate = renderTemplate;
     /**
      * Handle form submission.
      */
-    document.getElementById('encrypt_form').addEventListener('submit', function (e) {
+    document.getElementById('encrypt_form').addEventListener('submit', async function (e) {
         e.preventDefault();
 
         trackEvent('generate_encrypted');
@@ -687,13 +669,13 @@ exports.renderTemplate = renderTemplate;
         // (see https://stackoverflow.com/questions/3147670/ckeditor-update-textarea)
         CKEDITOR.instances['instructions'].updateElement();
 
-        var unencrypted = document.getElementById('unencrypted_html').value,
+        const unencrypted = document.getElementById('unencrypted_html').value,
             passphrase = document.getElementById('passphrase').value;
 
-        var salt = cryptoEngine.generateRandomSalt();
-        var encryptedMsg = encode(unencrypted, passphrase, salt);
+        const salt = cryptoEngine.generateRandomSalt();
+        const encryptedMsg = await encode(unencrypted, passphrase, salt);
 
-        var decryptButton = document.getElementById('decrypt_button').value,
+        const decryptButton = document.getElementById('decrypt_button').value,
             instructions = document.getElementById('instructions').value,
             isRememberEnabled = document.getElementById('remember').checked,
             pageTitle = document.getElementById('title').value.trim(),
@@ -701,7 +683,7 @@ exports.renderTemplate = renderTemplate;
             rememberDurationInDays = document.getElementById('remember_in_days').value || 0,
             rememberMe = document.getElementById('remember_me').value;
 
-        var data = {
+        const data = {
             crypto_tag: '<script src="https://cdnjs.cloudflare.com/ajax/libs/crypto-js/3.1.9-1/crypto-js.min.js" integrity="sha384-lp4k1VRKPU9eBnPePjnJ9M2RF3i7PC30gXs70+elCVfgwLwx1tv5+ctxdtwxqZa7" crossorigin="anonymous"></scr' + 'ipt>',
             decrypt_button: decryptButton ? decryptButton : 'DECRYPT',
             encrypted: encryptedMsg,
@@ -718,11 +700,7 @@ exports.renderTemplate = renderTemplate;
 
         document.getElementById('encrypted_html_display').textContent = encryptedMsg;
 
-        if (document.getElementById("embed-crypto").checked) {
-            setFileToDownloadWithEmbeddedCrypto(data);
-        } else {
-            setFileToDownload(data);
-        }
+        setFileToDownload(data);
     });
 
     document.getElementById('toggle-extra-option')
@@ -731,7 +709,7 @@ exports.renderTemplate = renderTemplate;
             document.getElementById('extra-options').classList.toggle('hidden');
         });
 
-    var isConceptShown = false;
+    let isConceptShown = false;
     document.getElementById('toggle-concept')
         .addEventListener('click', function (e) {
             e.preventDefault();
@@ -754,13 +732,13 @@ exports.renderTemplate = renderTemplate;
                 trackEvent('download_encrypted');
             }
 
-            var isIE = (navigator.userAgent.indexOf("MSIE") !== -1) || (!!document.documentMode === true); // >= 10
-            var isEdge = navigator.userAgent.indexOf("Edge") !== -1;
+            const isIE = (navigator.userAgent.indexOf("MSIE") !== -1) || (!!document.documentMode === true); // >= 10
+            const isEdge = navigator.userAgent.indexOf("Edge") !== -1;
 
             // download with MS specific feature
             if (htmlToDownload && (isIE || isEdge)) {
                 e.preventDefault();
-                var blobObject = new Blob([htmlToDownload]);
+                const blobObject = new Blob([htmlToDownload]);
                 window.navigator.msSaveOrOpenBlob(blobObject, 'encrypted.html');
             }
 

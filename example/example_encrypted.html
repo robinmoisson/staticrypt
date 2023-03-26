@@ -187,6 +187,9 @@
 
 
 <script>
+    // do not remove this comment, it is used to detect the version of the script
+    // STATICRYPT_VERSION: async
+
     const cryptoEngine = ((function(){
   const exports = {};
   const { subtle } = crypto;
@@ -324,12 +327,13 @@ exports.decrypt = decrypt;
  * @returns {Promise<string>}
  */
 async function hashPassphrase(passphrase, salt) {
-    // we hash the passphrase in two steps: first 1k iterations, then we add iterations. This is because we used to use 1k,
-    // so for backwards compatibility with remember-me/autodecrypt links, we need to support going from that to more
-    // iterations
-    const hashedPassphrase = await hashLegacyRound(passphrase, salt);
+    // we hash the passphrase in multiple steps, each adding more iterations. This is because we used to allow less
+    // iterations, so for backward compatibility reasons, we need to support going from that to more iterations.
+    let hashedPassphrase = await hashLegacyRound(passphrase, salt);
 
-    return hashSecondRound(hashedPassphrase, salt);
+    hashedPassphrase = await hashSecondRound(hashedPassphrase, salt);
+
+    return hashThirdRound(hashedPassphrase, salt);
 }
 exports.hashPassphrase = hashPassphrase;
 
@@ -358,6 +362,19 @@ function hashSecondRound(hashedPassphrase, salt) {
     return pbkdf2(hashedPassphrase, salt, 14000, "SHA-256");
 }
 exports.hashSecondRound = hashSecondRound;
+
+/**
+ * Add a third round of iterations to bring total number to 600k. This is because we used to use 1k, then 15k, so for
+ * backwards compatibility with remember-me/autodecrypt links, we need to support going from that to more iterations.
+ *
+ * @param hashedPassphrase
+ * @param salt
+ * @returns {Promise<string>}
+ */
+function hashThirdRound(hashedPassphrase, salt) {
+    return pbkdf2(hashedPassphrase, salt, 585000, "SHA-256");
+}
+exports.hashThirdRound = hashThirdRound;
 
 /**
  * Salt and hash the passphrase so it can be stored in localStorage without opening a password reuse vulnerability.
@@ -390,7 +407,6 @@ async function pbkdf2(passphrase, salt, iterations, hashAlgorithm) {
 
     return HexEncoder.stringify(new Uint8Array(keyBytes));
 }
-exports.hashPassphrase = hashPassphrase;
 
 function generateRandomSalt() {
     const bytes = crypto.getRandomValues(new Uint8Array(128 / 8));
@@ -465,10 +481,6 @@ exports.generateRandomString = generateRandomString;
  * @param cryptoEngine - the engine to use for encryption / decryption
  */
 function init(cryptoEngine) {
-  // TODO: remove on next major version bump. This is a hack to make the salt available in all functions here in a
-  //  backward compatible way (not requiring to  change the password_template).
-  const backwardCompatibleSalt = 'b93bbaf35459951c47721d1f3eaeb5b9';
-
   const exports = {};
 
   /**
@@ -478,15 +490,11 @@ function init(cryptoEngine) {
    * @param {string} msg
    * @param {string} password
    * @param {string} salt
-   * @param {boolean} isLegacy - whether to use the legacy hashing algorithm (1k iterations) or not
    *
    * @returns {string} The encoded text
    */
-  async function encode(msg, password, salt, isLegacy = false) {
-    // TODO: remove in the next major version bump. This is to not break backwards compatibility with the old way of hashing
-    const hashedPassphrase = isLegacy
-        ? await cryptoEngine.hashLegacyRound(password, salt)
-        : await cryptoEngine.hashPassphrase(password, salt);
+  async function encode(msg, password, salt) {
+    const hashedPassphrase = await cryptoEngine.hashPassphrase(password, salt);
 
 
     const encrypted = await cryptoEngine.encrypt(msg, hashedPassphrase);
@@ -504,43 +512,40 @@ function init(cryptoEngine) {
    *
    * @param {string} signedMsg
    * @param {string} hashedPassphrase
-   * @param {string} backwardCompatibleHashedPassword
+   * @param {string} salt
+   * @param {int} backwardCompatibleAttempt
+   * @param {string} originalPassphrase
    *
    * @returns {Object} {success: true, decoded: string} | {success: false, message: string}
    */
-  async function decode(signedMsg, hashedPassphrase, backwardCompatibleHashedPassword = '') {
+  async function decode(
+      signedMsg,
+      hashedPassphrase,
+      salt,
+      backwardCompatibleAttempt = 0,
+      originalPassphrase = ''
+  ) {
     const encryptedHMAC = signedMsg.substring(0, 64);
     const encryptedMsg = signedMsg.substring(64);
     const decryptedHMAC = await cryptoEngine.signMessage(hashedPassphrase, encryptedMsg);
 
     if (decryptedHMAC !== encryptedHMAC) {
-      // TODO: remove in next major version bump. This is to not break backwards compatibility with the old 1k
-      //  iterations in PBKDF2 - if the key we try isn't working, it might be because it's a remember-me/autodecrypt
-      //  link key, generated with 1k iterations. Try again with the updated iteration count.
-      if (!backwardCompatibleHashedPassword) {
-        return decode(
-            signedMsg,
-            await cryptoEngine.hashSecondRound(hashedPassphrase, backwardCompatibleSalt),
-            hashedPassphrase
-        );
+      // we have been raising the number of iterations in the hashing algorithm multiple times, so to support the old
+      // remember-me/autodecrypt links we need to try bringing the old hashes up to speed.
+      originalPassphrase = originalPassphrase || hashedPassphrase;
+      if (backwardCompatibleAttempt === 0) {
+        const updatedHashedPassphrase = await cryptoEngine.hashThirdRound(originalPassphrase, salt);
+
+        return decode(signedMsg, updatedHashedPassphrase, salt, backwardCompatibleAttempt + 1, originalPassphrase);
+      }
+      if (backwardCompatibleAttempt === 1) {
+        let updatedHashedPassphrase = await cryptoEngine.hashSecondRound(originalPassphrase, salt);
+        updatedHashedPassphrase = await cryptoEngine.hashThirdRound(updatedHashedPassphrase, salt);
+
+        return decode(signedMsg, updatedHashedPassphrase, salt, backwardCompatibleAttempt + 1, originalPassphrase);
       }
 
       return { success: false, message: "Signature mismatch" };
-    }
-
-    // TODO: remove in next major version bump. If we're trying to double hash for backward compatibility reasons,
-    //  and the attempt is successful, we check if we should update the stored password in localStorage. This avoids
-    //  having to compute the upgrade each time.
-    if (backwardCompatibleHashedPassword) {
-      if (window && window.localStorage) {
-        const storedPassword = window.localStorage.getItem('staticrypt_passphrase');
-
-        // check the stored password is actually the backward compatible one, so we don't save the new one and trigger
-        // the "remember-me" by mistake, leaking the password
-        if (storedPassword === backwardCompatibleHashedPassword) {
-          window.localStorage.setItem('staticrypt_passphrase', hashedPassphrase);
-        }
-      }
     }
 
     return {
@@ -559,7 +564,7 @@ exports.init = init;
     const decode = codec.init(cryptoEngine).decode;
 
     // variables to be filled when generating the file
-    const encryptedMsg = '69480424a5fcc19909363e39d8434a0f706b32183e0771f2be1e746cdadfef879e9866b997f75e85a60ddfb7483e571eeba89134dea2f77a4b1123fb2825e8d32132045ea5a98b491fb29b20142643c98a2bc24e90d936f58dea6c67a2a692c9066e4d0cce5f01da8b433a5338224327edda47dadf43a6ffc45185f26f4c2438a68af464f3a69cb586fbb71cf4ef353a66d474fafa848bf736c683c986bb86b8e23dfcf6f3dbef170cacaae3591f9004f6f44b4dcc597d5696adfbb0781a4c32',
+    const encryptedMsg = '1c9cbdfdb99a165b6459b329f37250ec99c30c53c5cca71d28e19314268896ec613dc0443a36e38dc5a983145dda064fc7716024e87c32ae5dbe03a888731e53e0869a0e739134d91fb343c0b11c759a2a9f9ac755544274af0fad8959919ad91e285405f9255b9ad8ce83f3f8e13e367c0b061b1bd84df78440a63196469743d34a887819d31111750f0de9d915e85020ca3b4cd209e5ad82678c572fc677642a8884fff4943b6366d4172d515519db96b6476f23066d36ae40b1b3bdd3c69a',
         salt = 'b93bbaf35459951c47721d1f3eaeb5b9',
         labelError = 'Bad password!',
         isRememberEnabled = true,
@@ -576,7 +581,7 @@ exports.init = init;
      * @returns {Promise<boolean>}
      */
     async function decryptAndReplaceHtml(hashedPassphrase) {
-        const result = await decode(encryptedMsg, hashedPassphrase);
+        const result = await decode(encryptedMsg, hashedPassphrase, salt);
         if (!result.success) {
             return false;
         }

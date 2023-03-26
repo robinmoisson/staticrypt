@@ -1,10 +1,9 @@
 const fs = require("fs");
 
-const cryptoEngine = require("../lib/cryptoEngine/cryptojsEngine");
+const { generateRandomSalt } = require("../lib/cryptoEngine/webcryptoEngine.js");
 const path = require("path");
 const {renderTemplate} = require("../lib/formater.js");
 const Yargs = require("yargs");
-const { generateRandomSalt } = cryptoEngine;
 
 const PASSWORD_TEMPLATE_DEFAULT_PATH = path.join(__dirname, "..", "lib", "password_template.html");
 
@@ -12,11 +11,11 @@ const PASSWORD_TEMPLATE_DEFAULT_PATH = path.join(__dirname, "..", "lib", "passwo
 /**
  * @param {string} message
  */
-function exitEarly(message) {
-    console.log(message);
+function exitWithError(message) {
+    console.log("ERROR: " + message);
     process.exit(1);
 }
-exports.exitEarly = exitEarly;
+exports.exitWithError = exitWithError;
 
 /**
  * Check if a particular option has been set by the user. Useful for distinguishing default value with flag without
@@ -66,7 +65,7 @@ function getPassword(positionalArguments) {
     }
 
     if (positionalArguments.length < 2) {
-        exitEarly("Missing password: please provide an argument or set the STATICRYPT_PASSWORD environment variable in the environment or .env file");
+        exitWithError("missing password, please provide an argument or set the STATICRYPT_PASSWORD environment variable in the environment or .env file");
     }
 
     return positionalArguments[1].toString();
@@ -81,7 +80,7 @@ function getFileContent(filepath) {
     try {
         return fs.readFileSync(filepath, "utf8");
     } catch (e) {
-        exitEarly("Failure: input file does not exist!");
+        exitWithError("input file does not exist!");
     }
 }
 exports.getFileContent = getFileContent;
@@ -119,7 +118,7 @@ function convertCommonJSToBrowserJS(modulePath) {
     const resolvedPath = path.join(rootDirectory, ...modulePath.split("/")) + ".js";
 
     if (!fs.existsSync(resolvedPath)) {
-        exitEarly(`Failure: could not find module to convert at path "${resolvedPath}"`);
+        exitWithError(`could not find module to convert at path "${resolvedPath}"`);
     }
 
     const moduleText = fs
@@ -145,7 +144,7 @@ function readFile(filePath, errorName = file) {
     try {
         return fs.readFileSync(filePath, "utf8");
     } catch (e) {
-        exitEarly(`Failure: could not read ${errorName}!`);
+        exitWithError(`could not read ${errorName}!`);
     }
 }
 
@@ -164,7 +163,7 @@ function genFile(data, outputFilePath, templateFilePath) {
     try {
         fs.writeFileSync(outputFilePath, renderedTemplate);
     } catch (e) {
-        exitEarly("Failure: could not generate output file!");
+        exitWithError("could not generate output file!");
     }
 }
 exports.genFile = genFile;
@@ -179,21 +178,38 @@ exports.genFile = genFile;
  * @returns {boolean}
  */
 function isCustomPasswordTemplateLegacy(templatePathParameter) {
-    // if the user uses the default template, it's up to date
-    if (templatePathParameter === PASSWORD_TEMPLATE_DEFAULT_PATH) {
-        return false;
-    }
-
     const customTemplateContent = readFile(templatePathParameter, "template");
 
     // if the template injects the crypto engine, it's up to date
-    if (customTemplateContent.includes("js_crypto_engine")) {
-        return false;
-    }
-
-    return true;
+    return !customTemplateContent.includes("js_crypto_engine");
 }
 exports.isCustomPasswordTemplateLegacy = isCustomPasswordTemplateLegacy;
+
+/**
+ * TODO: remove in next major version
+ *
+ * This method checks whether the password template support the async logic.
+ *
+ * @param {string} templatePathParameter
+ * @returns {boolean}
+ */
+function isPasswordTemplateUsingAsync(templatePathParameter) {
+    const customTemplateContent = readFile(templatePathParameter, "template");
+
+    // if the template includes this comment, it's up to date
+    return customTemplateContent.includes("// STATICRYPT_VERSION: async");
+}
+exports.isPasswordTemplateUsingAsync = isPasswordTemplateUsingAsync;
+
+/**
+ * @param {string} templatePathParameter
+ * @returns {boolean}
+ */
+function isCustomPasswordTemplateDefault(templatePathParameter) {
+    // if the user uses the default template, it's up to date
+    return templatePathParameter === PASSWORD_TEMPLATE_DEFAULT_PATH;
+}
+exports.isCustomPasswordTemplateDefault = isCustomPasswordTemplateDefault;
 
 function parseCommandLineArguments() {
     return Yargs.usage("Usage: staticrypt <filename> [<password>] [options]")
@@ -216,7 +232,8 @@ function parseCommandLineArguments() {
         })
         .option("engine", {
             type: "string",
-            describe: "The crypto engine to use. Possible values: 'cryptojs', 'webcrypto'.",
+            describe: "The crypto engine to use. WebCrypto uses 600k iterations and is more secure, CryptoJS 15k.\n" +
+                "Possible values: 'cryptojs', 'webcrypto'.",
             default: "cryptojs",
         })
         .option("f", {
