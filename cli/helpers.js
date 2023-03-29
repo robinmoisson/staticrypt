@@ -1,7 +1,8 @@
+const path = require("path");
 const fs = require("fs");
+const readline = require('readline');
 
 const { generateRandomSalt } = require("../lib/cryptoEngine.js");
-const path = require("path");
 const {renderTemplate} = require("../lib/formater.js");
 const Yargs = require("yargs");
 
@@ -51,24 +52,46 @@ function isOptionSetByUser(option, yargs) {
 exports.isOptionSetByUser = isOptionSetByUser;
 
 /**
- * Get the password from the command arguments
+ * Prompts the user for input on the CLI.
  *
- * @param {string[]} positionalArguments
- * @returns {string}
+ * @param {string} question
+ * @returns {Promise<string>}
  */
-function getPassword(positionalArguments) {
-    let password = process.env.STATICRYPT_PASSWORD;
-    const hasEnvPassword = password !== undefined && password !== "";
+function prompt (question) {
+    const rl = readline.createInterface({
+        input: process.stdin,
+        output: process.stdout,
+    });
 
+    return new Promise((resolve) => {
+        return rl.question(question, (answer) => {
+            rl.close();
+            return resolve(answer);
+        });
+    });
+}
+
+/**
+ * Get the password from the command arguments or environment variables.
+ *
+ * @param {string} passwordArgument - password from the command line
+ * @returns {Promise<string>}
+ */
+async function getPassword(passwordArgument) {
+    // try to get the password from the environment variable
+    const envPassword = process.env.STATICRYPT_PASSWORD;
+    const hasEnvPassword = envPassword !== undefined && envPassword !== "";
     if (hasEnvPassword) {
-        return password;
+        return envPassword;
     }
 
-    if (positionalArguments.length < 2) {
-        exitWithError("missing password, please provide an argument or set the STATICRYPT_PASSWORD environment variable in the environment or .env file");
+    // try to get the password from the command line arguments
+    if (passwordArgument !== null) {
+        return passwordArgument;
     }
 
-    return positionalArguments[1].toString();
+    // prompt the user for their password
+    return prompt('Enter your long, unusual password: ');
 }
 exports.getPassword = getPassword;
 
@@ -140,11 +163,12 @@ exports.convertCommonJSToBrowserJS = convertCommonJSToBrowserJS;
  * @param {string} errorName
  * @returns {string}
  */
-function readFile(filePath, errorName = file) {
+function readFile(filePath, errorName = "file") {
     try {
         return fs.readFileSync(filePath, "utf8");
     } catch (e) {
-        exitWithError(`could not read ${errorName}!`);
+        console.error(e);
+        exitWithError(`could not read ${errorName} at path "${filePath}"`);
     }
 }
 
@@ -160,10 +184,17 @@ function genFile(data, outputFilePath, templateFilePath) {
 
     const renderedTemplate = renderTemplate(templateContents, data);
 
+    // create output directory if it does not exist
+    const dirname = path.dirname(outputFilePath);
+    if (!fs.existsSync(dirname)) {
+        fs.mkdirSync(dirname, { recursive: true });
+    }
+
     try {
         fs.writeFileSync(outputFilePath, renderedTemplate);
     } catch (e) {
-        exitWithError("could not generate output file!");
+        console.error(e);
+        exitWithError("could not generate output file");
     }
 }
 exports.genFile = genFile;
@@ -179,63 +210,31 @@ function isCustomPasswordTemplateDefault(templatePathParameter) {
 exports.isCustomPasswordTemplateDefault = isCustomPasswordTemplateDefault;
 
 function parseCommandLineArguments() {
-    return Yargs.usage("Usage: staticrypt <filename> [<password>] [options]")
+    return Yargs.usage("Usage: staticrypt <filename> [options]")
         .option("c", {
             alias: "config",
             type: "string",
             describe: 'Path to the config file. Set to "false" to disable.',
             default: ".staticrypt.json",
         })
-        .option("decrypt-button", {
-            type: "string",
-            describe: 'Label to use for the decrypt button. Default: "DECRYPT".',
-            default: "DECRYPT",
-        })
-        .option("f", {
-            alias: "file-template",
-            type: "string",
-            describe: "Path to custom HTML template with password prompt.",
-            default: PASSWORD_TEMPLATE_DEFAULT_PATH,
-        })
-        .option("i", {
-            alias: "instructions",
-            type: "string",
-            describe: "Special instructions to display to the user.",
-            default: "",
-        })
-        .option("label-error", {
-            type: "string",
-            describe: "Error message to display on entering wrong password.",
-            default: "Bad password!",
-        })
-        .option("noremember", {
-            type: "boolean",
-            describe: 'Set this flag to remove the "Remember me" checkbox.',
-            default: false,
-        })
         .option("o", {
             alias: "output",
             type: "string",
-            describe: "File name/path for the generated encrypted file.",
+            describe: "Name of the directory where the encrypted files will be saved.",
+            default: "encrypted/",
+        })
+        .option("p", {
+            alias: "password",
+            type: "string",
+            describe: "The password to encrypt your file with.",
             default: null,
         })
-        .option("passphrase-placeholder", {
-            type: "string",
-            describe: "Placeholder to use for the password input.",
-            default: "Password",
-        })
-        .option("r", {
-            alias: "remember",
+        .option("remember", {
             type: "number",
             describe:
                 'Expiration in days of the "Remember me" checkbox that will save the (salted + hashed) password ' +
-                'in localStorage when entered by the user. Default: "0", no expiration.',
+                'in localStorage when entered by the user. Set to "false" to hide the box. Default: "0", no expiration.',
             default: 0,
-        })
-        .option("remember-label", {
-            type: "string",
-            describe: 'Label to use for the "Remember me" checkbox.',
-            default: "Remember me",
         })
         // do not give a default option to this parameter - we want to see when the flag is included with no
         // value and when it's not included at all
@@ -261,7 +260,37 @@ function parseCommandLineArguments() {
             default: false,
         })
         .option("t", {
-            alias: "title",
+            alias: "template",
+            type: "string",
+            describe: "Path to custom HTML template with password prompt.",
+            default: PASSWORD_TEMPLATE_DEFAULT_PATH,
+        })
+        .option("template-button", {
+            type: "string",
+            describe: 'Label to use for the decrypt button. Default: "DECRYPT".',
+            default: "DECRYPT",
+        })
+        .option("template-instructions", {
+            type: "string",
+            describe: "Special instructions to display to the user.",
+            default: "",
+        })
+        .option("template-error", {
+            type: "string",
+            describe: "Error message to display on entering wrong password.",
+            default: "Bad password!",
+        })
+        .option("template-placeholder", {
+            type: "string",
+            describe: "Placeholder to use for the password input.",
+            default: "Password",
+        })
+        .option("template-remember", {
+            type: "string",
+            describe: 'Label to use for the "Remember me" checkbox.',
+            default: "Remember me",
+        })
+        .option("template-title", {
             type: "string",
             describe: "Title for the output HTML page.",
             default: "Protected Page",

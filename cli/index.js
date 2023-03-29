@@ -27,18 +27,18 @@ async function runStatiCrypt() {
 
     // validate the number of arguments
     const positionalArguments = namedArgs._;
-    if (positionalArguments.length > 2 || positionalArguments.length === 0) {
+    if (positionalArguments.length === 0) {
         yargs.showHelp();
         process.exit(1);
     }
 
     // parse input
     const inputFilepath = positionalArguments[0].toString(),
-        password = getPassword(positionalArguments);
+        password = await getPassword(namedArgs.password);
 
     if (password.length < 16 && !namedArgs.short) {
         console.log(
-            `WARNING: Your password is less than 16 characters (length: ${password.length}). Brute-force attacks are easy to `
+            `\nWARNING: Your password is less than 16 characters (length: ${password.length}). Brute-force attacks are easy to `
             + `try on public files, and you are most safe when using a long password.\n\n`
             + `👉️ Here's a strong generated password you could use: `
             + generateRandomString(21)
@@ -88,25 +88,23 @@ async function runStatiCrypt() {
     const encryptedMessage = await encode(contents, password, salt);
 
     const data = {
-        decrypt_button: namedArgs.decryptButton,
+        decrypt_button: namedArgs.templateButton,
         encrypted: encryptedMessage,
-        instructions: namedArgs.instructions,
-        is_remember_enabled: namedArgs.noremember ? "false" : "true",
+        instructions: namedArgs.templateInstructions,
+        is_remember_enabled: namedArgs.remember === "false" ? "false" : "true",
         js_codec: convertCommonJSToBrowserJS("lib/codec"),
         js_crypto_engine: convertCommonJSToBrowserJS("lib/cryptoEngine"),
-        label_error: namedArgs.labelError,
-        passphrase_placeholder: namedArgs.passphrasePlaceholder,
+        label_error: namedArgs.templateError,
+        passphrase_placeholder: namedArgs.templatePlaceholder,
         remember_duration_in_days: namedArgs.remember,
-        remember_me: namedArgs.rememberLabel,
+        remember_me: namedArgs.templateRemember,
         salt: salt,
-        title: namedArgs.title,
+        title: namedArgs.templateTitle,
     };
 
-    const outputFilepath = namedArgs.output !== null
-        ? namedArgs.output
-        : inputFilepath.replace(/\.html$/, "") + "_encrypted.html";
+    const outputFilepath = namedArgs.output.replace(/\/+$/, '') + "/" + inputFilepath;
 
-    genFile(data, outputFilepath, namedArgs.f);
+    genFile(data, outputFilepath, namedArgs.template);
 }
 
 runStatiCrypt();
