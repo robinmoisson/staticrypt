@@ -112,7 +112,7 @@
                 <div class="form-group">
                     <label class="no-style">
                         <input type="checkbox" id="remember" checked>
-                        Add "Remember me" checkbox (append <code>?staticrypt_logout</code> to your URL to logout)
+                        Add "Remember me" checkbox (append <code>#staticrypt_logout</code> to your URL to logout)
                         <small>
                             <abbr class="text-muted"
                                   title="The password will be stored in clear text in the browser's localStorage upon entry by the user. See &quot;More options&quot; to set the expiration (default: none)">
@@ -616,7 +616,7 @@ exports.renderTemplate = renderTemplate;
 
     /**
      * Register something happened - this uses a simple Supabase function to implement a counter, and allows use to drop
-     * google analytics. We don't store the IP or any personal information.
+     * google analytics.
      *
      * @param  action
      */

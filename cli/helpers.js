@@ -297,7 +297,7 @@ function parseCommandLineArguments() {
         .option("share", {
             describe:
                 'Get a link containing your hashed password that will auto-decrypt the page. Pass your URL as a value to append '
-                + '"?staticrypt_pwd=<hashed_pwd>", or leave empty to display the hash to append.',
+                + '"#staticrypt_pwd=<hashed_pwd>", or leave empty to display the hash to append.',
             type: "string",
         })
         .option("short", {

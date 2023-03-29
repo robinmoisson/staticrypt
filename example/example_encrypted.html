@@ -564,7 +564,7 @@ exports.init = init;
     const decode = codec.init(cryptoEngine).decode;
 
     // variables to be filled when generating the file
-    const encryptedMsg = '1c9cbdfdb99a165b6459b329f37250ec99c30c53c5cca71d28e19314268896ec613dc0443a36e38dc5a983145dda064fc7716024e87c32ae5dbe03a888731e53e0869a0e739134d91fb343c0b11c759a2a9f9ac755544274af0fad8959919ad91e285405f9255b9ad8ce83f3f8e13e367c0b061b1bd84df78440a63196469743d34a887819d31111750f0de9d915e85020ca3b4cd209e5ad82678c572fc677642a8884fff4943b6366d4172d515519db96b6476f23066d36ae40b1b3bdd3c69a',
+    const encryptedMsg = 'df7428ed075decd3c4ff9d8ab6d2bea4410854c863d705789fb22e14b7da7ee20e94c593047abb9ba34d6519eebc879d2097bb918c0af0d4e248959849fb9c6bbb93aba054806c8773d1e4b63ec317185ad5462a9919dda986716c67bb57a89a044de3e25707cded482657c4a0208e9916aaa9d839f090eaaeb95603e05db11fe4bc37c4d98b9170124ce1c7ca18fe39c2f179e23eee61ba7d79cb3145e8833936c62adeffce1f5e129745c89541faa8100bfde4733bfa9c0ecf04768b3d1889',
         salt = 'b93bbaf35459951c47721d1f3eaeb5b9',
         labelError = 'Bad password!',
         isRememberEnabled = true,
@@ -601,6 +601,31 @@ exports.init = init;
     }
 
     /**
+     * Clear storage if we are logging out
+     *
+     * @returns  - whether we logged out
+     */
+    function logoutIfNeeded() {
+        const logoutKey = "staticrypt_logout";
+
+        // handle logout through query param
+        const queryParams = new URLSearchParams(window.location.search);
+        if (queryParams.has(logoutKey)) {
+            clearLocalStorage();
+            return true;
+        }
+
+        // handle logout through URL fragment
+        const hash = window.location.hash.substring(1);
+        if (hash.includes(logoutKey)) {
+            clearLocalStorage();
+            return true;
+        }
+
+        return false;
+    }
+
+    /**
      * To be called on load: check if we want to try to decrypt and replace the HTML with the decrypted content, and
      * try to do it if needed.
      *
@@ -614,11 +639,8 @@ exports.init = init;
         // show the remember me checkbox
         document.getElementById('staticrypt-remember-label').classList.remove('hidden');
 
-        // if we are login out, clear the storage and terminate
-        const queryParams = new URLSearchParams(window.location.search);
-
-        if (queryParams.has("staticrypt_logout")) {
-            clearLocalStorage();
+        // if we are login out, terminate
+        if (logoutIfNeeded()) {
             return false;
         }
 
@@ -652,9 +674,18 @@ exports.init = init;
         return false;
     }
 
-    function decryptOnLoadFromQueryParam() {
+    function decryptOnLoadFromUrl() {
+        const passwordKey = "staticrypt_pwd";
+
+        // get the password from the query param
         const queryParams = new URLSearchParams(window.location.search);
-        const hashedPassphrase = queryParams.get("staticrypt_pwd");
+        const hashedPassphraseQuery = queryParams.get(passwordKey);
+
+        // get the password from the url fragment
+        const hashRegexMatch = window.location.hash.substring(1).match(new RegExp(passwordKey + "=(.*)"));
+        const hashedPassphraseFragment = hashRegexMatch ? hashRegexMatch[1] : null;
+
+        const hashedPassphrase = hashedPassphraseFragment || hashedPassphraseQuery;
 
         if (hashedPassphrase) {
             return decryptAndReplaceHtml(hashedPassphrase);
@@ -665,7 +696,7 @@ exports.init = init;
 
     // try to automatically decrypt on load if there is a saved password
     window.onload = async function () {
-        let hasDecrypted = await decryptOnLoadFromQueryParam();
+        let hasDecrypted = await decryptOnLoadFromUrl();
 
         if (!hasDecrypted) {
             hasDecrypted = await decryptOnLoadFromRememberMe();

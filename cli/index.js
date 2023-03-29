@@ -88,7 +88,7 @@ async function runStatiCrypt() {
 
         const hashedPassword = await cryptoEngine.hashPassphrase(password, salt);
 
-        console.log(url + "?staticrypt_pwd=" + hashedPassword);
+        console.log(url + "#staticrypt_pwd=" + hashedPassword);
     }
 
     // TODO: remove in the next major version bump. This is to allow a security update to some versions without breaking

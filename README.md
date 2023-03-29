@@ -42,9 +42,9 @@ staticrypt test.html --engine webcrypto
 **Encrypt a file and get a shareable link containing the hashed password** - you can include your file URL or leave blank:
 
 ```bash
-# you can also pass '--share' without specifying the URL to get the `?staticrypt_pwd=...` 
+# you can also pass '--share' without specifying the URL to get the `#staticrypt_pwd=...` 
 staticrypt test.html MY_LONG_PASSWORD --share https://example.com/test_encrypted.html --engine webcrypto
-# => https://example.com/test_encrypted.html?staticrypt_pwd=5bfbf1343c7257cd7be23ecd74bb37fa2c76d041042654f358b6255baeab898f
+# => https://example.com/test_encrypted.html#staticrypt_pwd=5bfbf1343c7257cd7be23ecd74bb37fa2c76d041042654f358b6255baeab898f
 ```
 
 **Encrypt all html files in a directory** and replace them with encrypted versions (`{}` will be replaced with each file name by the `find` command - if you wanted to move the encrypted files to an `encrypted/` directory, you could use `-o encrypted/{}`):
@@ -106,7 +106,7 @@ The password argument is optional if `STATICRYPT_PASSWORD` is set in the environ
                                     you can use: "statycrypt -s".           [string]
           --share                   Get a link containing your hashed password that
                                     will auto-decrypt the page. Pass your URL as a
-                                    value to append "?staticrypt_pwd=<hashed_pwd>",
+                                    value to append "#staticrypt_pwd=<hashed_pwd>",
                                     or leave empty to display the hash to append.
                                                                             [string]
           --short                   Hide the "short password" warning.
@@ -175,7 +175,7 @@ If no value is provided the stored password doesn't expire, you can also give it
 
 #### "Logging out"
 
-You can clear StatiCrypt values in localStorage (effectively "logging out") at any time by appending `staticrypt_logout` to the URL query parameters (`mysite.com?staticrypt_logout`).
+You can clear StatiCrypt values in localStorage (effectively "logging out") at any time by appending `staticrypt_logout` to the URL fragment (`mysite.com#staticrypt_logout`).
 
 #### Encrypting multiple pages
 
