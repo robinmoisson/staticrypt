@@ -1,6 +1,6 @@
 const fs = require("fs");
 
-const { generateRandomSalt } = require("../lib/cryptoEngine/webcryptoEngine.js");
+const { generateRandomSalt } = require("../lib/cryptoEngine.js");
 const path = require("path");
 const {renderTemplate} = require("../lib/formater.js");
 const Yargs = require("yargs");
@@ -169,39 +169,6 @@ function genFile(data, outputFilePath, templateFilePath) {
 exports.genFile = genFile;
 
 /**
- * TODO: remove in next major version
- *
- * This method checks whether the password template support the security fix increasing PBKDF2 iterations. Users using
- * an old custom password_template might have logic that doesn't benefit from the fix.
- *
- * @param {string} templatePathParameter
- * @returns {boolean}
- */
-function isCustomPasswordTemplateLegacy(templatePathParameter) {
-    const customTemplateContent = readFile(templatePathParameter, "template");
-
-    // if the template injects the crypto engine, it's up to date
-    return !customTemplateContent.includes("js_crypto_engine");
-}
-exports.isCustomPasswordTemplateLegacy = isCustomPasswordTemplateLegacy;
-
-/**
- * TODO: remove in next major version
- *
- * This method checks whether the password template support the async logic.
- *
- * @param {string} templatePathParameter
- * @returns {boolean}
- */
-function isPasswordTemplateUsingAsync(templatePathParameter) {
-    const customTemplateContent = readFile(templatePathParameter, "template");
-
-    // if the template includes this comment, it's up to date
-    return customTemplateContent.includes("// STATICRYPT_VERSION: async");
-}
-exports.isPasswordTemplateUsingAsync = isPasswordTemplateUsingAsync;
-
-/**
  * @param {string} templatePathParameter
  * @returns {boolean}
  */
@@ -223,18 +190,6 @@ function parseCommandLineArguments() {
             type: "string",
             describe: 'Label to use for the decrypt button. Default: "DECRYPT".',
             default: "DECRYPT",
-        })
-        .option("e", {
-            alias: "embed",
-            type: "boolean",
-            describe: "Whether or not to embed crypto-js in the page (or use an external CDN).",
-            default: true,
-        })
-        .option("engine", {
-            type: "string",
-            describe: "The crypto engine to use. WebCrypto uses 600k iterations and is more secure, CryptoJS 15k.\n" +
-                "Possible values: 'cryptojs', 'webcrypto'.",
-            default: "cryptojs",
         })
         .option("f", {
             alias: "file-template",

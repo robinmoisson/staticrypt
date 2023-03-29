@@ -201,8 +201,6 @@ const ENCRYPTION_ALGO = "AES-CBC";
 /**
  * Translates between utf8 encoded hexadecimal strings
  * and Uint8Array bytes.
- *
- * Mirrors the API of CryptoJS.enc.Hex
  */
 const HexEncoder = {
     /**
@@ -564,7 +562,7 @@ exports.init = init;
     const decode = codec.init(cryptoEngine).decode;
 
     // variables to be filled when generating the file
-    const encryptedMsg = 'df7428ed075decd3c4ff9d8ab6d2bea4410854c863d705789fb22e14b7da7ee20e94c593047abb9ba34d6519eebc879d2097bb918c0af0d4e248959849fb9c6bbb93aba054806c8773d1e4b63ec317185ad5462a9919dda986716c67bb57a89a044de3e25707cded482657c4a0208e9916aaa9d839f090eaaeb95603e05db11fe4bc37c4d98b9170124ce1c7ca18fe39c2f179e23eee61ba7d79cb3145e8833936c62adeffce1f5e129745c89541faa8100bfde4733bfa9c0ecf04768b3d1889',
+    const encryptedMsg = '2c0a13159934226fa022225a06c64af6dfffe80dd6cb908f0f6ad93311563d78150cfc5465e3c7d70d682194a6d4a0c6082e37aaca8dbd83036d9e9cf629a112132b8fb6004a028b31ea4fb5a9f82d505096fe59e109970261733b4c8f21110b6f365d8b087d0ec15866917341e3cd105c65c9c7542626bae08903cd10675ed7fbd71062a1e87e35d30341c8251ab452352eaeecd6e44ed0a256979b30287032bccefaecf1685e948bf0fc3a3b5ad1f7b70092d9e32ceb60818ee49e821f8933',
         salt = 'b93bbaf35459951c47721d1f3eaeb5b9',
         labelError = 'Bad password!',
         isRememberEnabled = true,

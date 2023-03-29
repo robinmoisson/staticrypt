@@ -2,7 +2,7 @@ const { convertCommonJSToBrowserJS, genFile } = require("../cli/helpers.js");
 
 const data = {
     js_codec: convertCommonJSToBrowserJS("lib/codec"),
-    js_crypto_engine: convertCommonJSToBrowserJS("lib/cryptoEngine/webcryptoEngine"),
+    js_crypto_engine: convertCommonJSToBrowserJS("lib/cryptoEngine"),
     js_formater: convertCommonJSToBrowserJS("lib/formater"),
 };
 

@@ -184,11 +184,6 @@ Your encrypted string</pre>
     </div>
 </div>
 
-<!--
-Filename changed to circumvent adblockers that mistake it for a crypto miner (see https://github.com/robinmoisson/staticrypt/issues/107)
--->
-<script src="lib/kryptojs-3.1.9-1.min.js"></script>
-
 <script src="https://cdn.ckeditor.com/4.7.0/standard/ckeditor.js"></script>
 
 <script id="cryptoEngine">
@@ -223,8 +218,8 @@ Filename changed to circumvent adblockers that mistake it for a crypto miner (se
     }
 
     /**
-     * Register something happened - this uses a simple Supabase function to implement a counter, and allows use to drop
-     * google analytics.
+     * Register something happened - this uses a simple Supabase function to implement a counter, and allows to drop
+     * google analytics. We don't store any personal data or IP.
      *
      * @param {string} action
      */
