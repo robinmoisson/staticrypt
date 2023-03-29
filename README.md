@@ -192,7 +192,7 @@ In case the value stored in the browser becomes compromised an attacker can decr
 - [@AaronCoplan](https://github.com/AaronCoplan) for bringing the CLI to life
 - [@epicfaace](https://github.com/epicfaace) & [@thomasmarr](https://github.com/thomasmarr) for sparking the caching of the password in localStorage (allowing the "Remember me" checkbox)
 - [@hurrymaplelad](https://github.com/hurrymaplelad) for refactoring a lot of the code and making the project much more pleasant to work with
-- [@hurrymaplelad](https://github.com/hurrymaplelad) and [@tarpdalton](https://github.com/tarpdalton) for bringing WebCrypto to StatiCrypt
+- [@hurrymaplelad](https://github.com/hurrymaplelad) and [@tarpdalton](https://github.com/tarpdalton) for their work in bringing WebCrypto to StatiCrypt
 
 ### Opening PRs and issues
 
