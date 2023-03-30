@@ -21,8 +21,20 @@ const yargs = parseCommandLineArguments();
 const namedArgs = yargs.argv;
 
 async function runStatiCrypt() {
+    const hasSaltFlag = isOptionSetByUser("s", yargs);
+    const hasShareFlag = isOptionSetByUser("share", yargs);
+
+    // validate the number of arguments
+    if (!hasShareFlag && !hasSaltFlag) {
+        const positionalArguments = namedArgs._;
+        if (positionalArguments.length === 0) {
+            yargs.showHelp();
+            process.exit(1);
+        }
+    }
+
     // if the 's' flag is passed without parameter, generate a salt, display & exit
-    if (isOptionSetByUser("s", yargs) && !namedArgs.salt) {
+    if (hasSaltFlag && !namedArgs.salt) {
         console.log(generateRandomSalt());
         process.exit(0);
     }
@@ -35,20 +47,13 @@ async function runStatiCrypt() {
     const password = await getValidatedPassword(namedArgs.password, namedArgs.short);
 
     // display the share link with the hashed password if the --share flag is set
-    if (isOptionSetByUser("share", yargs)) {
+    if (hasShareFlag) {
         const url = namedArgs.share || "";
 
         const hashedPassword = await cryptoEngine.hashPassphrase(password, salt);
 
         console.log(url + "#staticrypt_pwd=" + hashedPassword);
         process.exit(0);
-    }
-
-    // validate the number of arguments
-    const positionalArguments = namedArgs._;
-    if (positionalArguments.length === 0) {
-        yargs.showHelp();
-        process.exit(1);
     }
 
     // write salt to config file
