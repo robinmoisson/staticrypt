@@ -183,14 +183,11 @@
     </div>
 </div>
 
-
-
-
 <script>
-    // do not remove this comment, it is used to detect the version of the script
-    // STATICRYPT_VERSION: async
-
-    const cryptoEngine = ((function(){
+    // these variables will be filled when generating the file - the template format is 'variable_name'
+    const staticryptInitiator = ((function(){
+  const exports = {};
+  const cryptoEngine = ((function(){
   const exports = {};
   const { subtle } = crypto;
 
@@ -201,8 +198,6 @@ const ENCRYPTION_ALGO = "AES-CBC";
 /**
  * Translates between utf8 encoded hexadecimal strings
  * and Uint8Array bytes.
- *
- * Mirrors the API of CryptoJS.enc.Hex
  */
 const HexEncoder = {
     /**
@@ -473,7 +468,7 @@ exports.generateRandomString = generateRandomString;
 
   return exports;
 })())
-    const codec = ((function(){
+const codec = ((function(){
   const exports = {};
   /**
  * Initialize the codec with the provided cryptoEngine - this return functions to encode and decode messages.
@@ -561,49 +556,130 @@ exports.init = init;
 
   return exports;
 })())
-    const decode = codec.init(cryptoEngine).decode;
+const decode = codec.init(cryptoEngine).decode;
 
-    // variables to be filled when generating the file
-    const encryptedMsg = 'df7428ed075decd3c4ff9d8ab6d2bea4410854c863d705789fb22e14b7da7ee20e94c593047abb9ba34d6519eebc879d2097bb918c0af0d4e248959849fb9c6bbb93aba054806c8773d1e4b63ec317185ad5462a9919dda986716c67bb57a89a044de3e25707cded482657c4a0208e9916aaa9d839f090eaaeb95603e05db11fe4bc37c4d98b9170124ce1c7ca18fe39c2f179e23eee61ba7d79cb3145e8833936c62adeffce1f5e129745c89541faa8100bfde4733bfa9c0ecf04768b3d1889',
-        salt = 'b93bbaf35459951c47721d1f3eaeb5b9',
-        labelError = 'Bad password!',
-        isRememberEnabled = true,
-        rememberDurationInDays = 0; // 0 means forever
 
-    // constants
-    const rememberPassphraseKey = 'staticrypt_passphrase',
-        rememberExpirationKey = 'staticrypt_expiration';
+/**
+ * Initialize the staticrypt module, that exposes functions callbable by the password_template.
+ *
+ * @param {{
+ *  encryptedMsg: string,
+ *  isRememberEnabled: boolean,
+ *  rememberDurationInDays: number,
+ *  salt: string,
+ * }} staticryptConfig - object of data that is stored on the password_template at encryption time.
+ *
+ * @param {{
+ *  rememberExpirationKey: string,
+ *  rememberPassphraseKey: string,
+ *  replaceHtmlCallback: function,
+ *  clearLocalStorageCallback: function,
+ * }} templateConfig - object of data that can be configured by a custom password_template.
+ */
+function init(staticryptConfig, templateConfig) {
+    const exports = {};
 
     /**
      * Decrypt our encrypted page, replace the whole HTML.
      *
-     * @param  hashedPassphrase
+     * @param {string} hashedPassphrase
      * @returns {Promise<boolean>}
      */
     async function decryptAndReplaceHtml(hashedPassphrase) {
+        const { encryptedMsg, salt } = staticryptConfig;
+        const { replaceHtmlCallback } = templateConfig;
+
         const result = await decode(encryptedMsg, hashedPassphrase, salt);
         if (!result.success) {
             return false;
         }
         const plainHTML = result.decoded;
 
-        document.write(plainHTML);
-        document.close();
+        // if the user configured a callback call it, otherwise just replace the whole HTML
+        if (typeof replaceHtmlCallback === 'function') {
+            replaceHtmlCallback(plainHTML);
+        } else {
+            document.write(plainHTML);
+            document.close();
+        }
+
         return true;
     }
+
+    /**
+     * Attempt to decrypt the page and replace the whole HTML.
+     *
+     * @param {string} password
+     * @param {boolean} isRememberChecked
+     *
+     * @returns {Promise<{isSuccessful: boolean, hashedPassword?: string}>} - we return an object, so that if we want to
+     *   expose more information in the future we can do it without breaking the password_template
+     */
+    async function handleDecryptionOfPage(password, isRememberChecked) {
+        const { isRememberEnabled, rememberDurationInDays, salt } = staticryptConfig;
+        const { rememberExpirationKey, rememberPassphraseKey } = templateConfig;
+
+        // decrypt and replace the whole page
+        const hashedPassword = await cryptoEngine.hashPassphrase(password, salt);
+
+        const isDecryptionSuccessful = await decryptAndReplaceHtml(hashedPassword);
+
+        if (!isDecryptionSuccessful) {
+            return {
+                isSuccessful: false,
+                hashedPassword,
+            };
+        }
+
+        // remember the hashedPassword and set its expiration if necessary
+        if (isRememberEnabled && isRememberChecked) {
+            window.localStorage.setItem(rememberPassphraseKey, hashedPassword);
+
+            // set the expiration if the duration isn't 0 (meaning no expiration)
+            if (rememberDurationInDays > 0) {
+                window.localStorage.setItem(
+                    rememberExpirationKey,
+                    (new Date().getTime() + rememberDurationInDays * 24 * 60 * 60 * 1000).toString()
+                );
+            }
+        }
+
+        return {
+            isSuccessful: true,
+            hashedPassword,
+        };
+    }
+    exports.handleDecryptionOfPage = handleDecryptionOfPage;
 
     /**
      * Clear localstorage from staticrypt related values
      */
     function clearLocalStorage() {
-        localStorage.removeItem(rememberPassphraseKey);
-        localStorage.removeItem(rememberExpirationKey);
+        const { clearLocalStorageCallback, rememberExpirationKey, rememberPassphraseKey } = templateConfig;
+
+        if (typeof clearLocalStorageCallback === 'function') {
+            clearLocalStorageCallback();
+        } else {
+            localStorage.removeItem(rememberPassphraseKey);
+            localStorage.removeItem(rememberExpirationKey);
+        }
     }
+
+    async function handleDecryptOnLoad() {
+        let isSuccessful = await decryptOnLoadFromUrl();
+
+        if (!isSuccessful) {
+            isSuccessful = await decryptOnLoadFromRememberMe();
+        }
+
+        return { isSuccessful };
+    }
+    exports.handleDecryptOnLoad = handleDecryptOnLoad;
 
     /**
      * Clear storage if we are logging out
      *
-     * @returns  - whether we logged out
+     * @returns {boolean} - whether we logged out
      */
     function logoutIfNeeded() {
         const logoutKey = "staticrypt_logout";
@@ -632,12 +708,8 @@ exports.init = init;
      * @returns {Promise<boolean>} true if we derypted and replaced the whole page, false otherwise
      */
     async function decryptOnLoadFromRememberMe() {
-        if (!isRememberEnabled) {
-            return false;
-        }
-
-        // show the remember me checkbox
-        document.getElementById('staticrypt-remember-label').classList.remove('hidden');
+        const { rememberDurationInDays } = staticryptConfig;
+        const { rememberExpirationKey, rememberPassphraseKey } = templateConfig;
 
         // if we are login out, terminate
         if (logoutIfNeeded()) {
@@ -694,20 +766,42 @@ exports.init = init;
         return false;
     }
 
+    return exports;
+}
+exports.init = init;
+  return exports;
+})())
+    const templateError = 'Bad password!',
+        isRememberEnabled = true,
+        staticryptConfig = {"encryptedMsg":"ec966bcc5ec514148b6b329f4f4f4e5e38767cf6c88303e29f692b4e8de540eb678dccbe750aeabe7cd361384bdc79c66b85254710d5b20673d4d28781a6129d980f0287980b5307cca6d41371eb9542b79b8582c334dfa9f5dfa45a3ec3205eb6462c309b36b94e0a5aa76fe26013b1919175e802b354ff942f4330879245425b5851b069d78a4e606240f43496913150f2c34780f658c875480a6ea07a0d2d92967d9079622b3ebcfc9b4540f8bcc4d49f356db6895f614d13e8287b7be4ad","isRememberEnabled":true,"rememberDurationInDays":0,"salt":"b93bbaf35459951c47721d1f3eaeb5b9"};
+
+    // you can edit these values to customize some of the behavior of StatiCrypt
+    const templateConfig = {
+        rememberExpirationKey: 'staticrypt_expiration',
+        rememberPassphraseKey: 'staticrypt_passphrase',
+        replaceHtmlCallback: null,
+        clearLocalStorageCallback: null,
+    };
+
+    // init the staticrypt engine
+    const staticrypt = staticryptInitiator.init(staticryptConfig, templateConfig);
+
     // try to automatically decrypt on load if there is a saved password
     window.onload = async function () {
-        let hasDecrypted = await decryptOnLoadFromUrl();
+        const { isSuccessful } = await staticrypt.handleDecryptOnLoad();
 
-        if (!hasDecrypted) {
-            hasDecrypted = await decryptOnLoadFromRememberMe();
-        }
-
-        // if we didn't decrypt anything, show the password prompt. Otherwise the content has already been replaced, no
-        // need to do anything
-        if (!hasDecrypted) {
+        // if we didn't decrypt anything on load, show the password prompt. Otherwise the content has already been
+        // replaced, no need to do anything
+        if (!isSuccessful) {
+            // hide loading screen
             document.getElementById("staticrypt_loading").classList.add("hidden");
             document.getElementById("staticrypt_content").classList.remove("hidden");
             document.getElementById("staticrypt-password").focus();
+
+            // show the remember me checkbox
+            if (isRememberEnabled) {
+                document.getElementById('staticrypt-remember-label').classList.remove('hidden');
+            }
         }
     }
 
@@ -716,27 +810,12 @@ exports.init = init;
         e.preventDefault();
 
         const passphrase = document.getElementById('staticrypt-password').value,
-            shouldRememberPassphrase = document.getElementById('staticrypt-remember').checked;
+            isRememberChecked = document.getElementById('staticrypt-remember').checked;
 
-        // decrypt and replace the whole page
-        const hashedPassphrase = await cryptoEngine.hashPassphrase(passphrase, salt);
-        const isDecryptionSuccessful = await decryptAndReplaceHtml(hashedPassphrase);
+        const { isSuccessful } = await staticrypt.handleDecryptionOfPage(passphrase, isRememberChecked);
 
-        if (isDecryptionSuccessful) {
-            // remember the hashedPassphrase and set its expiration if necessary
-            if (isRememberEnabled && shouldRememberPassphrase) {
-                window.localStorage.setItem(rememberPassphraseKey, hashedPassphrase);
-
-                // set the expiration if the duration isn't 0 (meaning no expiration)
-                if (rememberDurationInDays > 0) {
-                    window.localStorage.setItem(
-                        rememberExpirationKey,
-                        (new Date().getTime() + rememberDurationInDays * 24 * 60 * 60 * 1000).toString()
-                    );
-                }
-            }
-        } else {
-            alert(labelError);
+        if (!isSuccessful) {
+            alert(templateError);
         }
     });
 </script>

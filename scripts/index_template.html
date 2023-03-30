@@ -46,7 +46,7 @@
             </p>
             <p>
                 Download your encrypted string in a HTML page with a password prompt you can upload anywhere (see <a
-                    target="_blank" href="example/example_encrypted.html">example</a>).
+                    target="_blank" href="example/encrypted/example.html">example</a>).
             </p>
             <p>
                 The tool is also available as <a href="https://npmjs.com/package/staticrypt">a CLI on NPM</a> and is <a
@@ -127,24 +127,24 @@
                 </p>
                 <div id="extra-options" class="hidden">
                     <div class="form-group">
-                        <label for="title">Page title</label>
-                        <input type="text" class="form-control" id="title" placeholder="Default: 'Protected Page'">
+                        <label for="template_title">Page title</label>
+                        <input type="text" class="form-control" id="template_title" placeholder="Default: 'Protected Page'">
                     </div>
 
                     <div class="form-group">
-                        <label for="instructions">Instructions to display the user</label>
-                        <textarea class="form-control" id="instructions" placeholder="Default: nothing."></textarea>
+                        <label for="template_instructions">Instructions to display the user</label>
+                        <textarea class="form-control" id="template_instructions" placeholder="Default: nothing."></textarea>
                     </div>
 
                     <div class="form-group">
-                        <label for="passphrase_placeholder">Passphrase input placeholder</label>
-                        <input type="text" class="form-control" id="passphrase_placeholder"
+                        <label for="template_placeholder">Passphrase input placeholder</label>
+                        <input type="text" class="form-control" id="template_placeholder"
                                placeholder="Default: 'Passphrase'">
                     </div>
 
                     <div class="form-group">
-                        <label for="remember_me">"Remember me" checkbox label</label>
-                        <input type="text" class="form-control" id="remember_me" placeholder="Default: 'Remember me'">
+                        <label for="template_remember">"Remember me" checkbox label</label>
+                        <input type="text" class="form-control" id="template_remember" placeholder="Default: 'Remember me'">
                     </div>
 
                     <div class="form-group">
@@ -161,8 +161,8 @@
                     </div>
 
                     <div class="form-group">
-                        <label for="decrypt_button">Decrypt button label</label>
-                        <input type="text" class="form-control" id="decrypt_button" placeholder="Default: 'DECRYPT'">
+                        <label for="template_button">Decrypt button label</label>
+                        <input type="text" class="form-control" id="template_button" placeholder="Default: 'DECRYPT'">
                     </div>
                 </div>
 
@@ -184,30 +184,29 @@ Your encrypted string</pre>
     </div>
 </div>
 
-<!--
-Filename changed to circumvent adblockers that mistake it for a crypto miner (see https://github.com/robinmoisson/staticrypt/issues/107)
--->
-<script src="lib/kryptojs-3.1.9-1.min.js"></script>
-
 <script src="https://cdn.ckeditor.com/4.7.0/standard/ckeditor.js"></script>
 
 <script id="cryptoEngine">
-    window.cryptoEngine = {js_crypto_engine}
+    window.cryptoEngine = /*[|js_crypto_engine|]*/0
 </script>
 
 <script id="codec">
-    window.codec = {js_codec}
+    window.codec = /*[|js_codec|]*/0
 </script>
 
 <script id="formater">
-    window.formater = {js_formater}
+    window.formater = /*[|js_formater|]*/0
+</script>
+
+<script id="staticrypt">
+    window.staticrypt = /*[|js_staticrypt|]*/0
 </script>
 
 <script>
     const encode = codec.init(cryptoEngine).encode;
 
     // enable CKEDIRTOR
-    CKEDITOR.replace('instructions');
+    CKEDITOR.replace('template_instructions');
 
     let htmlToDownload;
 
@@ -223,8 +222,8 @@ Filename changed to circumvent adblockers that mistake it for a crypto miner (se
     }
 
     /**
-     * Register something happened - this uses a simple Supabase function to implement a counter, and allows use to drop
-     * google analytics.
+     * Register something happened - this uses a simple Supabase function to implement a counter, and allows to drop
+     * google analytics. We don't store any personal data or IP.
      *
      * @param {string} action
      */
@@ -275,7 +274,7 @@ Filename changed to circumvent adblockers that mistake it for a crypto miner (se
 
         // update instruction textarea value with CKEDITOR content
         // (see https://stackoverflow.com/questions/3147670/ckeditor-update-textarea)
-        CKEDITOR.instances['instructions'].updateElement();
+        CKEDITOR.instances['template_instructions'].updateElement();
 
         const unencrypted = document.getElementById('unencrypted_html').value,
             passphrase = document.getElementById('passphrase').value;
@@ -283,27 +282,28 @@ Filename changed to circumvent adblockers that mistake it for a crypto miner (se
         const salt = cryptoEngine.generateRandomSalt();
         const encryptedMsg = await encode(unencrypted, passphrase, salt);
 
-        const decryptButton = document.getElementById('decrypt_button').value,
-            instructions = document.getElementById('instructions').value,
+        const templateButton = document.getElementById('template_button').value,
+            templateInstructions = document.getElementById('template_instructions').value,
             isRememberEnabled = document.getElementById('remember').checked,
-            pageTitle = document.getElementById('title').value.trim(),
-            passphrasePlaceholder = document.getElementById('passphrase_placeholder').value.trim(),
+            templateTitle = document.getElementById('template_title').value.trim(),
+            templatePlaceholder = document.getElementById('template_placeholder').value.trim(),
             rememberDurationInDays = document.getElementById('remember_in_days').value || 0,
-            rememberMe = document.getElementById('remember_me').value;
+            templateRemember = document.getElementById('template_remember').value;
 
         const data = {
-            crypto_tag: '<script src="https://cdnjs.cloudflare.com/ajax/libs/crypto-js/3.1.9-1/crypto-js.min.js" integrity="sha384-lp4k1VRKPU9eBnPePjnJ9M2RF3i7PC30gXs70+elCVfgwLwx1tv5+ctxdtwxqZa7" crossorigin="anonymous"></scr' + 'ipt>',
-            decrypt_button: decryptButton ? decryptButton : 'DECRYPT',
-            encrypted: encryptedMsg,
-            instructions: instructions ? instructions : '',
-            is_remember_enabled: isRememberEnabled ? 'true' : 'false',
-            js_codec: getScriptAsString('codec'),
-            js_crypto_engine: getScriptAsString('cryptoEngine'),
-            passphrase_placeholder: passphrasePlaceholder ? passphrasePlaceholder : 'Passphrase',
-            remember_duration_in_days: rememberDurationInDays.toString(),
-            remember_me: rememberMe ? rememberMe : 'Remember me',
-            salt: salt,
-            title: pageTitle ? pageTitle : 'Protected Page',
+            staticrypt_config: {
+                encryptedMsg,
+                isRememberEnabled,
+                rememberDurationInDays,
+                salt,
+            },
+            is_remember_enabled: JSON.stringify(isRememberEnabled),
+            js_staticrypt: getScriptAsString('staticrypt'),
+            template_button: templateButton ? templateButton : 'DECRYPT',
+            template_instructions: templateInstructions || '',
+            template_placeholder: templatePlaceholder || 'Passphrase',
+            template_remember: templateRemember || 'Remember me',
+            template_title: templateTitle || 'Protected Page',
         };
 
         document.getElementById('encrypted_html_display').textContent = encryptedMsg;

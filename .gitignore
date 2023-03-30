@@ -3,3 +3,5 @@
 node_modules
 .staticrypt.json
 .env
+encrypted/
+!example/encrypted/

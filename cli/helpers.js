@@ -1,8 +1,9 @@
-const fs = require("fs");
-
-const { generateRandomSalt } = require("../lib/cryptoEngine/webcryptoEngine.js");
 const path = require("path");
-const {renderTemplate} = require("../lib/formater.js");
+const fs = require("fs");
+const readline = require('readline');
+
+const { generateRandomSalt, generateRandomString} = require("../lib/cryptoEngine.js");
+const { renderTemplate } = require("../lib/formater.js");
 const Yargs = require("yargs");
 
 const PASSWORD_TEMPLATE_DEFAULT_PATH = path.join(__dirname, "..", "lib", "password_template.html");
@@ -51,26 +52,87 @@ function isOptionSetByUser(option, yargs) {
 exports.isOptionSetByUser = isOptionSetByUser;
 
 /**
- * Get the password from the command arguments
+ * Prompts the user for input on the CLI.
  *
- * @param {string[]} positionalArguments
- * @returns {string}
+ * @param {string} question
+ * @returns {Promise<string>}
  */
-function getPassword(positionalArguments) {
-    let password = process.env.STATICRYPT_PASSWORD;
-    const hasEnvPassword = password !== undefined && password !== "";
+function prompt (question) {
+    const rl = readline.createInterface({
+        input: process.stdin,
+        output: process.stdout,
+    });
 
-    if (hasEnvPassword) {
-        return password;
-    }
-
-    if (positionalArguments.length < 2) {
-        exitWithError("missing password, please provide an argument or set the STATICRYPT_PASSWORD environment variable in the environment or .env file");
-    }
-
-    return positionalArguments[1].toString();
+    return new Promise((resolve) => {
+        return rl.question(question, (answer) => {
+            rl.close();
+            return resolve(answer);
+        });
+    });
 }
-exports.getPassword = getPassword;
+
+async function getValidatedPassword(passwordArgument, isShortAllowed) {
+    const password = await getPassword(passwordArgument);
+
+    if (password.length < 14 && !isShortAllowed) {
+        const shouldUseShort = await prompt(
+            `WARNING: Your password is less than 14 characters (length: ${password.length})` +
+            " and it's easy to try brute-forcing on public files. For better security we recommend using a longer one, for example: "
+            + generateRandomString(21)
+            + "\nYou can hide this warning by increasing your password length or adding the '--short' flag." +
+            " Do you want to use the short password? [y/N] "
+        )
+
+        if (!shouldUseShort.match(/^\s*(y|yes)\s*$/i)) {
+            console.log("Aborting.");
+            process.exit(0);
+        }
+    }
+
+    return password;
+}
+exports.getValidatedPassword = getValidatedPassword;
+
+/**
+ * Get the config from the config file.
+ *
+ * @param {string} configArgument
+ * @returns {{}|object}
+ */
+function getConfig(configArgument) {
+    const isUsingconfigFile = configArgument.toLowerCase() !== "false";
+    const configPath = "./" + configArgument;
+
+    if (isUsingconfigFile && fs.existsSync(configPath)) {
+        return JSON.parse(fs.readFileSync(configPath, "utf8"));
+    }
+
+    return {};
+}
+exports.getConfig = getConfig;
+
+/**
+ * Get the password from the command arguments or environment variables.
+ *
+ * @param {string} passwordArgument - password from the command line
+ * @returns {Promise<string>}
+ */
+async function getPassword(passwordArgument) {
+    // try to get the password from the environment variable
+    const envPassword = process.env.STATICRYPT_PASSWORD;
+    const hasEnvPassword = envPassword !== undefined && envPassword !== "";
+    if (hasEnvPassword) {
+        return envPassword;
+    }
+
+    // try to get the password from the command line arguments
+    if (passwordArgument !== null) {
+        return passwordArgument;
+    }
+
+    // prompt the user for their password
+    return prompt('Enter your long, unusual password: ');
+}
 
 /**
  * @param {string} filepath
@@ -90,6 +152,26 @@ exports.getFileContent = getFileContent;
  * @param {object} config
  * @returns {string}
  */
+function getValidatedSalt(namedArgs, config) {
+    const salt = getSalt(namedArgs, config);
+
+    // validate the salt
+    if (salt.length !== 32 || /[^a-f0-9]/.test(salt)) {
+        exitWithError(
+            "the salt should be a 32 character long hexadecimal string (only [0-9a-f] characters allowed)"
+            + "\nDetected salt: " + salt
+        );
+    }
+
+    return salt;
+}
+exports.getValidatedSalt = getValidatedSalt;
+
+/**
+ * @param {object} namedArgs
+ * @param {object} config
+ * @returns {string}
+ */
 function getSalt(namedArgs, config) {
     // either a salt was provided by the user through the flag --salt
     if (!!namedArgs.salt) {
@@ -103,7 +185,6 @@ function getSalt(namedArgs, config) {
 
     return generateRandomSalt();
 }
-exports.getSalt = getSalt;
 
 /**
  * A dead-simple alternative to webpack or rollup for inlining simple
@@ -136,15 +217,33 @@ function convertCommonJSToBrowserJS(modulePath) {
 exports.convertCommonJSToBrowserJS = convertCommonJSToBrowserJS;
 
 /**
+ * Build the staticrypt script string to inject in our template.
+ *
+ * @returns {string}
+ */
+function buildStaticryptJS() {
+    let staticryptJS = convertCommonJSToBrowserJS("lib/staticryptJs");
+
+    const scriptsToInject = {
+        js_codec: convertCommonJSToBrowserJS("lib/codec"),
+        js_crypto_engine: convertCommonJSToBrowserJS("lib/cryptoEngine"),
+    };
+
+    return renderTemplate(staticryptJS, scriptsToInject);
+}
+exports.buildStaticryptJS = buildStaticryptJS;
+
+/**
  * @param {string} filePath
  * @param {string} errorName
  * @returns {string}
  */
-function readFile(filePath, errorName = file) {
+function readFile(filePath, errorName = "file") {
     try {
         return fs.readFileSync(filePath, "utf8");
     } catch (e) {
-        exitWithError(`could not read ${errorName}!`);
+        console.error(e);
+        exitWithError(`could not read ${errorName} at path "${filePath}"`);
     }
 }
 
@@ -160,46 +259,20 @@ function genFile(data, outputFilePath, templateFilePath) {
 
     const renderedTemplate = renderTemplate(templateContents, data);
 
+    // create output directory if it does not exist
+    const dirname = path.dirname(outputFilePath);
+    if (!fs.existsSync(dirname)) {
+        fs.mkdirSync(dirname, { recursive: true });
+    }
+
     try {
         fs.writeFileSync(outputFilePath, renderedTemplate);
     } catch (e) {
-        exitWithError("could not generate output file!");
+        console.error(e);
+        exitWithError("could not generate output file");
     }
 }
 exports.genFile = genFile;
-
-/**
- * TODO: remove in next major version
- *
- * This method checks whether the password template support the security fix increasing PBKDF2 iterations. Users using
- * an old custom password_template might have logic that doesn't benefit from the fix.
- *
- * @param {string} templatePathParameter
- * @returns {boolean}
- */
-function isCustomPasswordTemplateLegacy(templatePathParameter) {
-    const customTemplateContent = readFile(templatePathParameter, "template");
-
-    // if the template injects the crypto engine, it's up to date
-    return !customTemplateContent.includes("js_crypto_engine");
-}
-exports.isCustomPasswordTemplateLegacy = isCustomPasswordTemplateLegacy;
-
-/**
- * TODO: remove in next major version
- *
- * This method checks whether the password template support the async logic.
- *
- * @param {string} templatePathParameter
- * @returns {boolean}
- */
-function isPasswordTemplateUsingAsync(templatePathParameter) {
-    const customTemplateContent = readFile(templatePathParameter, "template");
-
-    // if the template includes this comment, it's up to date
-    return customTemplateContent.includes("// STATICRYPT_VERSION: async");
-}
-exports.isPasswordTemplateUsingAsync = isPasswordTemplateUsingAsync;
 
 /**
  * @param {string} templatePathParameter
@@ -212,75 +285,32 @@ function isCustomPasswordTemplateDefault(templatePathParameter) {
 exports.isCustomPasswordTemplateDefault = isCustomPasswordTemplateDefault;
 
 function parseCommandLineArguments() {
-    return Yargs.usage("Usage: staticrypt <filename> [<password>] [options]")
+    return Yargs.usage("Usage: staticrypt <filename> [options]")
         .option("c", {
             alias: "config",
             type: "string",
             describe: 'Path to the config file. Set to "false" to disable.',
             default: ".staticrypt.json",
         })
-        .option("decrypt-button", {
+        .option("d", {
+            alias: "directory",
             type: "string",
-            describe: 'Label to use for the decrypt button. Default: "DECRYPT".',
-            default: "DECRYPT",
+            describe: "Name of the directory where the encrypted files will be saved.",
+            default: "encrypted/",
         })
-        .option("e", {
-            alias: "embed",
-            type: "boolean",
-            describe: "Whether or not to embed crypto-js in the page (or use an external CDN).",
-            default: true,
-        })
-        .option("engine", {
+        .option("p", {
+            alias: "password",
             type: "string",
-            describe: "The crypto engine to use. WebCrypto uses 600k iterations and is more secure, CryptoJS 15k.\n" +
-                "Possible values: 'cryptojs', 'webcrypto'.",
-            default: "cryptojs",
-        })
-        .option("f", {
-            alias: "file-template",
-            type: "string",
-            describe: "Path to custom HTML template with password prompt.",
-            default: PASSWORD_TEMPLATE_DEFAULT_PATH,
-        })
-        .option("i", {
-            alias: "instructions",
-            type: "string",
-            describe: "Special instructions to display to the user.",
-            default: "",
-        })
-        .option("label-error", {
-            type: "string",
-            describe: "Error message to display on entering wrong password.",
-            default: "Bad password!",
-        })
-        .option("noremember", {
-            type: "boolean",
-            describe: 'Set this flag to remove the "Remember me" checkbox.',
-            default: false,
-        })
-        .option("o", {
-            alias: "output",
-            type: "string",
-            describe: "File name/path for the generated encrypted file.",
+            describe: "The password to encrypt your file with. Leave empty to be prompted for it. If STATICRYPT_PASSWORD" +
+                " is set in the env, we'll use that instead.",
             default: null,
         })
-        .option("passphrase-placeholder", {
-            type: "string",
-            describe: "Placeholder to use for the password input.",
-            default: "Password",
-        })
-        .option("r", {
-            alias: "remember",
+        .option("remember", {
             type: "number",
             describe:
                 'Expiration in days of the "Remember me" checkbox that will save the (salted + hashed) password ' +
-                'in localStorage when entered by the user. Default: "0", no expiration.',
+                'in localStorage when entered by the user. Set to "false" to hide the box. Default: "0", no expiration.',
             default: 0,
-        })
-        .option("remember-label", {
-            type: "string",
-            describe: 'Label to use for the "Remember me" checkbox.',
-            default: "Remember me",
         })
         // do not give a default option to this parameter - we want to see when the flag is included with no
         // value and when it's not included at all
@@ -306,7 +336,37 @@ function parseCommandLineArguments() {
             default: false,
         })
         .option("t", {
-            alias: "title",
+            alias: "template",
+            type: "string",
+            describe: "Path to custom HTML template with password prompt.",
+            default: PASSWORD_TEMPLATE_DEFAULT_PATH,
+        })
+        .option("template-button", {
+            type: "string",
+            describe: 'Label to use for the decrypt button. Default: "DECRYPT".',
+            default: "DECRYPT",
+        })
+        .option("template-instructions", {
+            type: "string",
+            describe: "Special instructions to display to the user.",
+            default: "",
+        })
+        .option("template-error", {
+            type: "string",
+            describe: "Error message to display on entering wrong password.",
+            default: "Bad password!",
+        })
+        .option("template-placeholder", {
+            type: "string",
+            describe: "Placeholder to use for the password input.",
+            default: "Password",
+        })
+        .option("template-remember", {
+            type: "string",
+            describe: 'Label to use for the "Remember me" checkbox.',
+            default: "Remember me",
+        })
+        .option("template-title", {
             type: "string",
             describe: "Title for the output HTML page.",
             default: "Protected Page",
