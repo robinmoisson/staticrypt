@@ -43,14 +43,14 @@ staticrypt test.html
 
 ```bash
 # you can also pass '--share' without specifying the URL to get the `#staticrypt_pwd=...` 
-staticrypt test.html MY_LONG_PASSWORD --share https://example.com/test_encrypted.html
+staticrypt test.html -p MY_LONG_PASSWORD --share https://example.com/test_encrypted.html
 # => https://example.com/test_encrypted.html#staticrypt_pwd=5bfbf1343c7257cd7be23ecd74bb37fa2c76d041042654f358b6255baeab898f
 ```
 
-**Encrypt all html files from a directory** and put them in a `encrypted/` directory:
+**Encrypt all html files from a directory** and put them in a `encrypted/` directory (`{}` will be replaced with each file name by the `find` command):
 
 ```bash
-find . -type f -name "*.html" -exec staticrypt {} MY_LONG_PASSWORD \;
+find . -type f -name "*.html" -exec staticrypt {} -p MY_LONG_PASSWORD \;
 ```
 
 ### CLI Reference
