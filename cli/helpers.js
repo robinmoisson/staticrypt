@@ -2,7 +2,7 @@ const path = require("path");
 const fs = require("fs");
 const readline = require('readline');
 
-const { generateRandomSalt } = require("../lib/cryptoEngine.js");
+const { generateRandomSalt, generateRandomString} = require("../lib/cryptoEngine.js");
 const { renderTemplate } = require("../lib/formater.js");
 const Yargs = require("yargs");
 
@@ -71,6 +71,46 @@ function prompt (question) {
     });
 }
 
+async function getValidatedPassword(passwordArgument, isShortAllowed) {
+    const password = await getPassword(passwordArgument);
+
+    if (password.length < 14 && !isShortAllowed) {
+        const shouldUseShort = await prompt(
+            `WARNING: Your password is less than 14 characters (length: ${password.length})` +
+            " and it's easy to try brute-forcing on public files. For better security we recommend using a longer one, for example: "
+            + generateRandomString(21)
+            + "\nYou can hide this warning by increasing your password length or adding the '--short' flag." +
+            " Do you want to use the short password? [y/N] "
+        )
+
+        if (!shouldUseShort.match(/^\s*(y|yes)\s*$/i)) {
+            console.log("Aborting.");
+            process.exit(0);
+        }
+    }
+
+    return password;
+}
+exports.getValidatedPassword = getValidatedPassword;
+
+/**
+ * Get the config from the config file.
+ *
+ * @param {string} configArgument
+ * @returns {{}|object}
+ */
+function getConfig(configArgument) {
+    const isUsingconfigFile = configArgument.toLowerCase() !== "false";
+    const configPath = "./" + configArgument;
+
+    if (isUsingconfigFile && fs.existsSync(configPath)) {
+        return JSON.parse(fs.readFileSync(configPath, "utf8"));
+    }
+
+    return {};
+}
+exports.getConfig = getConfig;
+
 /**
  * Get the password from the command arguments or environment variables.
  *
@@ -93,7 +133,6 @@ async function getPassword(passwordArgument) {
     // prompt the user for their password
     return prompt('Enter your long, unusual password: ');
 }
-exports.getPassword = getPassword;
 
 /**
  * @param {string} filepath
@@ -113,6 +152,26 @@ exports.getFileContent = getFileContent;
  * @param {object} config
  * @returns {string}
  */
+function getValidatedSalt(namedArgs, config) {
+    const salt = getSalt(namedArgs, config);
+
+    // validate the salt
+    if (salt.length !== 32 || /[^a-f0-9]/.test(salt)) {
+        exitWithError(
+            "the salt should be a 32 character long hexadecimal string (only [0-9a-f] characters allowed)"
+            + "\nDetected salt: " + salt
+        );
+    }
+
+    return salt;
+}
+exports.getValidatedSalt = getValidatedSalt;
+
+/**
+ * @param {object} namedArgs
+ * @param {object} config
+ * @returns {string}
+ */
 function getSalt(namedArgs, config) {
     // either a salt was provided by the user through the flag --salt
     if (!!namedArgs.salt) {
@@ -126,7 +185,6 @@ function getSalt(namedArgs, config) {
 
     return generateRandomSalt();
 }
-exports.getSalt = getSalt;
 
 /**
  * A dead-simple alternative to webpack or rollup for inlining simple
