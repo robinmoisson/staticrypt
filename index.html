@@ -565,7 +565,11 @@ exports.init = init;
     window.formater = ((function(){
   const exports = {};
   /**
- * Replace the placeholder tags (between '/*[|tag|]* /0') in the template string with provided data.
+ * Replace the variable in template tags, between '/*[|variable|]* /0' (without the space in '* /0', ommiting it would
+ * break this comment), with the provided data.
+ *
+ * This weird format is so that we have something that doesn't break JS parser in the template files (it understands it
+ * as '0'), so we can still use auto-formatting.
  *
  * @param {string} templateString
  * @param {Object} data
