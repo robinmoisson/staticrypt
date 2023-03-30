@@ -2,13 +2,15 @@
 
 # StatiCrypt
 
-StatiCrypt uses AES-256 to encrypt your HTML file with your long password and return a static page including a password prompt and the javascript decryption logic that you can safely upload anywhere (see [what the page looks like](https://robinmoisson.github.io/staticrypt/example/encrypted/example.html)).
+StatiCrypt uses AES-256 and WebCrypto to encrypt your HTML file with your long password and return a static page including a password prompt and the javascript decryption logic that you can safely upload anywhere (see [what the page looks like](https://robinmoisson.github.io/staticrypt/example/encrypted/example.html)).
 
 This means you can **password protect the content of your _public_ static HTML file, without any back-end** - serving it over Netlify, GitHub pages, etc. (see the detail of [how it works](#how-staticrypt-works)).
 
 You can encrypt a file online in your browser (client side) at https://robinmoisson.github.io/staticrypt, or use the CLI to do it in your build process.
 
 ## CLI
+
+**Migration:** v3 brings many improvements, a clearer CLI and simpler `password_template` over v2. See the [migration guide from v2 to v3](MIGRATING.md).
 
 ### Installation
 
@@ -22,41 +24,33 @@ You can then run it with `npx staticrypt ...`. You can also install globally wit
 
 ### Examples
 
-> If you're viewing your file over HTTPS or localhost, you should use the `--engine webcrypto` flag to use the WebCrypto engine, which is more secure here. Otherwise the CryptoJS engine will be used.
-> 
 > These examples will create a `.staticrypt.json` file in the current directory, see the FAQ as to why. You can prevent it by setting the `--config` flag to "false".
 
-**Encrypt a file:** Encrypt `test.html` and create a `test_encrypted.html` file (add `-o my_encrypted_file.html` to change the name of the output file):
+**Encrypt a file:** encrypt `test.html` and create a `encrypted/test.html` file (use `-d my_directory` to change the output directory):
 
 ```bash
-staticrypt test.html MY_LONG_PASSWORD --engine webcrypto
+staticrypt test.html -p MY_LONG_PASSWORD
 ```
 
 **Encrypt a file with the password in an environment variable:** set your long password in the `STATICRYPT_PASSWORD` environment variable ([`.env` files](https://www.npmjs.com/package/dotenv#usage) are supported):
 
 ```bash
 # the password is in the STATICRYPT_PASSWORD env variable
-staticrypt test.html --engine webcrypto
+staticrypt test.html
 ```
 
 **Encrypt a file and get a shareable link containing the hashed password** - you can include your file URL or leave blank:
 
 ```bash
 # you can also pass '--share' without specifying the URL to get the `#staticrypt_pwd=...` 
-staticrypt test.html MY_LONG_PASSWORD --share https://example.com/test_encrypted.html --engine webcrypto
+staticrypt test.html MY_LONG_PASSWORD --share https://example.com/test_encrypted.html
 # => https://example.com/test_encrypted.html#staticrypt_pwd=5bfbf1343c7257cd7be23ecd74bb37fa2c76d041042654f358b6255baeab898f
 ```
 
-**Encrypt all html files in a directory** and replace them with encrypted versions (`{}` will be replaced with each file name by the `find` command - if you wanted to move the encrypted files to an `encrypted/` directory, you could use `-o encrypted/{}`):
+**Encrypt all html files from a directory** and put them in a `encrypted/` directory:
 
 ```bash
-find . -type f -name "*.html" -exec staticrypt {} MY_LONG_PASSWORD -o {} --engine webcrypto \;
-```
-
-**Encrypt all html files in a directory except** the ones ending in `_encrypted.html`:
-
-```bash
-find . -type f -name "*.html" -not -name "*_encrypted.html" -exec staticrypt {} MY_LONG_PASSWORD --engine webcrypto \;
+find . -type f -name "*.html" -exec staticrypt {} MY_LONG_PASSWORD \;
 ```
 
 ### CLI Reference
@@ -70,7 +64,7 @@ The password argument is optional if `STATICRYPT_PASSWORD` is set in the environ
           --version                Show version number                     [boolean]
       -c, --config                 Path to the config file. Set to "false" to
                                    disable.   [string] [default: ".staticrypt.json"]
-      -o, --output                 Name of the directory where the encrypted files
+      -d, --directory              Name of the directory where the encrypted files
                                    will be saved.   [string] [default: "encrypted/"]
       -p, --password               The password to encrypt your file with. Leave
                                    empty to be prompted for it. If
@@ -115,21 +109,21 @@ The password argument is optional if `STATICRYPT_PASSWORD` is set in the environ
 
 So, how can you password protect html without a back-end?
 
-StatiCrypt uses the [crypto-js](https://github.com/brix/crypto-js) library or WebCrypto to generate a static, password protected page that can be decrypted in-browser. You can then just send or upload the generated page to a place serving static content (github pages, for example) and you're done: the page will prompt users for a password, and the javascript will decrypt and load your HTML, all done in the browser.
+StatiCrypt uses WebCrypto to generate a static, password protected page that can be decrypted in-browser. You can then just send or upload the generated page to a place serving static content (github pages, for example) and you're done: the page will prompt users for a password, and the javascript will decrypt and load your HTML, all done in the browser.
 
-So it basically encrypts your page and puts everything in a user-friendly way to use a password in the new file.
+So it basically encrypts your page and puts everything in a user-friendly way to enter the password in the new file.
 
 ## FAQ
 
 ### Is it secure?
 
-Simple answer: your file content has been encrypted with AES-256, a popular and strong encryption algorithm. You can now upload it in any public place and no one will be able to read it without the password. So if you used a long, strong password, then yes it should be pretty secure.
+Simple answer: your file content has been encrypted with AES-256, a popular and strong encryption algorithm. You can now upload it to any public place and no one will be able to read it without the password. So if you used a long, strong password, then yes it should be pretty secure.
 
 That being said, actual security always depends on a number of factors and on the threat model you want to protect against. Because your full encrypted file is accessible client side, brute-force/dictionary attacks would be easy to do at a really fast pace: **use a long, unusual password**. We recommend 16+ alphanum characters, [Bitwarden](https://bitwarden.com/) is a great open-source password manager if you don't have one already. 
 
-On the technical aspects: we use AES in CBC mode (see a discussion on why it's appropriate for StatiCrypt in [#19](https://github.com/robinmoisson/staticrypt/issues/19)) and 600k PBKDF2 iterations when using the WebCrypto engine (it's 15k when using CryptoJS, read a detailed report on why these numbers in [#159](https://github.com/robinmoisson/staticrypt/issues/159)).
+On the technical aspects: we use AES in CBC mode (see a discussion on why this mode is appropriate for StatiCrypt in [#19](https://github.com/robinmoisson/staticrypt/issues/19)) and 600k PBKDF2-SHA256 iterations (which is the [recommended number](https://cheatsheetseries.owasp.org/cheatsheets/Password_Storage_Cheat_Sheet.html#pbkdf2) by OWASP - read a detailed report on why this number and the security model of StatiCrypt in [#159](https://github.com/robinmoisson/staticrypt/issues/159)).
 
-**Also, disclaimer:** I am not a cryptographer - the concept is simple and I try my best to implement it correctly but please adjust accordingly: if you are an at-risk activist or have sensitive crypto data to protect, you might want to use something else.
+**Also, disclaimer:** I am not a cryptographer - I try my best to get the implementation right, listen to feedback and be transparent but please adjust accordingly depending on your threat model. If you are an at-risk activist or have sensitive crypto assets to protect, you might want to use something else.
 
 ### Can I customize the password prompt?
 
@@ -139,21 +133,7 @@ Be careful to not break the encrypting javascript part, the variables replaced b
 
 ### Can I remove the "Remember me" checkbox?
 
-If you don't want the checkbox to be included, you can add the `--noremember` flag to disable it.
-
-### Should I use the WebCrypto or CryptoJS engine?
-
-CryptoJS is the JS library that StatiCrypt used at first to do its crypto operations. WebCrypto is a browser API which exposes crypto methods, without having to rely on an external library.
-
-WebCrypto is faster, which allows us to do more hashing rounds and make StatiCrypt more robust against brute-force attacks - if you can, **you should use WebCrypto**. The only limitation is it's only available in HTTPS context (which [is annoying people](https://github.com/w3c/webcrypto/issues/28)) or on localhost and on non-ancient browsers, so if you need that you can use `--engine cryptojs` which works everywhere. WebCrypto will be the only available option in our next major version.
-
-> **Will switching break share links/remember-me?** If you encrypted a file with the CryptoJS engine and shared auto-decrypt links, or activated the remember-me flag, then switch to WebCrypto, the change is backward compatible and the file should still autodecrypt. The reverse isn't true - don't create an auto-decrypt link with WebCrypto then encrypt your file with CryptoJS.
-> 
-> This is because we use more hashing rounds with the faster WebCrypto, making it more secure, but we can't remove hashing rounds to convert back (which is the whole point of a hash).
-
-### Why do we embed the whole crypto-js library in each encrypted file when using the CryptoJS engine by default?
-
-Some adblockers used to see the `crypto-js.min.js` served by CDN, think that's a crypto miner and block it. If you don't want to include it and serve from a CDN instead, you can add `--embed false`.
+If you don't want the checkbox to be included, you can set the `--remember false` flag to disable it.
 
 ### Why does StatiCrypt create a config file?
 
@@ -167,13 +147,13 @@ The salt isn't secret, so you don't need to worry about hiding the config file.
 
 ### How does the "Remember me" checkbox work?
 
-The CLI will add a "Remember me" checkbox on the password prompt by default (`--noremember` to disable). If the user checks it, the (salted + hashed) password will be stored in their browser's localStorage and the page will attempt to auto-decrypt when they come back.
+The CLI will add a "Remember me" checkbox on the password prompt by default (`--remember false` to disable). If the user checks it, the (salted + hashed) password will be stored in their browser's localStorage and the page will attempt to auto-decrypt when they come back.
 
-If no value is provided the stored password doesn't expire, you can also give it a value in days for how long should the store value be kept with `-r NUMBER_OF_DAYS`. If the user reconnects to the page after the expiration date the stored value will be cleared.
+If no value is provided the stored password doesn't expire, you can also give it a value in days for how long should the store value be kept with `--remember NUMBER_OF_DAYS`. If the user reconnects to the page after the expiration date the stored value will be cleared.
 
 #### "Logging out"
 
-You can clear StatiCrypt values in localStorage (effectively "logging out") at any time by appending `staticrypt_logout` to the URL fragment (`mysite.com#staticrypt_logout`).
+You can clear StatiCrypt values in localStorage (effectively "logging out") at any time by appending `staticrypt_logout` to the URL fragment (`https://mysite.com#staticrypt_logout`).
 
 #### Encrypting multiple pages
 
@@ -200,6 +180,10 @@ It's fine to open issues with suggestions and bug reports.
 
 If you find a serious security bug please open an issue, I'll try to fix it relatively quickly.
 
+### Security
+
+You can find the security policy and secure contact details in [SECURITY.md](SECURITY.md). If you have general ideas or feedback around the implementation or StatiCrypt security model they are very welcome, if it's not extra sensitive feel free to open an issue. A couple of place where security was discussed previously are [#19](https://github.com/robinmoisson/staticrypt/issues/19) and [#159](https://github.com/robinmoisson/staticrypt/issues/159).
+
 ### Guidelines to contributing
 
 #### Source map
@@ -207,12 +191,12 @@ If you find a serious security bug please open an issue, I'll try to fix it rela
 - `cli/` - The command-line interface published to NPM.
 - `example/` - Example encrypted files, used as an example in the public website and for manual testing.
 - `lib/` - Files shared across www and cli.
-- `scripts/` - Build, test, deploy, CI, etc. See `npm run-script`.
+- `scripts/` - Convenient scripts for building the project.
 - `index.html` - The root of the in-browser encryption site hosted at https://robinmoisson.github.io/staticrypt. Kept in the root of the repo for easy deploys to GitHub Pages.
 
 #### Build
 
-Built assets are committed to main. Run build before submitting a PR or publishing to npm.
+When editing StatiCrypt logic, we want to reflect the changes in the browser version, the CLI and the example files. To do so, run:  
 
 ```
 npm install
@@ -221,7 +205,7 @@ npm run build
 
 #### Test
 
-The testing is done manually for now - run [build](#build), then open `example/encrypted/example.html` and check everything works correctly.
+The testing is done manually for now - you can run [build](#build), then open `example/encrypted/example.html` and check everything works correctly. There is an open issue to automate this in [#136](https://github.com/robinmoisson/staticrypt/issues/136), feel free to contribute to setting up a test framework if you'd like!
 
 ## Community and alternatives
 

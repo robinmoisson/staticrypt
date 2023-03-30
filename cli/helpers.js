@@ -234,8 +234,8 @@ function parseCommandLineArguments() {
             describe: 'Path to the config file. Set to "false" to disable.',
             default: ".staticrypt.json",
         })
-        .option("o", {
-            alias: "output",
+        .option("d", {
+            alias: "directory",
             type: "string",
             describe: "Name of the directory where the encrypted files will be saved.",
             default: "encrypted/",
