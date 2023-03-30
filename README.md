@@ -10,7 +10,7 @@ You can encrypt a file online in your browser (client side) at https://robinmois
 
 ## CLI
 
-**Migration:** v3 brings many improvements, a clearer CLI and simpler `password_template` over v2. See the [migration guide from v2 to v3](MIGRATING.md).
+**Migration:** v3 brings many improvements, a clearer CLI and simpler `password_template` over v2. See the [migration guide from v2 to v3](MIGRATING.md). v3 uses WebCrypto which is only available in HTTPS or localhost contexts, so if you need to use it in HTTP you'll need to use v2.
 
 ### Installation
 
@@ -134,6 +134,10 @@ Be careful to not break the encrypting javascript part, the variables replaced b
 ### Can I remove the "Remember me" checkbox?
 
 If you don't want the checkbox to be included, you can set the `--remember false` flag to disable it.
+
+### Why doesn't StatiCrypt work in HTTP?
+
+From version 3.x StatiCrypt only uses the browser WebCrypto API, which makes it more secure but is only available in HTTPS or on localhost. If you need to use it in HTTP, you can use version 2.x which offers the CryptoJS engine as an option, and will work everywhere.
 
 ### Why does StatiCrypt create a config file?
 
