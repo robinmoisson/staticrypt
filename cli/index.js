@@ -24,9 +24,10 @@ async function runStatiCrypt() {
     const hasSaltFlag = isOptionSetByUser("s", yargs);
     const hasShareFlag = isOptionSetByUser("share", yargs);
 
+    const positionalArguments = namedArgs._;
+
     // validate the number of arguments
     if (!hasShareFlag && !hasSaltFlag) {
-        const positionalArguments = namedArgs._;
         if (positionalArguments.length === 0) {
             yargs.showHelp();
             process.exit(1);
