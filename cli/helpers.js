@@ -3,7 +3,7 @@ const fs = require("fs");
 const readline = require('readline');
 
 const { generateRandomSalt } = require("../lib/cryptoEngine.js");
-const {renderTemplate} = require("../lib/formater.js");
+const { renderTemplate } = require("../lib/formater.js");
 const Yargs = require("yargs");
 
 const PASSWORD_TEMPLATE_DEFAULT_PATH = path.join(__dirname, "..", "lib", "password_template.html");
@@ -159,6 +159,23 @@ function convertCommonJSToBrowserJS(modulePath) {
 exports.convertCommonJSToBrowserJS = convertCommonJSToBrowserJS;
 
 /**
+ * Build the staticrypt script string to inject in our template.
+ *
+ * @returns {string}
+ */
+function buildStaticryptJS() {
+    let staticryptJS = convertCommonJSToBrowserJS("lib/staticryptJs");
+
+    const scriptsToInject = {
+        js_codec: convertCommonJSToBrowserJS("lib/codec"),
+        js_crypto_engine: convertCommonJSToBrowserJS("lib/cryptoEngine"),
+    };
+
+    return renderTemplate(staticryptJS, scriptsToInject);
+}
+exports.buildStaticryptJS = buildStaticryptJS;
+
+/**
  * @param {string} filePath
  * @param {string} errorName
  * @returns {string}
@@ -226,7 +243,8 @@ function parseCommandLineArguments() {
         .option("p", {
             alias: "password",
             type: "string",
-            describe: "The password to encrypt your file with.",
+            describe: "The password to encrypt your file with. Leave empty to be prompted for it. If STATICRYPT_PASSWORD" +
+                " is set in the env, we'll use that instead.",
             default: null,
         })
         .option("remember", {

@@ -2,7 +2,7 @@
 
 # StatiCrypt
 
-StatiCrypt uses AES-256 to encrypt your HTML file with your long password and return a static page including a password prompt and the javascript decryption logic that you can safely upload anywhere (see [what the page looks like](https://robinmoisson.github.io/staticrypt/example/example_encrypted.html)).
+StatiCrypt uses AES-256 to encrypt your HTML file with your long password and return a static page including a password prompt and the javascript decryption logic that you can safely upload anywhere (see [what the page looks like](https://robinmoisson.github.io/staticrypt/example/encrypted/example.html)).
 
 This means you can **password protect the content of your _public_ static HTML file, without any back-end** - serving it over Netlify, GitHub pages, etc. (see the detail of [how it works](#how-staticrypt-works)).
 
@@ -63,55 +63,51 @@ find . -type f -name "*.html" -not -name "*_encrypted.html" -exec staticrypt {} 
 
 The password argument is optional if `STATICRYPT_PASSWORD` is set in the environment or `.env` file.
 
-    Usage: staticrypt <filename> [<password>] [options]
+    Usage: staticrypt <filename> [options]
 
     Options:
-          --help                    Show help                              [boolean]
-          --version                 Show version number                    [boolean]
-      -c, --config                  Path to the config file. Set to "false" to
-                                    disable.  [string] [default: ".staticrypt.json"]
-          --decrypt-button          Label to use for the decrypt button. Default:
-                                    "DECRYPT".         [string] [default: "DECRYPT"]
-      -e, --embed                   Whether or not to embed crypto-js in the page
-                                    (or use an external CDN).
-                                                           [boolean] [default: true]
-          --engine                  The crypto engine to use. WebCrypto uses 600k
-                                    iterations and is more secure, CryptoJS 15k.
-                                    Possible values: 'cryptojs', 'webcrypto'.
-                                                      [string] [default: "cryptojs"]
-      -f, --file-template           Path to custom HTML template with password
-                                    prompt.
-                   [string] [default: "/code/staticrypt/lib/password_template.html"]
-      -i, --instructions            Special instructions to display to the user.
-                                                              [string] [default: ""]
-          --label-error             Error message to display on entering wrong
-                                    password.    [string] [default: "Bad password!"]
-          --noremember              Set this flag to remove the "Remember me"
-                                    checkbox.             [boolean] [default: false]
-      -o, --output                  File name/path for the generated encrypted file.
-                                                            [string] [default: null]
-          --passphrase-placeholder  Placeholder to use for the password input.
-                                                      [string] [default: "Password"]
-      -r, --remember                Expiration in days of the "Remember me" checkbox
-                                    that will save the (salted + hashed) password in
-                                    localStorage when entered by the user. Default:
-                                    "0", no expiration.        [number] [default: 0]
-          --remember-label          Label to use for the "Remember me" checkbox.
-                                                   [string] [default: "Remember me"]
-      -s, --salt                    Set the salt manually. It should be set if you
-                                    want to use "Remember me" through multiple
-                                    pages. It needs to be a 32-character-long
-                                    hexadecimal string.
-                                    Include the empty flag to generate a random salt
-                                    you can use: "statycrypt -s".           [string]
-          --share                   Get a link containing your hashed password that
-                                    will auto-decrypt the page. Pass your URL as a
-                                    value to append "#staticrypt_pwd=<hashed_pwd>",
-                                    or leave empty to display the hash to append.
+          --help                   Show help                               [boolean]
+          --version                Show version number                     [boolean]
+      -c, --config                 Path to the config file. Set to "false" to
+                                   disable.   [string] [default: ".staticrypt.json"]
+      -o, --output                 Name of the directory where the encrypted files
+                                   will be saved.   [string] [default: "encrypted/"]
+      -p, --password               The password to encrypt your file with. Leave
+                                   empty to be prompted for it. If
+                                   STATICRYPT_PASSWORD is set in the env, we'll use
+                                   that instead.            [string] [default: null]
+          --remember               Expiration in days of the "Remember me" checkbox
+                                   that will save the (salted + hashed) password in
+                                   localStorage when entered by the user. Set to
+                                   "false" to hide the box. Default: "0", no
+                                   expiration.                 [number] [default: 0]
+      -s, --salt                   Set the salt manually. It should be set if you
+                                   want to use "Remember me" through multiple pages.
+                                   It needs to be a 32-character-long hexadecimal
+                                   string.
+                                   Include the empty flag to generate a random salt
+                                   you can use: "statycrypt -s".            [string]
+          --share                  Get a link containing your hashed password that
+                                   will auto-decrypt the page. Pass your URL as a
+                                   value to append "#staticrypt_pwd=<hashed_pwd>",
+                                   or leave empty to display the hash to append.
                                                                             [string]
-          --short                   Hide the "short password" warning.
+          --short                  Hide the "short password" warning.
                                                           [boolean] [default: false]
-      -t, --title                   Title for the output HTML page.
+      -t, --template               Path to custom HTML template with password
+                                   prompt.
+                   [string] [default: "/code/staticrypt/lib/password_template.html"]
+          --template-button        Label to use for the decrypt button. Default:
+                                   "DECRYPT".          [string] [default: "DECRYPT"]
+          --template-instructions  Special instructions to display to the user.
+                                                              [string] [default: ""]
+          --template-error         Error message to display on entering wrong
+                                   password.     [string] [default: "Bad password!"]
+          --template-placeholder   Placeholder to use for the password input.
+                                                      [string] [default: "Password"]
+          --template-remember      Label to use for the "Remember me" checkbox.
+                                                   [string] [default: "Remember me"]
+          --template-title         Title for the output HTML page.
                                                 [string] [default: "Protected Page"]
 
 
@@ -137,7 +133,9 @@ On the technical aspects: we use AES in CBC mode (see a discussion on why it's a
 
 ### Can I customize the password prompt?
 
-Yes! Just copy `lib/password_template.html`, modify it to suit your style and point to your template file with the `-f path/to/my/file.html` flag. Be careful to not break the encrypting javascript part, the variables replaced by StatiCrypt are between curly brackets: `{salt}`.
+Yes! Just copy `lib/password_template.html`, modify it to suit your style and point to your template file with the `-t path/to/my/file.html` flag. 
+
+Be careful to not break the encrypting javascript part, the variables replaced by StatiCrypt are in this format: `/*[|variable|]*/0`. Don't leave out the `0` at the end, this weird syntax is to avoid conflict with other templating engines while still being read as valid JS to parsers so we can use auto-formatting on the template files.
 
 ### Can I remove the "Remember me" checkbox?
 
@@ -223,7 +221,7 @@ npm run build
 
 #### Test
 
-The testing is done manually for now - run [build](#build), then open `example/example_encypted.html` and check everything works correctly.
+The testing is done manually for now - run [build](#build), then open `example/encrypted/example.html` and check everything works correctly.
 
 ## Community and alternatives
 

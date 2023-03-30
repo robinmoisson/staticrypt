@@ -11,8 +11,7 @@ const cryptoEngine = require("../lib/cryptoEngine.js");
 const codec = require("../lib/codec.js");
 const { generateRandomSalt, generateRandomString } = cryptoEngine;
 const { encode } = codec.init(cryptoEngine);
-const { convertCommonJSToBrowserJS, exitWithError, isOptionSetByUser, genFile, getPassword, getFileContent, getSalt} = require("./helpers");
-const { parseCommandLineArguments} = require("./helpers.js");
+const { parseCommandLineArguments, buildStaticryptJS, exitWithError, isOptionSetByUser, genFile, getPassword, getFileContent, getSalt } = require("./helpers.js");
 
 // parse arguments
 const yargs = parseCommandLineArguments();
@@ -85,21 +84,25 @@ async function runStatiCrypt() {
     const contents = getFileContent(inputFilepath);
 
     // encrypt input
-    const encryptedMessage = await encode(contents, password, salt);
+    const encryptedMsg = await encode(contents, password, salt);
+
+    const isRememberEnabled = namedArgs.remember !== "false";
 
     const data = {
-        decrypt_button: namedArgs.templateButton,
-        encrypted: encryptedMessage,
-        instructions: namedArgs.templateInstructions,
-        is_remember_enabled: namedArgs.remember === "false" ? "false" : "true",
-        js_codec: convertCommonJSToBrowserJS("lib/codec"),
-        js_crypto_engine: convertCommonJSToBrowserJS("lib/cryptoEngine"),
-        label_error: namedArgs.templateError,
-        passphrase_placeholder: namedArgs.templatePlaceholder,
-        remember_duration_in_days: namedArgs.remember,
-        remember_me: namedArgs.templateRemember,
-        salt: salt,
-        title: namedArgs.templateTitle,
+        is_remember_enabled: JSON.stringify(isRememberEnabled),
+        js_staticrypt: buildStaticryptJS(),
+        staticrypt_config: {
+            encryptedMsg,
+            isRememberEnabled,
+            rememberDurationInDays: namedArgs.remember,
+            salt,
+        },
+        template_button: namedArgs.templateButton,
+        template_error: namedArgs.templateError,
+        template_instructions: namedArgs.templateInstructions,
+        template_placeholder: namedArgs.templatePlaceholder,
+        template_remember: namedArgs.templateRemember,
+        template_title: namedArgs.templateTitle,
     };
 
     const outputFilepath = namedArgs.output.replace(/\/+$/, '') + "/" + inputFilepath;
