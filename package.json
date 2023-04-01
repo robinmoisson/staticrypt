@@ -1,6 +1,6 @@
 {
   "name": "staticrypt",
-  "version": "3.0.1",
+  "version": "3.0.2",
   "description": "Based on the [crypto-js](https://github.com/brix/crypto-js) library, StatiCrypt uses AES-256 to encrypt your input with your passphrase and put it in a HTML file with a password prompt that can decrypted in-browser (client side).",
   "main": "index.js",
   "files": [
@@ -11,9 +11,11 @@
     "staticrypt": "./cli/index.js"
   },
   "dependencies": {
-    "crypto-js": "3.1.9-1",
     "dotenv": "^16.0.3",
     "yargs": ">=10.0.3"
+  },
+  "engines": {
+    "node": ">=16.0.0"
   },
   "author": "Robin Moisson (https://github.com/robinmoisson)",
   "contributors": [
@@ -34,7 +36,9 @@
     "password",
     "protected",
     "encrypted",
-    "encryption"
+    "encryption",
+    "crypto",
+    "webcrypto"
   ],
   "bugs": {
     "url": "https://github.com/robinmoisson/staticrypt/issues"
