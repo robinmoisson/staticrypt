@@ -1,6 +1,6 @@
 const fs = require("fs");
 
-const { generateRandomSalt } = require("../lib/cryptoEngine/webcryptoEngine.js");
+const { generateRandomSalt } = require("../lib/cryptoEngine/cryptojsEngine.js");
 const path = require("path");
 const {renderTemplate} = require("../lib/formater.js");
 const Yargs = require("yargs");

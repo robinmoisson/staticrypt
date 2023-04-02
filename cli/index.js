@@ -8,8 +8,6 @@ const path = require("path");
 // parse .env file into process.env
 require('dotenv').config();
 
-const cryptojsEngine = require("../lib/cryptoEngine/cryptojsEngine");
-const webcryptoEngine = require("../lib/cryptoEngine/webcryptoEngine");
 const codec = require("../lib/codec.js");
 const { convertCommonJSToBrowserJS, exitWithError, isOptionSetByUser, genFile, getPassword, getFileContent, getSalt} = require("./helpers");
 const { isCustomPasswordTemplateLegacy, parseCommandLineArguments, isPasswordTemplateUsingAsync} = require("./helpers.js");
@@ -24,7 +22,14 @@ const namedArgs = yargs.argv;
 
 // set the crypto engine
 const isWebcrypto = namedArgs.engine === "webcrypto";
-const cryptoEngine = isWebcrypto ? webcryptoEngine : cryptojsEngine;
+const isNodeMissingWebCrypto = require("node:crypto").webcrypto === undefined;
+
+if (isWebcrypto && isNodeMissingWebCrypto) {
+    exitWithError("WebCrypto is not included in your Node.js version. Please upgrade your node version to >= 16, or use the cryptoJS engine.");
+}
+
+// only call "require" for the webcrypto engine if we are actually using it, to avoid errors in older node versions
+const cryptoEngine = isWebcrypto ? require("../lib/cryptoEngine/webcryptoEngine") : require("../lib/cryptoEngine/cryptojsEngine");
 const { generateRandomSalt, generateRandomString } = cryptoEngine;
 const { encode } = codec.init(cryptoEngine);
 
@@ -106,11 +111,13 @@ async function runStatiCrypt() {
     }
 
     if (!isWebcrypto) {
-        console.log(
-            "WARNING: If you are viewing the file over HTTPS or locally, we recommend " +
-            (isPasswordTemplateUsingAsync(namedArgs.f) ? "" : "updating your password template to the latest version and ") +
-            "using the '--engine webcrypto' more secure engine. It will become the default in StatiCrypt next major version."
-        );
+        if (!isNodeMissingWebCrypto) {
+            console.log(
+                "WARNING: If you are viewing the file over HTTPS or locally, we recommend " +
+                (isPasswordTemplateUsingAsync(namedArgs.f) ? "" : "updating your password template to the latest version and ") +
+                "using the '--engine webcrypto' more secure engine. It will become the default in StatiCrypt next major version."
+            );
+        }
     } else if (!isPasswordTemplateUsingAsync(namedArgs.f) && isWebcrypto) {
         exitWithError(
             "The '--engine webcrypto' engine is only available for password templates that use async/await. Please " +
