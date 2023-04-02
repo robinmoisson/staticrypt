@@ -53,13 +53,14 @@ staticrypt test.html -p MY_LONG_PASSWORD --share https://example.com/test_encryp
 find . -type f -name "*.html" -exec staticrypt {} -p MY_LONG_PASSWORD \;
 ```
 
-**Pin the salt to use staticrypt in your CI in a build step** - if you want want the "Remember-me" or share features to work accross multiple pages or multiple successive deployement, the salt needs to be the same ([see why](https://github.com/robinmoisson/staticrypt#why-does-staticrypt-create-a-config-file)). If you run StatiCrypt in a CI step, you can pin the salt in two ways:
+**Pin the salt to use staticrypt in your CI in a build step** - if you want want the "Remember-me" or share features to work accross multiple pages or multiple successive deployment, the salt needs to stay the same ([see why](https://github.com/robinmoisson/staticrypt#why-does-staticrypt-create-a-config-file)). If you run StatiCrypt in a CI step, you can pin the salt in two ways:
 
 ```bash
-# Commit the .staticrypt.json config file. You can generate a random salt and a config file on your local machine:
+# Either commit the .staticrypt.json config file - you can generate a random salt and 
+# a config file on your local machine:
 staticrypt --salt
 
-# Hardcode the salt in the CI script command:
+# Or hardcode the salt in the CI script command:
 staticrypt test.html -p MY_LONG_PASSWORD --salt 12345678901234567890123456789012
 ```
 
@@ -89,7 +90,7 @@ The password argument is optional if `STATICRYPT_PASSWORD` is set in the environ
                                    Pass a 32-character-long hexadecimal string to
                                    use as salt, or leave empty to generate, display
                                    and save to config a random salt. This won't
-                                   overwrite an exisiting config file.      [string]
+                                   overwrite an existing config file.       [string]
           --share                  Get a link containing your hashed password that
                                    will auto-decrypt the page. Pass your URL as a
                                    value to append "#staticrypt_pwd=<hashed_pwd>",

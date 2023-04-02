@@ -4,12 +4,13 @@
 
 These versions will receive security updates:
 
-| Version | Security updates   |
-| ------- | ------------------ |
-| 2.x     | :white_check_mark: |
-| 1.x     | :white_check_mark: |
+| Version | Security updates |
+|---------|------------------|
+| 3.x     | ✅ Yes            |
+| 2.x     | ✅ Yes            |
+| 1.x     | ❌ No             |
 
-I'll give priority the latest versions since I have a limited bandwidth, but I want to eventually roll out a fix for all versions. (This might change in the future. If it does, the last update to the unsupported versions will be to display a warning when running the command.)
+When a version stops being supported, the last update will be to display a warning when running the command.
 
 ## Reporting a Vulnerability
 
@@ -17,13 +18,11 @@ If you'd like to warn me privately of a vulnerabilty, you can write me at robin.
 
 If it's a more of a suggestion, or something that can be discussed openly without negative impact, you can also open an issue. Discussions on the security model and choices of StatiCrypt are very welcome!
 
-In case of a severe vulnerability I'll try to get back to you quickly to acknowledge I got the message, and to get a fix out relatively quickly as well. 
-
-There are periods in my life where I'm offline for weeks at a time, so unfortunately I can't guarantee a specific response speed at all times. Just know this might be what's happening if I'm completely unresponsive... It shouldn't last more than a month though.
-
+In case of a severe vulnerability I'll try to get back to you quickly to acknowledge I got the message, and to get a fix out relatively quickly as well. (I am sometimes offline for a few weeks at a time but that's pretty rare.)
 
 And finally if you're reporting anything security related: thank you very much for making StatiCrypt safer, your benevolence is very much appreciated! 🙏
 
+## Public key
 
 My public key:
 

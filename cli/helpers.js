@@ -323,7 +323,7 @@ function parseCommandLineArguments() {
             describe:
                 'Generate a config file or set the salt manually. Pass a 32-character-long hexadecimal string ' +
                 'to use as salt, or leave empty to generate, display and save to config a random salt. This won\'t' +
-                ' overwrite an exisiting config file.',
+                ' overwrite an existing config file.',
             type: "string",
         })
         // do not give a default option to this parameter - we want to see when the flag is included with no
