@@ -53,6 +53,16 @@ staticrypt test.html -p MY_LONG_PASSWORD --share https://example.com/test_encryp
 find . -type f -name "*.html" -exec staticrypt {} -p MY_LONG_PASSWORD \;
 ```
 
+**Pin the salt to use staticrypt in your CI in a build step** - if you want want the "Remember-me" or share features to work accross multiple pages or multiple successive deployement, the salt needs to be the same ([see why](https://github.com/robinmoisson/staticrypt#why-does-staticrypt-create-a-config-file)). If you run StatiCrypt in a CI step, you can pin the salt in two ways:
+
+```bash
+# Commit the .staticrypt.json config file. You can generate a random salt and a config file on your local machine:
+staticrypt --salt
+
+# Hardcode the salt in the CI script command:
+staticrypt test.html -p MY_LONG_PASSWORD --salt 12345678901234567890123456789012
+```
+
 ### CLI Reference
 
 The password argument is optional if `STATICRYPT_PASSWORD` is set in the environment or `.env` file.
@@ -131,10 +141,6 @@ Yes! Just copy `lib/password_template.html`, modify it to suit your style and po
 
 Be careful to not break the encrypting javascript part, the variables replaced by StatiCrypt are in this format: `/*[|variable|]*/0`. Don't leave out the `0` at the end, this weird syntax is to avoid conflict with other templating engines while still being read as valid JS to parsers so we can use auto-formatting on the template files.
 
-### Can I remove the "Remember me" checkbox?
-
-If you don't want the checkbox to be included, you can set the `--remember false` flag to disable it.
-
 ### Why doesn't StatiCrypt work in HTTP?
 
 From version 3.x StatiCrypt only uses the browser WebCrypto API, which makes it more secure but is only available in HTTPS or on localhost. If you need to use it in HTTP, you can use version 2.x which offers the CryptoJS engine as an option, and will work everywhere.
@@ -147,7 +153,7 @@ When deciding what salt to use, StatiCrypt will first look for a `--salt` flag, 
 
 If you don't want StatiCrypt to create or use the config file, you can set `--config false` to disable it.
 
-The salt isn't secret, so you don't need to worry about hiding the config file.
+The salt isn't secret (it's publicly visible on the encrypted file), so you don't need to worry about hiding the config file. If you're encrypting as part of a CI step, you can commit the `.staticrypt.json` file so it's accessible to your build server.
 
 ### How does the "Remember me" checkbox work?
 
@@ -167,22 +173,26 @@ This allows encrypting multiple page on a single domain with the same password: 
 
 In case the value stored in the browser becomes compromised an attacker can decrypt the page, but because it's stored salted and hashed this should still protect against password reuse attacks if you've used the password on other websites (of course, please use a long, unique password nonetheless).
 
+#### Can I remove the "Remember me" checkbox?
+
+If you don't want the checkbox to be included, you can set the `--remember false` flag to disable it.
+
 ## Contributing
 
 ### 🙏 Thank you!
 
 - [@AaronCoplan](https://github.com/AaronCoplan) for bringing the CLI to life
-- [@epicfaace](https://github.com/epicfaace) & [@thomasmarr](https://github.com/thomasmarr) for sparking the caching of the password in localStorage (allowing the "Remember me" checkbox)
+- [@epicfaace](https://github.com/epicfaace) & [@thomasmarr](https://github.com/thomasmarr) for sparking the caching of the password in localStorage, allowing the "Remember me" checkbox
 - [@hurrymaplelad](https://github.com/hurrymaplelad) for refactoring a lot of the code and making the project much more pleasant to work with
 - [@hurrymaplelad](https://github.com/hurrymaplelad) and [@tarpdalton](https://github.com/tarpdalton) for their work in bringing WebCrypto to StatiCrypt
 
 ### Opening PRs and issues
 
-You're free to open PRs if you're ok with having no response for a (possibly very) long time and me possibly ending up getting inspiration from your proposal but merging something different myself (I'll try to credit you though). Apologies in advance for the delay, and thank you!
+I administer the project when I have time and motivation. You're free to open PRs if you're ok with having no response for a (possibly very) long time and me possibly ending up getting inspiration from your proposal but merging something different myself (I'll try to credit you though). Apologies in advance for the delay, and thank you for making the project better!
 
-It's fine to open issues with suggestions and bug reports.
+Opening issues with suggestions and bug reports is welcome.
 
-If you find a serious security bug please open an issue, I'll try to fix it relatively quickly.
+If you find a serious security bug please open an issue or contact me following the instructions in [SECURITY.md](SECURITY.md) and I'll try to fix it relatively quickly.
 
 ### Security
 
@@ -200,7 +210,7 @@ You can find the security policy and secure contact details in [SECURITY.md](SEC
 
 #### Build
 
-When editing StatiCrypt logic, we want to reflect the changes in the browser version, the CLI and the example files. To do so, run:  
+When editing StatiCrypt logic, we want to sync the changes to the browser version, the CLI and the example files, so all of them use the new logic. To do so, run:  
 
 ```
 npm install

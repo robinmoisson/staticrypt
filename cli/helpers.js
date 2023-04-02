@@ -96,20 +96,24 @@ exports.getValidatedPassword = getValidatedPassword;
 /**
  * Get the config from the config file.
  *
- * @param {string} configArgument
+ * @param {string|null} configPath
  * @returns {{}|object}
  */
-function getConfig(configArgument) {
-    const isUsingconfigFile = configArgument.toLowerCase() !== "false";
-    const configPath = "./" + configArgument;
-
-    if (isUsingconfigFile && fs.existsSync(configPath)) {
+function getConfig(configPath) {
+    if (configPath && fs.existsSync(configPath)) {
         return JSON.parse(fs.readFileSync(configPath, "utf8"));
     }
 
     return {};
 }
 exports.getConfig = getConfig;
+
+function writeConfig(configPath, config) {
+    if (configPath) {
+        fs.writeFileSync(configPath, JSON.stringify(config, null, 4));
+    }
+}
+exports.writeConfig = writeConfig;
 
 /**
  * Get the password from the command arguments or environment variables.
@@ -317,9 +321,9 @@ function parseCommandLineArguments() {
         .option("s", {
             alias: "salt",
             describe:
-                'Set the salt manually. It should be set if you want to use "Remember me" through multiple pages. It ' +
-                "needs to be a 32-character-long hexadecimal string.\nInclude the empty flag to generate a random salt you " +
-                'can use: "statycrypt -s".',
+                'Generate a config file or set the salt manually. Pass a 32-character-long hexadecimal string ' +
+                'to use as salt, or leave empty to generate, display and save to config a random salt. This won\'t' +
+                ' overwrite an exisiting config file.',
             type: "string",
         })
         // do not give a default option to this parameter - we want to see when the flag is included with no

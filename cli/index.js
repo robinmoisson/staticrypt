@@ -13,7 +13,7 @@ const { generateRandomSalt } = cryptoEngine;
 const { encode } = codec.init(cryptoEngine);
 const { parseCommandLineArguments, buildStaticryptJS, isOptionSetByUser, genFile, getPassword, getFileContent, getSalt,
     getValidatedSalt,
-    getValidatedPassword, getConfig
+    getValidatedPassword, getConfig, writeConfig
 } = require("./helpers.js");
 
 // parse arguments
@@ -27,21 +27,34 @@ async function runStatiCrypt() {
     const positionalArguments = namedArgs._;
 
     // validate the number of arguments
-    if (!hasShareFlag && !hasSaltFlag) {
+    if (!hasShareFlag && !(hasSaltFlag && !namedArgs.salt)) {
         if (positionalArguments.length === 0) {
+            console.log("ERROR: Invalid number of arguments. Please provide an input file.\n");
+
             yargs.showHelp();
             process.exit(1);
         }
     }
 
+    // get config file
+    const configPath = namedArgs.config.toLowerCase() === "false" ? null : "./" + namedArgs.config;
+    const config = getConfig(configPath);
+
     // if the 's' flag is passed without parameter, generate a salt, display & exit
     if (hasSaltFlag && !namedArgs.salt) {
-        console.log(generateRandomSalt());
+        const generatedSalt = generateRandomSalt();
+
+        // show salt
+        console.log(generatedSalt);
+
+        // write to config file if it doesn't exist
+        if (!config.salt) {
+            config.salt = generatedSalt;
+            writeConfig(configPath, config);
+        }
+
         process.exit(0);
     }
-
-    // get config file
-    const config = getConfig(namedArgs.config);
 
     // get the salt & password
     const salt = getValidatedSalt(namedArgs, config);
@@ -58,9 +71,7 @@ async function runStatiCrypt() {
     }
 
     // write salt to config file
-    const isUsingconfigFile = namedArgs.config.toLowerCase() !== "false";
-    const configPath = "./" + namedArgs.config;
-    if (isUsingconfigFile && config.salt !== salt) {
+    if (config.salt !== salt) {
         config.salt = salt;
         fs.writeFileSync(configPath, JSON.stringify(config, null, 4));
     }
