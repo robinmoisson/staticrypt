@@ -10,6 +10,8 @@ There are a few breaking changes, but they should be easy to fix. If you have an
 
 3.x works with WebCrypto exclusively, which is only available on HTTPS and localhost. If you need access to the file over HTTP, you'll need to stay on 2.x.
 
+The minimum node version is now 16. If you need to stay on a lower number, you'll need to stay on 2.x and use the cryptoJS engine.
+
 #### The CLI
 
 When encrypting `secret.html`, the CLI will now create a folder with your encrypted file `encrypted/secret.html`. It will not create a `secret_encrypted.html` file anymore.
