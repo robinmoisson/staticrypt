@@ -85,12 +85,11 @@ The password argument is optional if `STATICRYPT_PASSWORD` is set in the environ
                                    localStorage when entered by the user. Set to
                                    "false" to hide the box. Default: "0", no
                                    expiration.                 [number] [default: 0]
-      -s, --salt                   Set the salt manually. It should be set if you
-                                   want to use "Remember me" through multiple pages.
-                                   It needs to be a 32-character-long hexadecimal
-                                   string.
-                                   Include the empty flag to generate a random salt
-                                   you can use: "statycrypt -s".            [string]
+      -s, --salt                   Generate a config file or set the salt manually.
+                                   Pass a 32-character-long hexadecimal string to
+                                   use as salt, or leave empty to generate, display
+                                   and save to config a random salt. This won't
+                                   overwrite an exisiting config file.      [string]
           --share                  Get a link containing your hashed password that
                                    will auto-decrypt the page. Pass your URL as a
                                    value to append "#staticrypt_pwd=<hashed_pwd>",
@@ -223,7 +222,9 @@ The testing is done manually for now - you can run [build](#build), then open `e
 
 ## Community and alternatives
 
-Here are some other projects and community resources you might find interesting (this is included as an informative section, I haven't personally vetted any of those). If you have a StatiCrypt project you'd like to share, feel free to open an issue describing it.
+Here are some other projects and community resources you might find interesting (this is included as an informative section, I haven't personally vetted any of those). 
+
+If you have a StatiCrypt project you'd like to share, feel free to open an issue describing it.
 
 ### Alternatives to StatiCrypt
 
