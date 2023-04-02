@@ -370,6 +370,16 @@ function parseCommandLineArguments() {
             type: "string",
             describe: "Title for the output HTML page.",
             default: "Protected Page",
-        });
+        })
+        .option("template-color-primary", {
+            type: "string",
+            describe: "Button color.",
+            default: "#4CAF50",
+        })
+        .option("template-color-secondary", {
+            type: "string",
+            describe: "Background color of the page.",
+            default: "#76b852",
+        })
 }
 exports.parseCommandLineArguments = parseCommandLineArguments;
