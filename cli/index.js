@@ -8,7 +8,6 @@ const path = require("path");
 // parse .env file into process.env
 require('dotenv').config();
 
-const codec = require("../lib/codec.js");
 const { convertCommonJSToBrowserJS, exitWithError, isOptionSetByUser, genFile, getPassword, getFileContent, getSalt} = require("./helpers");
 const { isCustomPasswordTemplateLegacy, parseCommandLineArguments, isPasswordTemplateUsingAsync} = require("./helpers.js");
 
@@ -31,7 +30,6 @@ if (isWebcrypto && isNodeMissingWebCrypto) {
 // only call "require" for the webcrypto engine if we are actually using it, to avoid errors in older node versions
 const cryptoEngine = isWebcrypto ? require("../lib/cryptoEngine/webcryptoEngine") : require("../lib/cryptoEngine/cryptojsEngine");
 const { generateRandomSalt, generateRandomString } = cryptoEngine;
-const { encode } = codec.init(cryptoEngine);
 
 async function runStatiCrypt() {
     // if the 's' flag is passed without parameter, generate a salt, display & exit
@@ -149,43 +147,46 @@ async function runStatiCrypt() {
     // get the file content
     const contents = getFileContent(inputFilepath);
 
+    // get appropriate codec for password_template version
+    const codec = isLegacy ? require("../lib/codec-sync.js") : require("../lib/codec.js");
+    const { encode } = codec.init(cryptoEngine);
+
     // encrypt input
-    encode(contents, password, salt, isLegacy).then((encryptedMessage) => {
-        let codecString;
-        if (isWebcrypto) {
-            codecString = convertCommonJSToBrowserJS("lib/codec");
-        } else {
-            // TODO: remove on next major version bump. The replace is a hack to pass the salt to the injected js_codec in
-            //  a backward compatible way (not requiring to update the password_template). Same for using a "sync" version
-            //  of the codec.
-            codecString = convertCommonJSToBrowserJS("lib/codec-sync").replace('##SALT##', salt);
-        }
+    const encryptedMessage = await encode(contents, password, salt, isLegacy);
 
-        const data = {
-            crypto_tag: cryptoTag,
-            decrypt_button: namedArgs.decryptButton,
-            // TODO: deprecated option here for backward compat, remove on next major version bump
-            embed: isWebcrypto ? false : namedArgs.embed,
-            encrypted: encryptedMessage,
-            instructions: namedArgs.instructions,
-            is_remember_enabled: namedArgs.noremember ? "false" : "true",
-            js_codec: codecString,
-            js_crypto_engine: cryptoEngineString,
-            label_error: namedArgs.labelError,
-            passphrase_placeholder: namedArgs.passphrasePlaceholder,
-            remember_duration_in_days: namedArgs.remember,
-            remember_me: namedArgs.rememberLabel,
-            salt: salt,
-            title: namedArgs.title,
-        };
+    let codecString;
+    if (isWebcrypto) {
+        codecString = convertCommonJSToBrowserJS("lib/codec");
+    } else {
+        // TODO: remove on next major version bump. The replace is a hack to pass the salt to the injected js_codec in
+        //  a backward compatible way (not requiring to update the password_template). Same for using a "sync" version
+        //  of the codec.
+        codecString = convertCommonJSToBrowserJS("lib/codec-sync").replace('##SALT##', salt);
+    }
 
-        const outputFilepath = namedArgs.output !== null
-            ? namedArgs.output
-            : inputFilepath.replace(/\.html$/, "") + "_encrypted.html";
+    const data = {
+        crypto_tag: cryptoTag,
+        decrypt_button: namedArgs.decryptButton,
+        // TODO: deprecated option here for backward compat, remove on next major version bump
+        embed: isWebcrypto ? false : namedArgs.embed,
+        encrypted: encryptedMessage,
+        instructions: namedArgs.instructions,
+        is_remember_enabled: namedArgs.noremember ? "false" : "true",
+        js_codec: codecString,
+        js_crypto_engine: cryptoEngineString,
+        label_error: namedArgs.labelError,
+        passphrase_placeholder: namedArgs.passphrasePlaceholder,
+        remember_duration_in_days: namedArgs.remember,
+        remember_me: namedArgs.rememberLabel,
+        salt: salt,
+        title: namedArgs.title,
+    };
 
-        genFile(data, outputFilepath, namedArgs.f);
+    const outputFilepath = namedArgs.output !== null
+        ? namedArgs.output
+        : inputFilepath.replace(/\.html$/, "") + "_encrypted.html";
 
-    });
+    genFile(data, outputFilepath, namedArgs.f);
 }
 
 runStatiCrypt();

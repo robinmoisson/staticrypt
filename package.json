@@ -1,6 +1,6 @@
 {
   "name": "staticrypt",
-  "version": "2.6.1",
+  "version": "2.6.2",
   "description": "Based on the [crypto-js](https://github.com/brix/crypto-js) library, StatiCrypt uses AES-256 to encrypt your input with your passphrase and put it in a HTML file with a password prompt that can decrypted in-browser (client side).",
   "main": "index.js",
   "files": [
