@@ -231,4 +231,4 @@ Here are some other projects and community resources you might find interesting 
 
 ### Based on StatiCrypt
 
-**Template to host an encrypted single page website with Github Pages:** [a-nau/password-protected-website-template](https://github.com/a-nau/password-protected-website-template) is a demonstration of how to build a protected page on Github Pages, integrating with Github Actions
+**Template to host an encrypted single page website with Github Pages:** [a-nau/password-protected-website-template](https://github.com/a-nau/password-protected-website-template) is a demonstration of how to build a protected page on Github Pages, integrating with Github Actions. (**Warning:** this is compatible with 2.x only, left it here for inspiration purpose. You can follow the [issue on upgrading to 3.x](https://github.com/a-nau/password-protected-website-template/issues/2).)
