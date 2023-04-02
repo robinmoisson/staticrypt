@@ -223,7 +223,7 @@ The testing is done manually for now - you can run [build](#build), then open `e
 
 ## Community and alternatives
 
-Here are some other projects and community resources you might find interesting (this is included as an informative section, I haven't personally vetted any of those).
+Here are some other projects and community resources you might find interesting (this is included as an informative section, I haven't personally vetted any of those). If you have a StatiCrypt project you'd like to share, feel free to open an issue describing it.
 
 ### Alternatives to StatiCrypt
 
