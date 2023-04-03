@@ -71,47 +71,53 @@ The password argument is optional if `STATICRYPT_PASSWORD` is set in the environ
     Usage: staticrypt <filename> [options]
 
     Options:
-          --help                   Show help                               [boolean]
-          --version                Show version number                     [boolean]
-      -c, --config                 Path to the config file. Set to "false" to
-                                   disable.   [string] [default: ".staticrypt.json"]
-      -d, --directory              Name of the directory where the encrypted files
-                                   will be saved.   [string] [default: "encrypted/"]
-      -p, --password               The password to encrypt your file with. Leave
-                                   empty to be prompted for it. If
-                                   STATICRYPT_PASSWORD is set in the env, we'll use
-                                   that instead.            [string] [default: null]
-          --remember               Expiration in days of the "Remember me" checkbox
-                                   that will save the (salted + hashed) password in
-                                   localStorage when entered by the user. Set to
-                                   "false" to hide the box. Default: "0", no
-                                   expiration.                 [number] [default: 0]
-      -s, --salt                   Generate a config file or set the salt manually.
-                                   Pass a 32-character-long hexadecimal string to
-                                   use as salt, or leave empty to generate, display
-                                   and save to config a random salt. This won't
-                                   overwrite an existing config file.       [string]
-          --share                  Get a link containing your hashed password that
-                                   will auto-decrypt the page. Pass your URL as a
-                                   value to append "#staticrypt_pwd=<hashed_pwd>",
-                                   or leave empty to display the hash to append.
-                                                                            [string]
-          --short                  Hide the "short password" warning.
+          --help                      Show help                            [boolean]
+          --version                   Show version number                  [boolean]
+      -c, --config                    Path to the config file. Set to "false" to
+                                      disable.[string] [default: ".staticrypt.json"]
+      -d, --directory                 Name of the directory where the encrypted
+                                      files will be saved.
+                                                    [string] [default: "encrypted/"]
+      -p, --password                  The password to encrypt your file with. Leave
+                                      empty to be prompted for it. If
+                                      STATICRYPT_PASSWORD is set in the env, we'll
+                                      use that instead.     [string] [default: null]
+          --remember                  Expiration in days of the "Remember me"
+                                      checkbox that will save the (salted + hashed)
+                                      password in localStorage when entered by the
+                                      user. Set to "false" to hide the box. Default:
+                                      "0", no expiration.      [number] [default: 0]
+      -s, --salt                      Generate a config file or set the salt
+                                      manually. Pass a 32-character-long hexadecimal
+                                      string to use as salt, or leave empty to
+                                      generate, display and save to config a random
+                                      salt. This won't overwrite an existing config
+                                      file.                                 [string]
+          --share                     Get a link containing your hashed password
+                                      that will auto-decrypt the page. Pass your URL
+                                      as a value to append
+                                      "#staticrypt_pwd=<hashed_pwd>", or leave empty
+                                      to display the hash to append.        [string]
+          --short                     Hide the "short password" warning.
                                                           [boolean] [default: false]
-      -t, --template               Path to custom HTML template with password
-                                   prompt.
+      -t, --template                  Path to custom HTML template with password
+                                      prompt.
                    [string] [default: "/code/staticrypt/lib/password_template.html"]
-          --template-button        Label to use for the decrypt button. Default:
-                                   "DECRYPT".          [string] [default: "DECRYPT"]
-          --template-instructions  Special instructions to display to the user.
+          --template-button           Label to use for the decrypt button. Default:
+                                      "DECRYPT".       [string] [default: "DECRYPT"]
+          --template-color-primary    Primary color (button...)
+                                                       [string] [default: "#4CAF50"]
+          --template-color-secondary  Secondary color (page background...)
+                                                       [string] [default: "#76B852"]
+          --template-instructions     Special instructions to display to the user.
                                                               [string] [default: ""]
-          --template-error         Error message to display on entering wrong
-                                   password.     [string] [default: "Bad password!"]
-          --template-placeholder   Placeholder to use for the password input.
+          --template-error            Error message to display on entering wrong
+                                      password.  [string] [default: "Bad password!"]
+          --template-placeholder      Placeholder to use for the password input.
                                                       [string] [default: "Password"]
-          --template-remember      Label to use for the "Remember me" checkbox.
+          --template-remember         Label to use for the "Remember me" checkbox.
                                                    [string] [default: "Remember me"]
-          --template-title         Title for the output HTML page.
+          --template-title            Title for the output HTML page.
                                                 [string] [default: "Protected Page"]
 
 

@@ -350,6 +350,16 @@ function parseCommandLineArguments() {
             describe: 'Label to use for the decrypt button. Default: "DECRYPT".',
             default: "DECRYPT",
         })
+        .option("template-color-primary", {
+            type: "string",
+            describe: "Primary color (button...)",
+            default: "#4CAF50",
+        })
+        .option("template-color-secondary", {
+            type: "string",
+            describe: "Secondary color (page background...)",
+            default: "#76B852",
+        })
         .option("template-instructions", {
             type: "string",
             describe: "Special instructions to display to the user.",
@@ -374,16 +384,6 @@ function parseCommandLineArguments() {
             type: "string",
             describe: "Title for the output HTML page.",
             default: "Protected Page",
-        })
-        .option("template-color-primary", {
-            type: "string",
-            describe: "Button color.",
-            default: "#4CAF50",
-        })
-        .option("template-color-secondary", {
-            type: "string",
-            describe: "Background color of the page.",
-            default: "#76b852",
-        })
+        });
 }
 exports.parseCommandLineArguments = parseCommandLineArguments;
