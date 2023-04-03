@@ -100,6 +100,8 @@ async function runStatiCrypt() {
         template_placeholder: namedArgs.templatePlaceholder,
         template_remember: namedArgs.templateRemember,
         template_title: namedArgs.templateTitle,
+        template_color_primary: namedArgs.templateColorPrimary,
+        template_color_secondary: namedArgs.templateColorSecondary,
     };
 
     const outputFilepath = namedArgs.directory.replace(/\/+$/, '') + "/" + inputFilepath;
