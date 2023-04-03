@@ -73,7 +73,7 @@ async function runStatiCrypt() {
     // write salt to config file
     if (config.salt !== salt) {
         config.salt = salt;
-        fs.writeFileSync(configPath, JSON.stringify(config, null, 4));
+        writeConfig(configPath, config);
     }
 
     // get the file content

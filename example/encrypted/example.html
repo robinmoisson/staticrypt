@@ -62,7 +62,8 @@
         }
 
         .staticrypt-form .staticrypt-decrypt-button:hover, .staticrypt-form .staticrypt-decrypt-button:active, .staticrypt-form .staticrypt-decrypt-button:focus {
-            background: #43A047;
+            background: #4CAF50;
+            filter: brightness(92%);
         }
 
         .staticrypt-html {
@@ -77,11 +78,7 @@
         .staticrypt-content {
             height: 100%;
             margin-bottom: 1em;
-            background: #76b852; /* fallback for old browsers */
-            background: -webkit-linear-gradient(right, #76b852, #8DC26F);
-            background: -moz-linear-gradient(right, #76b852, #8DC26F);
-            background: -o-linear-gradient(right, #76b852, #8DC26F);
-            background: linear-gradient(to left, #76b852, #8DC26F);
+            background: #76B852;
             font-family: "Arial", sans-serif;
             -webkit-font-smoothing: antialiased;
             -moz-osx-font-smoothing: grayscale;
@@ -773,7 +770,7 @@ exports.init = init;
 })())
     const templateError = 'Bad password!',
         isRememberEnabled = true,
-        staticryptConfig = {"encryptedMsg":"ec966bcc5ec514148b6b329f4f4f4e5e38767cf6c88303e29f692b4e8de540eb678dccbe750aeabe7cd361384bdc79c66b85254710d5b20673d4d28781a6129d980f0287980b5307cca6d41371eb9542b79b8582c334dfa9f5dfa45a3ec3205eb6462c309b36b94e0a5aa76fe26013b1919175e802b354ff942f4330879245425b5851b069d78a4e606240f43496913150f2c34780f658c875480a6ea07a0d2d92967d9079622b3ebcfc9b4540f8bcc4d49f356db6895f614d13e8287b7be4ad","isRememberEnabled":true,"rememberDurationInDays":0,"salt":"b93bbaf35459951c47721d1f3eaeb5b9"};
+        staticryptConfig = {"encryptedMsg":"87f21fbcd8377a4add0382f281123d5f3d7422d99eeac1e8bf287931f307ab42ed795ce671de90d2127951422f748d7f3b93e711e4e0ddf450371c741031208ae7a9c7a7cc38b7969c86dc22beb869ce9b98aa1abd29d2dd658b2e163729341fe247d79e15e172c716e4d99bc7e7b7581a648bc7f87a0639c497b299d2f2fe2b85dd43e8ac7018ef3d0028a39fb3d156ae0f4e303b575e70c4fb0079f353f0510798816b9009a4156d7803b286db1c82e55e68eb2b280be7fb20e4c01dc417f0","isRememberEnabled":true,"rememberDurationInDays":0,"salt":"b93bbaf35459951c47721d1f3eaeb5b9"};
 
     // you can edit these values to customize some of the behavior of StatiCrypt
     const templateConfig = {
