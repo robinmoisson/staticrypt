@@ -10,6 +10,12 @@ const Yargs = require('yargs');
 const SCRIPT_URL = 'https://cdnjs.cloudflare.com/ajax/libs/crypto-js/3.1.9-1/crypto-js.min.js';
 const SCRIPT_TAG = '<script src="' + SCRIPT_URL + '" integrity="sha384-lp4k1VRKPU9eBnPePjnJ9M2RF3i7PC30gXs70+elCVfgwLwx1tv5+ctxdtwxqZa7" crossorigin="anonymous"></script>';
 
+console.log(
+    "WARNING: support for StatiCrypt 1.x has ended. We recommend you upgrade to the latest version to get the" +
+    " latest security fixes.\nYou can follow the migration guide here:" +
+    " https://github.com/robinmoisson/staticrypt/blob/main/MIGRATING.md\n"
+);
+
 const namedArgs = Yargs
       .usage('Usage: staticrypt <filename> <passphrase> [options]')
       .demandCommand(2)

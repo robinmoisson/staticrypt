@@ -1,5 +1,7 @@
 # StatiCrypt
 
+**LEGACY VERSION - SUPPORT FOR 1.x HAS ENDED.** We recommend you switch to the latest version to get the latest security fixes. See [the migration guide](https://github.com/robinmoisson/staticrypt/blob/main/MIGRATING.md).
+
 Based on the [crypto-js](https://github.com/brix/crypto-js) library, StatiCrypt uses AES-256 to encrypt your string with your passphrase in your browser (client side).
 
 Download your encrypted string in a HTML page with a password prompt you can upload anywhere (see [example](https://robinmoisson.github.io/staticrypt/example.html)).
