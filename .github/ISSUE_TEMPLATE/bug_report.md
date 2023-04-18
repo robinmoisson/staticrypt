@@ -1,24 +1,24 @@
 ---
 name: Bug report
-about: Create a report to help us improve
+about: Open a bug report
 title: ''
-labels: ''
+labels: bug
 assignees: ''
 
 ---
 
 I'm trying to...
 
-## What's happening
+### What's happening
 
 When I do ... then this happens: ...
 
-## What should be happening
+### What should be happening
 
 I expect this would happen instead: ...
 
-## My setup
+### My setup
 
 StatiCrypt version:
 Node version:
-Any other relevant context:
+Any additional relevant context, if any:
