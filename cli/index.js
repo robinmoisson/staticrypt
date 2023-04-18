@@ -2,7 +2,12 @@
 
 "use strict";
 
-const fs = require("fs");
+// check node version before anything else
+const nodeVersion = process.versions.node.split(".");
+if (nodeVersion[0] < 16) {
+    console.log("ERROR: Node version 16 or higher is required.");
+    process.exit(1);
+}
 
 // parse .env file into process.env
 require('dotenv').config();
@@ -11,7 +16,7 @@ const cryptoEngine = require("../lib/cryptoEngine.js");
 const codec = require("../lib/codec.js");
 const { generateRandomSalt } = cryptoEngine;
 const { encode } = codec.init(cryptoEngine);
-const { parseCommandLineArguments, buildStaticryptJS, isOptionSetByUser, genFile, getPassword, getFileContent, getSalt,
+const { parseCommandLineArguments, buildStaticryptJS, isOptionSetByUser, genFile, getFileContent,
     getValidatedSalt,
     getValidatedPassword, getConfig, writeConfig
 } = require("./helpers.js");
