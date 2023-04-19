@@ -221,6 +221,26 @@
                                     placeholder="Default: 'DECRYPT'"
                                 />
                             </div>
+
+                            <div class="form-group">
+                                <label for="template_color_primary">Primary color (button, ...)</label>
+                                <input
+                                    type="text"
+                                    class="form-control"
+                                    id="template_color_primary"
+                                    placeholder="Default: '#4CAF50'"
+                                />
+                            </div>
+
+                            <div class="form-group">
+                                <label for="template_color_secondary">Secondary color (background, ...)</label>
+                                <input
+                                    type="text"
+                                    class="form-control"
+                                    id="template_color_secondary"
+                                    placeholder="Default: '#76B852'"
+                                />
+                            </div>
                         </div>
 
                         <button class="btn btn-primary pull-right" type="submit">
@@ -1321,6 +1341,8 @@ exports.init = init;
                 const encryptedMsg = await encode(unencrypted, password, salt);
 
                 const templateButton = document.getElementById("template_button").value,
+                    templateColorPrimary = document.getElementById("template_color_primary").value,
+                    templateColorSecondary = document.getElementById("template_color_secondary").value,
                     templateInstructions = document.getElementById("template_instructions").value,
                     isRememberEnabled = document.getElementById("remember").checked,
                     templateTitle = document.getElementById("template_title").value.trim(),
@@ -1338,6 +1360,8 @@ exports.init = init;
                     is_remember_enabled: JSON.stringify(isRememberEnabled),
                     js_staticrypt: getScriptAsString("staticrypt"),
                     template_button: templateButton ? templateButton : "DECRYPT",
+                    template_color_primary: templateColorPrimary || "#4CAF50",
+                    template_color_secondary: templateColorSecondary || "#76B852",
                     template_instructions: templateInstructions || "",
                     template_placeholder: templatePlaceholder || "Password",
                     template_remember: templateRemember || "Remember me",
