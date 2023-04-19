@@ -57,18 +57,18 @@ staticrypt dir_to_encrypt -p MY_LONG_PASSWORD -r
 
 ```bash
 # you can also pass '--share' without specifying the URL to get the `#staticrypt_pwd=...` 
-staticrypt test.html -p MY_LONG_PASSWORD --share https://example.com/test_encrypted.html
-# => https://example.com/test_encrypted.html#staticrypt_pwd=5bfbf1343c7257cd7be23ecd74bb37fa2c76d041042654f358b6255baeab898f
+staticrypt test.html -p MY_LONG_PASSWORD --share https://example.com/encrypted.html
+# => https://example.com/encrypted.html#staticrypt_pwd=5bfbf1343c7257cd7be23ecd74bb37fa2c76d041042654f358b6255baeab898f
 ```
 
 **Pin the salt to use staticrypt in your CI in a build step** - if you want want the "Remember-me" or share features to work accross multiple pages or multiple successive deployment, the salt needs to stay the same ([see why](https://github.com/robinmoisson/staticrypt#why-does-staticrypt-create-a-config-file)). If you run StatiCrypt in a CI step, you can pin the salt in two ways:
 
 ```bash
-# Either commit the .staticrypt.json config file - you can generate a random salt and 
-# a config file on your local machine:
+# either commit the .staticrypt.json config file - you can generate a random salt and 
+# config file on your local machine:
 staticrypt --salt
 
-# Or hardcode the salt in the CI script command:
+# or hardcode the salt in the CI script command:
 staticrypt test.html -p MY_LONG_PASSWORD --salt 12345678901234567890123456789012
 ```
 
