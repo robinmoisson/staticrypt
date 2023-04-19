@@ -96,8 +96,8 @@
         <div class="col-xs-12">
             <form id="encrypt_form">
                 <div class="form-group">
-                    <label for="passphrase">Password</label>
-                    <input type="password" class="form-control" id="passphrase"
+                    <label for="password">Password</label>
+                    <input type="password" class="form-control" id="password"
                            placeholder="Password (choose a long one!)">
                 </div>
 
@@ -137,9 +137,9 @@
                     </div>
 
                     <div class="form-group">
-                        <label for="template_placeholder">Passphrase input placeholder</label>
+                        <label for="template_placeholder">Password input placeholder</label>
                         <input type="text" class="form-control" id="template_placeholder"
-                               placeholder="Default: 'Passphrase'">
+                               placeholder="Default: 'Password'">
                     </div>
 
                     <div class="form-group">
@@ -155,7 +155,7 @@
                                step="any"
                                placeholder="Default: 0 (no expiration)">
                         <small class="form-text text-muted">
-                            After this many days, the user will have to enter the passphrase again. Leave empty or set
+                            After this many days, the user will have to enter the password again. Leave empty or set
                             to 0 for no expiration.
                         </small>
                     </div>
@@ -166,7 +166,7 @@
                     </div>
                 </div>
 
-                <button class="btn btn-primary pull-right" type="submit">Generate passphrase protected HTML</button>
+                <button class="btn btn-primary pull-right" type="submit">Generate password protected HTML</button>
             </form>
         </div>
     </div>
@@ -254,14 +254,14 @@ const UTF8Encoder = {
 /**
  * Salt and encrypt a msg with a password.
  */
-async function encrypt(msg, hashedPassphrase) {
+async function encrypt(msg, hashedPassword) {
     // Must be 16 bytes, unpredictable, and preferably cryptographically random. However, it need not be secret.
     // https://developer.mozilla.org/en-US/docs/Web/API/SubtleCrypto/encrypt#parameters
     const iv = crypto.getRandomValues(new Uint8Array(IV_BITS / 8));
 
     const key = await subtle.importKey(
         "raw",
-        HexEncoder.parse(hashedPassphrase),
+        HexEncoder.parse(hashedPassword),
         ENCRYPTION_ALGO,
         false,
         ["encrypt"]
@@ -285,17 +285,17 @@ exports.encrypt = encrypt;
  * Decrypt a salted msg using a password.
  *
  * @param {string} encryptedMsg
- * @param {string} hashedPassphrase
+ * @param {string} hashedPassword
  * @returns {Promise<string>}
  */
-async function decrypt(encryptedMsg, hashedPassphrase) {
+async function decrypt(encryptedMsg, hashedPassword) {
     const ivLength = IV_BITS / HEX_BITS;
     const iv = HexEncoder.parse(encryptedMsg.substring(0, ivLength));
     const encrypted = encryptedMsg.substring(ivLength);
 
     const key = await subtle.importKey(
         "raw",
-        HexEncoder.parse(hashedPassphrase),
+        HexEncoder.parse(hashedPassword),
         ENCRYPTION_ALGO,
         false,
         ["decrypt"]
@@ -315,33 +315,33 @@ async function decrypt(encryptedMsg, hashedPassphrase) {
 exports.decrypt = decrypt;
 
 /**
- * Salt and hash the passphrase so it can be stored in localStorage without opening a password reuse vulnerability.
+ * Salt and hash the password so it can be stored in localStorage without opening a password reuse vulnerability.
  *
- * @param {string} passphrase
+ * @param {string} password
  * @param {string} salt
  * @returns {Promise<string>}
  */
-async function hashPassphrase(passphrase, salt) {
-    // we hash the passphrase in multiple steps, each adding more iterations. This is because we used to allow less
+async function hashPassword(password, salt) {
+    // we hash the password in multiple steps, each adding more iterations. This is because we used to allow less
     // iterations, so for backward compatibility reasons, we need to support going from that to more iterations.
-    let hashedPassphrase = await hashLegacyRound(passphrase, salt);
+    let hashedPassword = await hashLegacyRound(password, salt);
 
-    hashedPassphrase = await hashSecondRound(hashedPassphrase, salt);
+    hashedPassword = await hashSecondRound(hashedPassword, salt);
 
-    return hashThirdRound(hashedPassphrase, salt);
+    return hashThirdRound(hashedPassword, salt);
 }
-exports.hashPassphrase = hashPassphrase;
+exports.hashPassword = hashPassword;
 
 /**
- * This hashes the passphrase with 1k iterations. This is a low number, we need this function to support backwards
+ * This hashes the password with 1k iterations. This is a low number, we need this function to support backwards
  * compatibility.
  *
- * @param {string} passphrase
+ * @param {string} password
  * @param {string} salt
  * @returns {Promise<string>}
  */
-function hashLegacyRound(passphrase, salt) {
-    return pbkdf2(passphrase, salt, 1000, "SHA-1");
+function hashLegacyRound(password, salt) {
+    return pbkdf2(password, salt, 1000, "SHA-1");
 }
 exports.hashLegacyRound = hashLegacyRound;
 
@@ -349,12 +349,12 @@ exports.hashLegacyRound = hashLegacyRound;
  * Add a second round of iterations. This is because we used to use 1k, so for backwards compatibility with
  * remember-me/autodecrypt links, we need to support going from that to more iterations.
  *
- * @param hashedPassphrase
+ * @param hashedPassword
  * @param salt
  * @returns {Promise<string>}
  */
-function hashSecondRound(hashedPassphrase, salt) {
-    return pbkdf2(hashedPassphrase, salt, 14000, "SHA-256");
+function hashSecondRound(hashedPassword, salt) {
+    return pbkdf2(hashedPassword, salt, 14000, "SHA-256");
 }
 exports.hashSecondRound = hashSecondRound;
 
@@ -362,28 +362,28 @@ exports.hashSecondRound = hashSecondRound;
  * Add a third round of iterations to bring total number to 600k. This is because we used to use 1k, then 15k, so for
  * backwards compatibility with remember-me/autodecrypt links, we need to support going from that to more iterations.
  *
- * @param hashedPassphrase
+ * @param hashedPassword
  * @param salt
  * @returns {Promise<string>}
  */
-function hashThirdRound(hashedPassphrase, salt) {
-    return pbkdf2(hashedPassphrase, salt, 585000, "SHA-256");
+function hashThirdRound(hashedPassword, salt) {
+    return pbkdf2(hashedPassword, salt, 585000, "SHA-256");
 }
 exports.hashThirdRound = hashThirdRound;
 
 /**
- * Salt and hash the passphrase so it can be stored in localStorage without opening a password reuse vulnerability.
+ * Salt and hash the password so it can be stored in localStorage without opening a password reuse vulnerability.
  *
- * @param {string} passphrase
+ * @param {string} password
  * @param {string} salt
  * @param {int} iterations
  * @param {string} hashAlgorithm
  * @returns {Promise<string>}
  */
-async function pbkdf2(passphrase, salt, iterations, hashAlgorithm) {
+async function pbkdf2(password, salt, iterations, hashAlgorithm) {
     const key = await subtle.importKey(
         "raw",
-        UTF8Encoder.parse(passphrase),
+        UTF8Encoder.parse(password),
         "PBKDF2",
         false,
         ["deriveBits"]
@@ -410,10 +410,10 @@ function generateRandomSalt() {
 }
 exports.generateRandomSalt = generateRandomSalt;
 
-async function signMessage(hashedPassphrase, message) {
+async function signMessage(hashedPassword, message) {
     const key = await subtle.importKey(
         "raw",
-        HexEncoder.parse(hashedPassphrase),
+        HexEncoder.parse(hashedPassword),
         {
             name: "HMAC",
             hash: "SHA-256",
@@ -492,13 +492,13 @@ function init(cryptoEngine) {
    * @returns {string} The encoded text
    */
   async function encode(msg, password, salt) {
-    const hashedPassphrase = await cryptoEngine.hashPassphrase(password, salt);
+    const hashedPassword = await cryptoEngine.hashPassword(password, salt);
 
-    const encrypted = await cryptoEngine.encrypt(msg, hashedPassphrase);
+    const encrypted = await cryptoEngine.encrypt(msg, hashedPassword);
 
     // we use the hashed password in the HMAC because this is effectively what will be used a password (so we can store
     // it in localStorage safely, we don't use the clear text password)
-    const hmac = await cryptoEngine.signMessage(hashedPassphrase, encrypted);
+    const hmac = await cryptoEngine.signMessage(hashedPassword, encrypted);
 
     return hmac + encrypted;
   }
@@ -509,58 +509,58 @@ function init(cryptoEngine) {
    * we don't need to hash the password multiple times.
    *
    * @param {string} msg
-   * @param {string} hashedPassphrase
+   * @param {string} hashedPassword
    *
    * @returns {string} The encoded text
    */
-  async function encodeWithHashedPassphrase(msg, hashedPassphrase) {
-    const encrypted = await cryptoEngine.encrypt(msg, hashedPassphrase);
+  async function encodeWithHashedPassword(msg, hashedPassword) {
+    const encrypted = await cryptoEngine.encrypt(msg, hashedPassword);
 
     // we use the hashed password in the HMAC because this is effectively what will be used a password (so we can store
     // it in localStorage safely, we don't use the clear text password)
-    const hmac = await cryptoEngine.signMessage(hashedPassphrase, encrypted);
+    const hmac = await cryptoEngine.signMessage(hashedPassword, encrypted);
 
     return hmac + encrypted;
   }
-  exports.encodeWithHashedPassphrase = encodeWithHashedPassphrase;
+  exports.encodeWithHashedPassword = encodeWithHashedPassword;
 
   /**
    * Top-level function for decoding a message.
    * Includes signature check and decryption.
    *
    * @param {string} signedMsg
-   * @param {string} hashedPassphrase
+   * @param {string} hashedPassword
    * @param {string} salt
    * @param {int} backwardCompatibleAttempt
-   * @param {string} originalPassphrase
+   * @param {string} originalPassword
    *
    * @returns {Object} {success: true, decoded: string} | {success: false, message: string}
    */
   async function decode(
       signedMsg,
-      hashedPassphrase,
+      hashedPassword,
       salt,
       backwardCompatibleAttempt = 0,
-      originalPassphrase = ''
+      originalPassword = ''
   ) {
     const encryptedHMAC = signedMsg.substring(0, 64);
     const encryptedMsg = signedMsg.substring(64);
-    const decryptedHMAC = await cryptoEngine.signMessage(hashedPassphrase, encryptedMsg);
+    const decryptedHMAC = await cryptoEngine.signMessage(hashedPassword, encryptedMsg);
 
     if (decryptedHMAC !== encryptedHMAC) {
       // we have been raising the number of iterations in the hashing algorithm multiple times, so to support the old
       // remember-me/autodecrypt links we need to try bringing the old hashes up to speed.
-      originalPassphrase = originalPassphrase || hashedPassphrase;
+      originalPassword = originalPassword || hashedPassword;
       if (backwardCompatibleAttempt === 0) {
-        const updatedHashedPassphrase = await cryptoEngine.hashThirdRound(originalPassphrase, salt);
+        const updatedHashedPassword = await cryptoEngine.hashThirdRound(originalPassword, salt);
 
-        return decode(signedMsg, updatedHashedPassphrase, salt, backwardCompatibleAttempt + 1, originalPassphrase);
+        return decode(signedMsg, updatedHashedPassword, salt, backwardCompatibleAttempt + 1, originalPassword);
       }
       if (backwardCompatibleAttempt === 1) {
-        let updatedHashedPassphrase = await cryptoEngine.hashSecondRound(originalPassphrase, salt);
-        updatedHashedPassphrase = await cryptoEngine.hashThirdRound(updatedHashedPassphrase, salt);
+        let updatedHashedPassword = await cryptoEngine.hashSecondRound(originalPassword, salt);
+        updatedHashedPassword = await cryptoEngine.hashThirdRound(updatedHashedPassword, salt);
 
-        return decode(signedMsg, updatedHashedPassphrase, salt, backwardCompatibleAttempt + 1, originalPassphrase);
+        return decode(signedMsg, updatedHashedPassword, salt, backwardCompatibleAttempt + 1, originalPassword);
       }
 
       return { success: false, message: "Signature mismatch" };
@@ -568,7 +568,7 @@ function init(cryptoEngine) {
 
     return {
       success: true,
-      decoded: await cryptoEngine.decrypt(encryptedMsg, hashedPassphrase),
+      decoded: await cryptoEngine.decrypt(encryptedMsg, hashedPassword),
     };
   }
   exports.decode = decode;
@@ -686,14 +686,14 @@ const UTF8Encoder = {
 /**
  * Salt and encrypt a msg with a password.
  */
-async function encrypt(msg, hashedPassphrase) {
+async function encrypt(msg, hashedPassword) {
     // Must be 16 bytes, unpredictable, and preferably cryptographically random. However, it need not be secret.
     // https://developer.mozilla.org/en-US/docs/Web/API/SubtleCrypto/encrypt#parameters
     const iv = crypto.getRandomValues(new Uint8Array(IV_BITS / 8));
 
     const key = await subtle.importKey(
         "raw",
-        HexEncoder.parse(hashedPassphrase),
+        HexEncoder.parse(hashedPassword),
         ENCRYPTION_ALGO,
         false,
         ["encrypt"]
@@ -717,17 +717,17 @@ exports.encrypt = encrypt;
  * Decrypt a salted msg using a password.
  *
  * @param {string} encryptedMsg
- * @param {string} hashedPassphrase
+ * @param {string} hashedPassword
  * @returns {Promise<string>}
  */
-async function decrypt(encryptedMsg, hashedPassphrase) {
+async function decrypt(encryptedMsg, hashedPassword) {
     const ivLength = IV_BITS / HEX_BITS;
     const iv = HexEncoder.parse(encryptedMsg.substring(0, ivLength));
     const encrypted = encryptedMsg.substring(ivLength);
 
     const key = await subtle.importKey(
         "raw",
-        HexEncoder.parse(hashedPassphrase),
+        HexEncoder.parse(hashedPassword),
         ENCRYPTION_ALGO,
         false,
         ["decrypt"]
@@ -747,33 +747,33 @@ async function decrypt(encryptedMsg, hashedPassphrase) {
 exports.decrypt = decrypt;
 
 /**
- * Salt and hash the passphrase so it can be stored in localStorage without opening a password reuse vulnerability.
+ * Salt and hash the password so it can be stored in localStorage without opening a password reuse vulnerability.
  *
- * @param {string} passphrase
+ * @param {string} password
  * @param {string} salt
  * @returns {Promise<string>}
  */
-async function hashPassphrase(passphrase, salt) {
-    // we hash the passphrase in multiple steps, each adding more iterations. This is because we used to allow less
+async function hashPassword(password, salt) {
+    // we hash the password in multiple steps, each adding more iterations. This is because we used to allow less
     // iterations, so for backward compatibility reasons, we need to support going from that to more iterations.
-    let hashedPassphrase = await hashLegacyRound(passphrase, salt);
+    let hashedPassword = await hashLegacyRound(password, salt);
 
-    hashedPassphrase = await hashSecondRound(hashedPassphrase, salt);
+    hashedPassword = await hashSecondRound(hashedPassword, salt);
 
-    return hashThirdRound(hashedPassphrase, salt);
+    return hashThirdRound(hashedPassword, salt);
 }
-exports.hashPassphrase = hashPassphrase;
+exports.hashPassword = hashPassword;
 
 /**
- * This hashes the passphrase with 1k iterations. This is a low number, we need this function to support backwards
+ * This hashes the password with 1k iterations. This is a low number, we need this function to support backwards
  * compatibility.
  *
- * @param {string} passphrase
+ * @param {string} password
  * @param {string} salt
  * @returns {Promise<string>}
  */
-function hashLegacyRound(passphrase, salt) {
-    return pbkdf2(passphrase, salt, 1000, "SHA-1");
+function hashLegacyRound(password, salt) {
+    return pbkdf2(password, salt, 1000, "SHA-1");
 }
 exports.hashLegacyRound = hashLegacyRound;
 
@@ -781,12 +781,12 @@ exports.hashLegacyRound = hashLegacyRound;
  * Add a second round of iterations. This is because we used to use 1k, so for backwards compatibility with
  * remember-me/autodecrypt links, we need to support going from that to more iterations.
  *
- * @param hashedPassphrase
+ * @param hashedPassword
  * @param salt
  * @returns {Promise<string>}
  */
-function hashSecondRound(hashedPassphrase, salt) {
-    return pbkdf2(hashedPassphrase, salt, 14000, "SHA-256");
+function hashSecondRound(hashedPassword, salt) {
+    return pbkdf2(hashedPassword, salt, 14000, "SHA-256");
 }
 exports.hashSecondRound = hashSecondRound;
 
@@ -794,28 +794,28 @@ exports.hashSecondRound = hashSecondRound;
  * Add a third round of iterations to bring total number to 600k. This is because we used to use 1k, then 15k, so for
  * backwards compatibility with remember-me/autodecrypt links, we need to support going from that to more iterations.
  *
- * @param hashedPassphrase
+ * @param hashedPassword
  * @param salt
  * @returns {Promise<string>}
  */
-function hashThirdRound(hashedPassphrase, salt) {
-    return pbkdf2(hashedPassphrase, salt, 585000, "SHA-256");
+function hashThirdRound(hashedPassword, salt) {
+    return pbkdf2(hashedPassword, salt, 585000, "SHA-256");
 }
 exports.hashThirdRound = hashThirdRound;
 
 /**
- * Salt and hash the passphrase so it can be stored in localStorage without opening a password reuse vulnerability.
+ * Salt and hash the password so it can be stored in localStorage without opening a password reuse vulnerability.
  *
- * @param {string} passphrase
+ * @param {string} password
  * @param {string} salt
  * @param {int} iterations
  * @param {string} hashAlgorithm
  * @returns {Promise<string>}
  */
-async function pbkdf2(passphrase, salt, iterations, hashAlgorithm) {
+async function pbkdf2(password, salt, iterations, hashAlgorithm) {
     const key = await subtle.importKey(
         "raw",
-        UTF8Encoder.parse(passphrase),
+        UTF8Encoder.parse(password),
         "PBKDF2",
         false,
         ["deriveBits"]
@@ -842,10 +842,10 @@ function generateRandomSalt() {
 }
 exports.generateRandomSalt = generateRandomSalt;
 
-async function signMessage(hashedPassphrase, message) {
+async function signMessage(hashedPassword, message) {
     const key = await subtle.importKey(
         "raw",
-        HexEncoder.parse(hashedPassphrase),
+        HexEncoder.parse(hashedPassword),
         {
             name: "HMAC",
             hash: "SHA-256",
@@ -921,13 +921,13 @@ function init(cryptoEngine) {
    * @returns {string} The encoded text
    */
   async function encode(msg, password, salt) {
-    const hashedPassphrase = await cryptoEngine.hashPassphrase(password, salt);
+    const hashedPassword = await cryptoEngine.hashPassword(password, salt);
 
-    const encrypted = await cryptoEngine.encrypt(msg, hashedPassphrase);
+    const encrypted = await cryptoEngine.encrypt(msg, hashedPassword);
 
     // we use the hashed password in the HMAC because this is effectively what will be used a password (so we can store
     // it in localStorage safely, we don't use the clear text password)
-    const hmac = await cryptoEngine.signMessage(hashedPassphrase, encrypted);
+    const hmac = await cryptoEngine.signMessage(hashedPassword, encrypted);
 
     return hmac + encrypted;
   }
@@ -938,58 +938,58 @@ function init(cryptoEngine) {
    * we don't need to hash the password multiple times.
    *
    * @param {string} msg
-   * @param {string} hashedPassphrase
+   * @param {string} hashedPassword
    *
    * @returns {string} The encoded text
    */
-  async function encodeWithHashedPassphrase(msg, hashedPassphrase) {
-    const encrypted = await cryptoEngine.encrypt(msg, hashedPassphrase);
+  async function encodeWithHashedPassword(msg, hashedPassword) {
+    const encrypted = await cryptoEngine.encrypt(msg, hashedPassword);
 
     // we use the hashed password in the HMAC because this is effectively what will be used a password (so we can store
     // it in localStorage safely, we don't use the clear text password)
-    const hmac = await cryptoEngine.signMessage(hashedPassphrase, encrypted);
+    const hmac = await cryptoEngine.signMessage(hashedPassword, encrypted);
 
     return hmac + encrypted;
   }
-  exports.encodeWithHashedPassphrase = encodeWithHashedPassphrase;
+  exports.encodeWithHashedPassword = encodeWithHashedPassword;
 
   /**
    * Top-level function for decoding a message.
    * Includes signature check and decryption.
    *
    * @param {string} signedMsg
-   * @param {string} hashedPassphrase
+   * @param {string} hashedPassword
    * @param {string} salt
    * @param {int} backwardCompatibleAttempt
-   * @param {string} originalPassphrase
+   * @param {string} originalPassword
    *
    * @returns {Object} {success: true, decoded: string} | {success: false, message: string}
    */
   async function decode(
       signedMsg,
-      hashedPassphrase,
+      hashedPassword,
       salt,
       backwardCompatibleAttempt = 0,
-      originalPassphrase = ''
+      originalPassword = ''
   ) {
     const encryptedHMAC = signedMsg.substring(0, 64);
     const encryptedMsg = signedMsg.substring(64);
-    const decryptedHMAC = await cryptoEngine.signMessage(hashedPassphrase, encryptedMsg);
+    const decryptedHMAC = await cryptoEngine.signMessage(hashedPassword, encryptedMsg);
 
     if (decryptedHMAC !== encryptedHMAC) {
       // we have been raising the number of iterations in the hashing algorithm multiple times, so to support the old
       // remember-me/autodecrypt links we need to try bringing the old hashes up to speed.
-      originalPassphrase = originalPassphrase || hashedPassphrase;
+      originalPassword = originalPassword || hashedPassword;
       if (backwardCompatibleAttempt === 0) {
-        const updatedHashedPassphrase = await cryptoEngine.hashThirdRound(originalPassphrase, salt);
+        const updatedHashedPassword = await cryptoEngine.hashThirdRound(originalPassword, salt);
 
-        return decode(signedMsg, updatedHashedPassphrase, salt, backwardCompatibleAttempt + 1, originalPassphrase);
+        return decode(signedMsg, updatedHashedPassword, salt, backwardCompatibleAttempt + 1, originalPassword);
       }
       if (backwardCompatibleAttempt === 1) {
-        let updatedHashedPassphrase = await cryptoEngine.hashSecondRound(originalPassphrase, salt);
-        updatedHashedPassphrase = await cryptoEngine.hashThirdRound(updatedHashedPassphrase, salt);
+        let updatedHashedPassword = await cryptoEngine.hashSecondRound(originalPassword, salt);
+        updatedHashedPassword = await cryptoEngine.hashThirdRound(updatedHashedPassword, salt);
 
-        return decode(signedMsg, updatedHashedPassphrase, salt, backwardCompatibleAttempt + 1, originalPassphrase);
+        return decode(signedMsg, updatedHashedPassword, salt, backwardCompatibleAttempt + 1, originalPassword);
       }
 
       return { success: false, message: "Signature mismatch" };
@@ -997,7 +997,7 @@ function init(cryptoEngine) {
 
     return {
       success: true,
-      decoded: await cryptoEngine.decrypt(encryptedMsg, hashedPassphrase),
+      decoded: await cryptoEngine.decrypt(encryptedMsg, hashedPassword),
     };
   }
   exports.decode = decode;
@@ -1034,14 +1034,14 @@ function init(staticryptConfig, templateConfig) {
     /**
      * Decrypt our encrypted page, replace the whole HTML.
      *
-     * @param {string} hashedPassphrase
+     * @param {string} hashedPassword
      * @returns {Promise<boolean>}
      */
-    async function decryptAndReplaceHtml(hashedPassphrase) {
+    async function decryptAndReplaceHtml(hashedPassword) {
         const { encryptedMsg, salt } = staticryptConfig;
         const { replaceHtmlCallback } = templateConfig;
 
-        const result = await decode(encryptedMsg, hashedPassphrase, salt);
+        const result = await decode(encryptedMsg, hashedPassword, salt);
         if (!result.success) {
             return false;
         }
@@ -1072,7 +1072,7 @@ function init(staticryptConfig, templateConfig) {
         const { rememberExpirationKey, rememberPassphraseKey } = templateConfig;
 
         // decrypt and replace the whole page
-        const hashedPassword = await cryptoEngine.hashPassphrase(password, salt);
+        const hashedPassword = await cryptoEngine.hashPassword(password, salt);
 
         const isDecryptionSuccessful = await decryptAndReplaceHtml(hashedPassword);
 
@@ -1179,11 +1179,11 @@ function init(staticryptConfig, templateConfig) {
             }
         }
 
-        const hashedPassphrase = localStorage.getItem(rememberPassphraseKey);
+        const hashedPassword = localStorage.getItem(rememberPassphraseKey);
 
-        if (hashedPassphrase) {
+        if (hashedPassword) {
             // try to decrypt
-            const isDecryptionSuccessful = await decryptAndReplaceHtml(hashedPassphrase);
+            const isDecryptionSuccessful = await decryptAndReplaceHtml(hashedPassword);
 
             // if the decryption is unsuccessful the password might be wrong - silently clear the saved data and let
             // the user fill the password form again
@@ -1203,16 +1203,16 @@ function init(staticryptConfig, templateConfig) {
 
         // get the password from the query param
         const queryParams = new URLSearchParams(window.location.search);
-        const hashedPassphraseQuery = queryParams.get(passwordKey);
+        const hashedPasswordQuery = queryParams.get(passwordKey);
 
         // get the password from the url fragment
         const hashRegexMatch = window.location.hash.substring(1).match(new RegExp(passwordKey + "=(.*)"));
-        const hashedPassphraseFragment = hashRegexMatch ? hashRegexMatch[1] : null;
+        const hashedPasswordFragment = hashRegexMatch ? hashRegexMatch[1] : null;
 
-        const hashedPassphrase = hashedPassphraseFragment || hashedPassphraseQuery;
+        const hashedPassword = hashedPasswordFragment || hashedPasswordQuery;
 
-        if (hashedPassphrase) {
-            return decryptAndReplaceHtml(hashedPassphrase);
+        if (hashedPassword) {
+            return decryptAndReplaceHtml(hashedPassword);
         }
 
         return false;
@@ -1300,10 +1300,10 @@ exports.init = init;
         CKEDITOR.instances['template_instructions'].updateElement();
 
         const unencrypted = document.getElementById('unencrypted_html').value,
-            passphrase = document.getElementById('passphrase').value;
+            password = document.getElementById('password').value;
 
         const salt = cryptoEngine.generateRandomSalt();
-        const encryptedMsg = await encode(unencrypted, passphrase, salt);
+        const encryptedMsg = await encode(unencrypted, password, salt);
 
         const templateButton = document.getElementById('template_button').value,
             templateInstructions = document.getElementById('template_instructions').value,
@@ -1324,7 +1324,7 @@ exports.init = init;
             js_staticrypt: getScriptAsString('staticrypt'),
             template_button: templateButton ? templateButton : 'DECRYPT',
             template_instructions: templateInstructions || '',
-            template_placeholder: templatePlaceholder || 'Passphrase',
+            template_placeholder: templatePlaceholder || 'Password',
             template_remember: templateRemember || 'Remember me',
             template_title: templateTitle || 'Protected Page',
         };

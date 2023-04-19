@@ -15,7 +15,7 @@ require('dotenv').config();
 const cryptoEngine = require("../lib/cryptoEngine.js");
 const codec = require("../lib/codec.js");
 const { generateRandomSalt } = cryptoEngine;
-const { encodeWithHashedPassphrase } = codec.init(cryptoEngine);
+const { encodeWithHashedPassword } = codec.init(cryptoEngine);
 const { parseCommandLineArguments, buildStaticryptJS, isOptionSetByUser, genFile, getFileContent,
     getValidatedSalt,
     getValidatedPassword, getConfig, writeConfig
@@ -69,7 +69,7 @@ async function runStatiCrypt() {
     if (hasShareFlag) {
         const url = namedArgs.share || "";
 
-        const hashedPassword = await cryptoEngine.hashPassphrase(password, salt);
+        const hashedPassword = await cryptoEngine.hashPassword(password, salt);
 
         console.log(url + "#staticrypt_pwd=" + hashedPassword);
         process.exit(0);
@@ -96,7 +96,7 @@ async function runStatiCrypt() {
         template_color_secondary: namedArgs.templateColorSecondary,
     };
 
-    const hashedPassword = await cryptoEngine.hashPassphrase(password, salt);
+    const hashedPassword = await cryptoEngine.hashPassword(password, salt);
 
     for (const positionalArgument of positionalArguments) {
         const inputFilepath = positionalArgument.toString();
@@ -105,7 +105,7 @@ async function runStatiCrypt() {
         const contents = getFileContent(inputFilepath);
 
         // encrypt input
-        const encryptedMsg = await encodeWithHashedPassphrase(contents, hashedPassword);
+        const encryptedMsg = await encodeWithHashedPassword(contents, hashedPassword);
 
         const staticryptConfig = {
             encryptedMsg,

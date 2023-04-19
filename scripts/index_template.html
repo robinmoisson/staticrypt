@@ -96,8 +96,8 @@
         <div class="col-xs-12">
             <form id="encrypt_form">
                 <div class="form-group">
-                    <label for="passphrase">Password</label>
-                    <input type="password" class="form-control" id="passphrase"
+                    <label for="password">Password</label>
+                    <input type="password" class="form-control" id="password"
                            placeholder="Password (choose a long one!)">
                 </div>
 
@@ -137,9 +137,9 @@
                     </div>
 
                     <div class="form-group">
-                        <label for="template_placeholder">Passphrase input placeholder</label>
+                        <label for="template_placeholder">Password input placeholder</label>
                         <input type="text" class="form-control" id="template_placeholder"
-                               placeholder="Default: 'Passphrase'">
+                               placeholder="Default: 'Password'">
                     </div>
 
                     <div class="form-group">
@@ -155,7 +155,7 @@
                                step="any"
                                placeholder="Default: 0 (no expiration)">
                         <small class="form-text text-muted">
-                            After this many days, the user will have to enter the passphrase again. Leave empty or set
+                            After this many days, the user will have to enter the password again. Leave empty or set
                             to 0 for no expiration.
                         </small>
                     </div>
@@ -166,7 +166,7 @@
                     </div>
                 </div>
 
-                <button class="btn btn-primary pull-right" type="submit">Generate passphrase protected HTML</button>
+                <button class="btn btn-primary pull-right" type="submit">Generate password protected HTML</button>
             </form>
         </div>
     </div>
@@ -277,10 +277,10 @@ Your encrypted string</pre>
         CKEDITOR.instances['template_instructions'].updateElement();
 
         const unencrypted = document.getElementById('unencrypted_html').value,
-            passphrase = document.getElementById('passphrase').value;
+            password = document.getElementById('password').value;
 
         const salt = cryptoEngine.generateRandomSalt();
-        const encryptedMsg = await encode(unencrypted, passphrase, salt);
+        const encryptedMsg = await encode(unencrypted, password, salt);
 
         const templateButton = document.getElementById('template_button').value,
             templateInstructions = document.getElementById('template_instructions').value,
@@ -301,7 +301,7 @@ Your encrypted string</pre>
             js_staticrypt: getScriptAsString('staticrypt'),
             template_button: templateButton ? templateButton : 'DECRYPT',
             template_instructions: templateInstructions || '',
-            template_placeholder: templatePlaceholder || 'Passphrase',
+            template_placeholder: templatePlaceholder || 'Password',
             template_remember: templateRemember || 'Remember me',
             template_title: templateTitle || 'Protected Page',
         };
