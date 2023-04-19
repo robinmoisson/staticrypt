@@ -10,7 +10,7 @@ if (nodeVersion[0] < 16) {
 }
 
 // parse .env file into process.env
-require('dotenv').config();
+require("dotenv").config();
 
 const fs = require("fs");
 
@@ -18,9 +18,16 @@ const cryptoEngine = require("../lib/cryptoEngine.js");
 const codec = require("../lib/codec.js");
 const { generateRandomSalt } = cryptoEngine;
 const { encodeWithHashedPassword } = codec.init(cryptoEngine);
-const { parseCommandLineArguments, buildStaticryptJS, isOptionSetByUser, genFile, getFileContent,
+const {
+    parseCommandLineArguments,
+    buildStaticryptJS,
+    isOptionSetByUser,
+    genFile,
+    getFileContent,
     getValidatedSalt,
-    getValidatedPassword, getConfig, writeConfig
+    getValidatedPassword,
+    getConfig,
+    writeConfig,
 } = require("./helpers.js");
 
 // parse arguments
@@ -100,27 +107,26 @@ async function runStatiCrypt() {
 
     const hashedPassword = await cryptoEngine.hashPassword(password, salt);
 
-    positionalArguments.forEach(path => encodeAndGenerateFile(
-        path.toString(),
-        hashedPassword,
-        salt,
-        baseTemplateData,
-        isRememberEnabled,
-        namedArgs
-    ));
+    positionalArguments.forEach((path) =>
+        encodeAndGenerateFile(path.toString(), hashedPassword, salt, baseTemplateData, isRememberEnabled, namedArgs)
+    );
 }
 
 async function encodeAndGenerateFile(path, hashedPassword, salt, baseTemplateData, isRememberEnabled, namedArgs) {
     // if the path is a directory, get into it and process all files
     if (fs.statSync(path).isDirectory()) {
         if (!namedArgs.recursive) {
-            console.log("ERROR: The path '" + path + "' is a directory. Use the -r|--recursive flag to process all files in the directory.");
+            console.log(
+                "ERROR: The path '" +
+                    path +
+                    "' is a directory. Use the -r|--recursive flag to process all files in the directory."
+            );
 
             // just return instead of exiting the process, that way all other files can be processed
             return;
         }
 
-        fs.readdirSync(path).forEach(filePath => {
+        fs.readdirSync(path).forEach((filePath) => {
             const fullPath = `${path}/${filePath}`;
 
             encodeAndGenerateFile(fullPath, hashedPassword, salt, baseTemplateData, isRememberEnabled, namedArgs);
@@ -145,7 +151,7 @@ async function encodeAndGenerateFile(path, hashedPassword, salt, baseTemplateDat
         staticrypt_config: staticryptConfig,
     };
 
-    const outputFilepath = namedArgs.directory.replace(/\/+$/, '') + "/" + path;
+    const outputFilepath = namedArgs.directory.replace(/\/+$/, "") + "/" + path;
 
     genFile(templateData, outputFilepath, namedArgs.template);
 }

@@ -1,13 +1,12 @@
 const path = require("path");
 const fs = require("fs");
-const readline = require('readline');
+const readline = require("readline");
 
-const { generateRandomSalt, generateRandomString} = require("../lib/cryptoEngine.js");
+const { generateRandomSalt, generateRandomString } = require("../lib/cryptoEngine.js");
 const { renderTemplate } = require("../lib/formater.js");
 const Yargs = require("yargs");
 
 const PASSWORD_TEMPLATE_DEFAULT_PATH = path.join(__dirname, "..", "lib", "password_template.html");
-
 
 /**
  * @param {string} message
@@ -43,8 +42,9 @@ function isOptionSetByUser(option, yargs) {
     for (let aliasIndex in yargs.parsed.aliases[option]) {
         const alias = yargs.parsed.aliases[option][aliasIndex];
 
-        if (searchForOption(`-${alias}`) || searchForOption(`--${alias}`))
+        if (searchForOption(`-${alias}`) || searchForOption(`--${alias}`)) {
             return true;
+        }
     }
 
     return false;
@@ -57,7 +57,7 @@ exports.isOptionSetByUser = isOptionSetByUser;
  * @param {string} question
  * @returns {Promise<string>}
  */
-function prompt (question) {
+function prompt(question) {
     const rl = readline.createInterface({
         input: process.stdin,
         output: process.stdout,
@@ -77,11 +77,11 @@ async function getValidatedPassword(passwordArgument, isShortAllowed) {
     if (password.length < 14 && !isShortAllowed) {
         const shouldUseShort = await prompt(
             `WARNING: Your password is less than 14 characters (length: ${password.length})` +
-            " and it's easy to try brute-forcing on public files. For better security we recommend using a longer one, for example: "
-            + generateRandomString(21)
-            + "\nYou can hide this warning by increasing your password length or adding the '--short' flag." +
-            " Do you want to use the short password? [y/N] "
-        )
+                " and it's easy to try brute-forcing on public files. For better security we recommend using a longer one, for example: " +
+                generateRandomString(21) +
+                "\nYou can hide this warning by increasing your password length or adding the '--short' flag." +
+                " Do you want to use the short password? [y/N] "
+        );
 
         if (!shouldUseShort.match(/^\s*(y|yes)\s*$/i)) {
             console.log("Aborting.");
@@ -135,7 +135,7 @@ async function getPassword(passwordArgument) {
     }
 
     // prompt the user for their password
-    return prompt('Enter your long, unusual password: ');
+    return prompt("Enter your long, unusual password: ");
 }
 
 /**
@@ -162,8 +162,9 @@ function getValidatedSalt(namedArgs, config) {
     // validate the salt
     if (salt.length !== 32 || /[^a-f0-9]/.test(salt)) {
         exitWithError(
-            "the salt should be a 32 character long hexadecimal string (only [0-9a-f] characters allowed)"
-            + "\nDetected salt: " + salt
+            "the salt should be a 32 character long hexadecimal string (only [0-9a-f] characters allowed)" +
+                "\nDetected salt: " +
+                salt
         );
     }
 
@@ -199,16 +200,14 @@ function getSalt(namedArgs, config) {
  * @param {string} modulePath - path from staticrypt root directory
  */
 function convertCommonJSToBrowserJS(modulePath) {
-    const rootDirectory = path.join(__dirname, '..');
+    const rootDirectory = path.join(__dirname, "..");
     const resolvedPath = path.join(rootDirectory, ...modulePath.split("/")) + ".js";
 
     if (!fs.existsSync(resolvedPath)) {
         exitWithError(`could not find module to convert at path "${resolvedPath}"`);
     }
 
-    const moduleText = fs
-        .readFileSync(resolvedPath, "utf8")
-        .replace(/^.*\brequire\(.*$\n/gm, "");
+    const moduleText = fs.readFileSync(resolvedPath, "utf8").replace(/^.*\brequire\(.*$\n/gm, "");
 
     return `
 ((function(){
@@ -289,107 +288,110 @@ function isCustomPasswordTemplateDefault(templatePathParameter) {
 exports.isCustomPasswordTemplateDefault = isCustomPasswordTemplateDefault;
 
 function parseCommandLineArguments() {
-    return Yargs.usage("Usage: staticrypt <filename> [<filename> ...] [options]")
-        .option("c", {
-            alias: "config",
-            type: "string",
-            describe: 'Path to the config file. Set to "false" to disable.',
-            default: ".staticrypt.json",
-        })
-        .option("d", {
-            alias: "directory",
-            type: "string",
-            describe: "Name of the directory where the encrypted files will be saved.",
-            default: "encrypted/",
-        })
-        .option("p", {
-            alias: "password",
-            type: "string",
-            describe: "The password to encrypt your file with. Leave empty to be prompted for it. If STATICRYPT_PASSWORD" +
-                " is set in the env, we'll use that instead.",
-            default: null,
-        })
-        .option("r", {
-            alias: "recursive",
-            type: "boolean",
-            describe: "Whether to recursively encrypt the input directory.",
-            default: false,
-        })
-        .option("remember", {
-            type: "number",
-            describe:
-                'Expiration in days of the "Remember me" checkbox that will save the (salted + hashed) password ' +
-                'in localStorage when entered by the user. Set to "false" to hide the box. Default: "0", no expiration.',
-            default: 0,
-        })
-        // do not give a default option to this parameter - we want to see when the flag is included with no
-        // value and when it's not included at all
-        .option("s", {
-            alias: "salt",
-            describe:
-                'Generate a config file or set the salt manually. Pass a 32-character-long hexadecimal string ' +
-                'to use as salt, or leave empty to generate, display and save to config a random salt. This won\'t' +
-                ' overwrite an existing config file.',
-            type: "string",
-        })
-        // do not give a default option to this parameter - we want to see when the flag is included with no
-        // value and when it's not included at all
-        .option("share", {
-            describe:
-                'Get a link containing your hashed password that will auto-decrypt the page. Pass your URL as a value to append '
-                + '"#staticrypt_pwd=<hashed_pwd>", or leave empty to display the hash to append.',
-            type: "string",
-        })
-        .option("short", {
-            describe: 'Hide the "short password" warning.',
-            type: "boolean",
-            default: false,
-        })
-        .option("t", {
-            alias: "template",
-            type: "string",
-            describe: "Path to custom HTML template with password prompt.",
-            default: PASSWORD_TEMPLATE_DEFAULT_PATH,
-        })
-        .option("template-button", {
-            type: "string",
-            describe: 'Label to use for the decrypt button. Default: "DECRYPT".',
-            default: "DECRYPT",
-        })
-        .option("template-color-primary", {
-            type: "string",
-            describe: "Primary color (button...)",
-            default: "#4CAF50",
-        })
-        .option("template-color-secondary", {
-            type: "string",
-            describe: "Secondary color (page background...)",
-            default: "#76B852",
-        })
-        .option("template-instructions", {
-            type: "string",
-            describe: "Special instructions to display to the user.",
-            default: "",
-        })
-        .option("template-error", {
-            type: "string",
-            describe: "Error message to display on entering wrong password.",
-            default: "Bad password!",
-        })
-        .option("template-placeholder", {
-            type: "string",
-            describe: "Placeholder to use for the password input.",
-            default: "Password",
-        })
-        .option("template-remember", {
-            type: "string",
-            describe: 'Label to use for the "Remember me" checkbox.',
-            default: "Remember me",
-        })
-        .option("template-title", {
-            type: "string",
-            describe: "Title for the output HTML page.",
-            default: "Protected Page",
-        });
+    return (
+        Yargs.usage("Usage: staticrypt <filename> [<filename> ...] [options]")
+            .option("c", {
+                alias: "config",
+                type: "string",
+                describe: 'Path to the config file. Set to "false" to disable.',
+                default: ".staticrypt.json",
+            })
+            .option("d", {
+                alias: "directory",
+                type: "string",
+                describe: "Name of the directory where the encrypted files will be saved.",
+                default: "encrypted/",
+            })
+            .option("p", {
+                alias: "password",
+                type: "string",
+                describe:
+                    "The password to encrypt your file with. Leave empty to be prompted for it. If STATICRYPT_PASSWORD" +
+                    " is set in the env, we'll use that instead.",
+                default: null,
+            })
+            .option("r", {
+                alias: "recursive",
+                type: "boolean",
+                describe: "Whether to recursively encrypt the input directory.",
+                default: false,
+            })
+            .option("remember", {
+                type: "number",
+                describe:
+                    'Expiration in days of the "Remember me" checkbox that will save the (salted + hashed) password ' +
+                    'in localStorage when entered by the user. Set to "false" to hide the box. Default: "0", no expiration.',
+                default: 0,
+            })
+            // do not give a default option to this parameter - we want to see when the flag is included with no
+            // value and when it's not included at all
+            .option("s", {
+                alias: "salt",
+                describe:
+                    "Generate a config file or set the salt manually. Pass a 32-character-long hexadecimal string " +
+                    "to use as salt, or leave empty to generate, display and save to config a random salt. This won't" +
+                    " overwrite an existing config file.",
+                type: "string",
+            })
+            // do not give a default option to this parameter - we want to see when the flag is included with no
+            // value and when it's not included at all
+            .option("share", {
+                describe:
+                    "Get a link containing your hashed password that will auto-decrypt the page. Pass your URL as a value to append " +
+                    '"#staticrypt_pwd=<hashed_pwd>", or leave empty to display the hash to append.',
+                type: "string",
+            })
+            .option("short", {
+                describe: 'Hide the "short password" warning.',
+                type: "boolean",
+                default: false,
+            })
+            .option("t", {
+                alias: "template",
+                type: "string",
+                describe: "Path to custom HTML template with password prompt.",
+                default: PASSWORD_TEMPLATE_DEFAULT_PATH,
+            })
+            .option("template-button", {
+                type: "string",
+                describe: 'Label to use for the decrypt button. Default: "DECRYPT".',
+                default: "DECRYPT",
+            })
+            .option("template-color-primary", {
+                type: "string",
+                describe: "Primary color (button...)",
+                default: "#4CAF50",
+            })
+            .option("template-color-secondary", {
+                type: "string",
+                describe: "Secondary color (page background...)",
+                default: "#76B852",
+            })
+            .option("template-instructions", {
+                type: "string",
+                describe: "Special instructions to display to the user.",
+                default: "",
+            })
+            .option("template-error", {
+                type: "string",
+                describe: "Error message to display on entering wrong password.",
+                default: "Bad password!",
+            })
+            .option("template-placeholder", {
+                type: "string",
+                describe: "Placeholder to use for the password input.",
+                default: "Password",
+            })
+            .option("template-remember", {
+                type: "string",
+                describe: 'Label to use for the "Remember me" checkbox.',
+                default: "Remember me",
+            })
+            .option("template-title", {
+                type: "string",
+                describe: "Title for the output HTML page.",
+                default: "Protected Page",
+            })
+    );
 }
 exports.parseCommandLineArguments = parseCommandLineArguments;

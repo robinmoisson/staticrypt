@@ -1,4 +1,4 @@
-const { convertCommonJSToBrowserJS, genFile, buildStaticryptJS} = require("../cli/helpers.js");
+const { convertCommonJSToBrowserJS, genFile, buildStaticryptJS } = require("../cli/helpers.js");
 
 const data = {
     js_codec: convertCommonJSToBrowserJS("lib/codec"),
