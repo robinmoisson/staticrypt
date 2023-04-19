@@ -203,13 +203,14 @@ Filename changed to circumvent adblockers that mistake it for a crypto miner (se
      * Inspired by https://github.com/adonespitogo
      */
     var keySize = 256;
-    var iterations = 1000;
+    var iterations = 15000;
     function encrypt (msg, password) {
         var salt = CryptoJS.lib.WordArray.random(128/8);
 
         var key = CryptoJS.PBKDF2(password, salt, {
             keySize: keySize/32,
-            iterations: iterations
+            iterations: iterations,
+            hasher: CryptoJS.algo.SHA256,
         });
 
         var iv = CryptoJS.lib.WordArray.random(128/8);

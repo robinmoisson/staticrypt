@@ -70,15 +70,20 @@ try{
  * Salt and encrypt a msg with a password.
  * Inspired by https://github.com/adonespitogo
  */
-var keySize = 256;
-var iterations = 1000;
+var pbkdf2Parameters = {
+    keySize: 256/32,
+    iterations: 1000,
+};
+
+if (isTemplateSupporting15kIterations()) {
+    pbkdf2Parameters.iterations = 15000;
+    pbkdf2Parameters.hasher = CryptoJS.algo.SHA256;
+}
+
 function encrypt (msg, password) {
     var salt = CryptoJS.lib.WordArray.random(128/8);
-
-    var key = CryptoJS.PBKDF2(password, salt, {
-        keySize: keySize/32,
-        iterations: iterations
-    });
+    
+    var key = CryptoJS.PBKDF2(password, salt, pbkdf2Parameters);
 
     var iv = CryptoJS.lib.WordArray.random(128/8);
 
@@ -90,7 +95,7 @@ function encrypt (msg, password) {
 
     // salt, iv will be hex 32 in length
     // append them to the ciphertext for use  in decryption
-    var encryptedMsg = salt.toString()+ iv.toString() + encrypted.toString();
+    var encryptedMsg = salt.toString() + iv.toString() + encrypted.toString();
     return encryptedMsg;
 }
 
@@ -123,6 +128,18 @@ var data = {
 
 genFile(data);
 
+function isTemplateSupporting15kIterations() {
+    return getTemplateContent().includes("// STATICRYPT VERSION: >= 1.4.3");
+}
+
+function getTemplateContent() {
+    try {
+        return FileSystem.readFileSync(namedArgs.f, 'utf8');
+    } catch (e) {
+        console.log("Failure: could not read template!");
+        process.exit(1);
+    }
+}
 
 /**
  * Fill the template with provided data and writes it to output file.
@@ -130,12 +147,7 @@ genFile(data);
  * @param data
  */
 function genFile(data){
-    try{
-        var templateContents = FileSystem.readFileSync(namedArgs.f, 'utf8');
-    }catch(e){
-        console.log("Failure: could not read template!");
-        process.exit(1);
-    }
+    var templateContents = getTemplateContent();
 
     var renderedTemplate = render(templateContents, data);
 
