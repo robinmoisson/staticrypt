@@ -1,193 +1,256 @@
-<!doctype html>
+<!DOCTYPE html>
 <html>
-<head>
-    <meta charset="utf-8">
-    <title>StatiCrypt: Password protect static HTML</title>
-    <meta name="description" content="">
-    <meta name="viewport" content="width=device-width, initial-scale=1">
-    <link rel="stylesheet"
-          type="text/css"
-          href="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.7/css/bootstrap.min.css"
-          integrity="sha384-BVYiiSIFeK1dGmJRAkycuHAHRg32OmUcww7on3RYdg4Va+PmSTsz/K68vbdEjh4u"
-          crossorigin="anonymous">
-    <style>
-        a.no-style {
-            color: inherit;
-            text-decoration: inherit;
-        }
+    <head>
+        <meta charset="utf-8" />
+        <title>StatiCrypt: Password protect static HTML</title>
+        <meta name="description" content="" />
+        <meta name="viewport" content="width=device-width, initial-scale=1" />
+        <link
+            rel="stylesheet"
+            type="text/css"
+            href="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.7/css/bootstrap.min.css"
+            integrity="sha384-BVYiiSIFeK1dGmJRAkycuHAHRg32OmUcww7on3RYdg4Va+PmSTsz/K68vbdEjh4u"
+            crossorigin="anonymous"
+        />
+        <style>
+            a.no-style {
+                color: inherit;
+                text-decoration: inherit;
+            }
 
-        body {
-            font-size: 16px;
-        }
+            body {
+                font-size: 16px;
+            }
 
-        label.no-style {
-            font-weight: normal;
-        }
-    </style>
-</head>
+            label.no-style {
+                font-weight: normal;
+            }
+        </style>
+    </head>
 
-<body>
-<div class="container">
-    <div class="row">
-        <div class="col-xs-12">
-            <h1>
-                StatiCrypt
-                <div class="pull-right">
-                    <iframe src="https://ghbtns.com/github-btn.html?user=robinmoisson&repo=staticrypt&type=star&size=large"
-                            frameborder="0" scrolling="0" width="80px" height="30px"></iframe>
-                    <iframe src="https://ghbtns.com/github-btn.html?user=robinmoisson&repo=staticrypt&type=fork&size=large"
-                            frameborder="0" scrolling="0" width="80px" height="30px"></iframe>
+    <body>
+        <div class="container">
+            <div class="row">
+                <div class="col-xs-12">
+                    <h1>
+                        StatiCrypt
+                        <div class="pull-right">
+                            <iframe
+                                src="https://ghbtns.com/github-btn.html?user=robinmoisson&repo=staticrypt&type=star&size=large"
+                                frameborder="0"
+                                scrolling="0"
+                                width="80px"
+                                height="30px"
+                            ></iframe>
+                            <iframe
+                                src="https://ghbtns.com/github-btn.html?user=robinmoisson&repo=staticrypt&type=fork&size=large"
+                                frameborder="0"
+                                scrolling="0"
+                                width="80px"
+                                height="30px"
+                            ></iframe>
+                        </div>
+                        <br />
+                        <small>Password protect a static HTML page</small>
+                    </h1>
+                    <p>
+                        StatiCrypt uses AES-256 with WebCrypto to encrypt your html string with your long password, in
+                        your browser (client side).
+                    </p>
+                    <p>
+                        Download your encrypted string in a HTML page with a password prompt you can upload anywhere
+                        (see <a target="_blank" href="example/encrypted/example.html">example</a>).
+                    </p>
+                    <p>
+                        The tool is also available as
+                        <a href="https://npmjs.com/package/staticrypt">a CLI on NPM</a> and is
+                        <a href="https://github.com/robinmoisson/staticrypt">open source on GitHub</a>.
+                    </p>
+                    <br />
+
+                    <h4>
+                        <a class="no-style" id="toggle-concept" href="#">
+                            <span id="toggle-concept-sign">►</span> HOW IT WORKS
+                        </a>
+                    </h4>
+                    <div id="concept" class="hidden">
+                        <p>
+                            <b class="text-danger">Disclaimer</b> if you are an at-risk activist, or have extra
+                            sensitive banking data, you should probably use something else!
+                        </p>
+                        <p>
+                            StatiCrypt generates a static, password protected page that can be decrypted in-browser:
+                            just send or upload the generated page to a place serving static content (github pages, for
+                            example) and you're done: the javascript will prompt users for password, decrypt the page
+                            and load your HTML.
+                        </p>
+                        <p>
+                            The page is encrypted with AES-256 in CBC mode (see why this mode is appropriate for
+                            StatiCrypt in
+                            <a href="https://github.com/robinmoisson/staticrypt/issues/19">#19</a>). The password is
+                            hashed with PBKDF2 (599k iterations with SHA-256, plus 1k with SHA-1 for legacy reasons (see
+                            <a href="https://github.com/robinmoisson/staticrypt/issues/159">#159</a>), for the added
+                            <a
+                                href="https://cheatsheetseries.owasp.org/cheatsheets/Password_Storage_Cheat_Sheet.html#pbkdf2"
+                                >recommended total</a
+                            >
+                            of 600k) and used to encrypt the page.
+                        </p>
+                        <p>
+                            It basically encrypts your page and puts everything with a user-friendly way to use a
+                            password in the new file. AES-256 is state of the art but
+                            <b
+                                >brute-force/dictionary attacks would be easy to do at a really fast pace: use a long,
+                                unusual password!</b
+                            >
+                            <br />
+                            => To be safe, we recommend 16+ alphanum characters, and using a password manager like the
+                            open-source <a href="http://bitwarden.com">Bitwarden</a>.
+                        </p>
+                        <p>
+                            Feel free to contribute or report any thought to the
+                            <a href="https://github.com/robinmoisson/staticrypt">GitHub project</a>.
+                        </p>
+                    </div>
+                    <br />
                 </div>
-                <br>
-                <small>Password protect a static HTML page</small>
-            </h1>
-            <p>
-                StatiCrypt uses AES-256 with WebCrypto to encrypt your html string with your long password, in your browser (client side).
-            </p>
-            <p>
-                Download your encrypted string in a HTML page with a password prompt you can upload anywhere (see <a
-                    target="_blank" href="example/encrypted/example.html">example</a>).
-            </p>
-            <p>
-                The tool is also available as <a href="https://npmjs.com/package/staticrypt">a CLI on NPM</a> and is <a
-                    href="https://github.com/robinmoisson/staticrypt">open source on GitHub</a>.
-            </p>
-            <br>
-
-            <h4>
-                <a class="no-style" id="toggle-concept" href="#">
-                    <span id="toggle-concept-sign">►</span> HOW IT WORKS
-                </a>
-            </h4>
-            <div id="concept" class="hidden">
-                <p>
-                    <b class="text-danger">Disclaimer</b> if you are an at-risk activist, or have extra sensitive
-                    banking data, you should probably use something else!
-                </p>
-                <p>
-                    StatiCrypt generates a static, password protected page that can be decrypted in-browser:
-                    just send or upload the generated page to a place serving static content (github pages, for example)
-                    and you're done: the javascript will prompt users for password, decrypt the page and load your HTML.
-                </p>
-                <p>
-                    The page is encrypted with AES-256 in CBC mode (see why this mode is appropriate for StatiCrypt in
-                    <a href="https://github.com/robinmoisson/staticrypt/issues/19">#19</a>). The password is hashed with
-                    PBKDF2 (599k iterations with SHA-256, plus 1k with SHA-1 for legacy reasons (see
-                    <a href="https://github.com/robinmoisson/staticrypt/issues/159">#159</a>), for the added
-                    <a href="https://cheatsheetseries.owasp.org/cheatsheets/Password_Storage_Cheat_Sheet.html#pbkdf2">recommended
-                        total</a> of 600k) and used to encrypt the page.
-                </p>
-                <p>
-                    It basically encrypts your page and puts everything with a user-friendly way to use a password
-                    in the new file. AES-256 is state of the art but <b>brute-force/dictionary attacks would be easy to
-                    do at a really fast pace: use a long, unusual password!</b>
-                    <br/> => To be safe, we recommend 16+ alphanum characters, and using a password manager like the
-                    open-source <a href="http://bitwarden.com">Bitwarden</a>.
-                </p>
-                <p>
-                    Feel free to contribute or report any thought to the
-                    <a href="https://github.com/robinmoisson/staticrypt">GitHub project</a>.
-                </p>
             </div>
-            <br>
+            <div class="row">
+                <div class="col-xs-12">
+                    <form id="encrypt_form">
+                        <div class="form-group">
+                            <label for="password">Password</label>
+                            <input
+                                type="password"
+                                class="form-control"
+                                id="password"
+                                placeholder="Password (choose a long one!)"
+                            />
+                        </div>
+
+                        <div class="form-group">
+                            <label for="unencrypted_html">HTML/string to encrypt</label>
+                            <textarea
+                                class="form-control"
+                                id="unencrypted_html"
+                                placeholder="<html><head>..."
+                                rows="5"
+                            ></textarea>
+                        </div>
+
+                        <div class="form-group">
+                            <label class="no-style">
+                                <input type="checkbox" id="remember" checked />
+                                Add "Remember me" checkbox (append <code>#staticrypt_logout</code> to your URL to
+                                logout)
+                                <small>
+                                    <abbr
+                                        class="text-muted"
+                                        title='The password will be stored in clear text in the browser&apos;s localStorage upon entry by the user. See "More options" to set the expiration (default: none)'
+                                    >
+                                        (?)
+                                    </abbr>
+                                </small>
+                            </label>
+                        </div>
+
+                        <p>
+                            <a href="#" id="toggle-extra-option">+ More options</a>
+                        </p>
+                        <div id="extra-options" class="hidden">
+                            <div class="form-group">
+                                <label for="template_title">Page title</label>
+                                <input
+                                    type="text"
+                                    class="form-control"
+                                    id="template_title"
+                                    placeholder="Default: 'Protected Page'"
+                                />
+                            </div>
+
+                            <div class="form-group">
+                                <label for="template_instructions">Instructions to display the user</label>
+                                <textarea
+                                    class="form-control"
+                                    id="template_instructions"
+                                    placeholder="Default: nothing."
+                                ></textarea>
+                            </div>
+
+                            <div class="form-group">
+                                <label for="template_placeholder">Password input placeholder</label>
+                                <input
+                                    type="text"
+                                    class="form-control"
+                                    id="template_placeholder"
+                                    placeholder="Default: 'Password'"
+                                />
+                            </div>
+
+                            <div class="form-group">
+                                <label for="template_remember">"Remember me" checkbox label</label>
+                                <input
+                                    type="text"
+                                    class="form-control"
+                                    id="template_remember"
+                                    placeholder="Default: 'Remember me'"
+                                />
+                            </div>
+
+                            <div class="form-group">
+                                <label for="remember_in_days">"Remember me" expiration in days</label>
+                                <input
+                                    type="number"
+                                    class="form-control"
+                                    id="remember_in_days"
+                                    step="any"
+                                    placeholder="Default: 0 (no expiration)"
+                                />
+                                <small class="form-text text-muted">
+                                    After this many days, the user will have to enter the password again. Leave empty or
+                                    set to 0 for no expiration.
+                                </small>
+                            </div>
+
+                            <div class="form-group">
+                                <label for="template_button">Decrypt button label</label>
+                                <input
+                                    type="text"
+                                    class="form-control"
+                                    id="template_button"
+                                    placeholder="Default: 'DECRYPT'"
+                                />
+                            </div>
+                        </div>
+
+                        <button class="btn btn-primary pull-right" type="submit">
+                            Generate password protected HTML
+                        </button>
+                    </form>
+                </div>
+            </div>
+
+            <div class="row mb-5">
+                <div class="col-xs-12">
+                    <h2>Encrypted HTML</h2>
+                    <p>
+                        <a
+                            class="btn btn-success download"
+                            download="encrypted.html"
+                            id="download-link"
+                            disabled="disabled"
+                            >Download html file with password prompt</a
+                        >
+                    </p>
+                    <pre id="encrypted_html_display">Your encrypted string</pre>
+                </div>
+            </div>
         </div>
-    </div>
-    <div class="row">
-        <div class="col-xs-12">
-            <form id="encrypt_form">
-                <div class="form-group">
-                    <label for="password">Password</label>
-                    <input type="password" class="form-control" id="password"
-                           placeholder="Password (choose a long one!)">
-                </div>
 
-                <div class="form-group">
-                    <label for="unencrypted_html">HTML/string to encrypt</label>
-                    <textarea class="form-control"
-                              id="unencrypted_html"
-                              placeholder="<html><head>..."
-                              rows="5"></textarea>
-                </div>
+        <script src="https://cdn.ckeditor.com/4.7.0/standard/ckeditor.js"></script>
 
-                <div class="form-group">
-                    <label class="no-style">
-                        <input type="checkbox" id="remember" checked>
-                        Add "Remember me" checkbox (append <code>#staticrypt_logout</code> to your URL to logout)
-                        <small>
-                            <abbr class="text-muted"
-                                  title="The password will be stored in clear text in the browser's localStorage upon entry by the user. See &quot;More options&quot; to set the expiration (default: none)">
-                                (?)
-                            </abbr>
-                        </small>
-                    </label>
-                </div>
-
-                <p>
-                    <a href="#" id="toggle-extra-option">+ More options</a>
-                </p>
-                <div id="extra-options" class="hidden">
-                    <div class="form-group">
-                        <label for="template_title">Page title</label>
-                        <input type="text" class="form-control" id="template_title" placeholder="Default: 'Protected Page'">
-                    </div>
-
-                    <div class="form-group">
-                        <label for="template_instructions">Instructions to display the user</label>
-                        <textarea class="form-control" id="template_instructions" placeholder="Default: nothing."></textarea>
-                    </div>
-
-                    <div class="form-group">
-                        <label for="template_placeholder">Password input placeholder</label>
-                        <input type="text" class="form-control" id="template_placeholder"
-                               placeholder="Default: 'Password'">
-                    </div>
-
-                    <div class="form-group">
-                        <label for="template_remember">"Remember me" checkbox label</label>
-                        <input type="text" class="form-control" id="template_remember" placeholder="Default: 'Remember me'">
-                    </div>
-
-                    <div class="form-group">
-                        <label for="remember_in_days">"Remember me" expiration in days</label>
-                        <input type="number"
-                               class="form-control"
-                               id="remember_in_days"
-                               step="any"
-                               placeholder="Default: 0 (no expiration)">
-                        <small class="form-text text-muted">
-                            After this many days, the user will have to enter the password again. Leave empty or set
-                            to 0 for no expiration.
-                        </small>
-                    </div>
-
-                    <div class="form-group">
-                        <label for="template_button">Decrypt button label</label>
-                        <input type="text" class="form-control" id="template_button" placeholder="Default: 'DECRYPT'">
-                    </div>
-                </div>
-
-                <button class="btn btn-primary pull-right" type="submit">Generate password protected HTML</button>
-            </form>
-        </div>
-    </div>
-
-    <div class="row mb-5">
-        <div class="col-xs-12">
-            <h2>Encrypted HTML</h2>
-            <p><a class="btn btn-success download"
-                  download="encrypted.html"
-                  id="download-link"
-                  disabled="disabled">Download html file with password prompt</a></p>
-            <pre id="encrypted_html_display">
-Your encrypted string</pre>
-        </div>
-    </div>
-</div>
-
-<script src="https://cdn.ckeditor.com/4.7.0/standard/ckeditor.js"></script>
-
-<script id="cryptoEngine">
-    window.cryptoEngine = ((function(){
+        <script id="cryptoEngine">
+            window.cryptoEngine = ((function(){
   const exports = {};
   const { subtle } = crypto;
 
@@ -259,13 +322,7 @@ async function encrypt(msg, hashedPassword) {
     // https://developer.mozilla.org/en-US/docs/Web/API/SubtleCrypto/encrypt#parameters
     const iv = crypto.getRandomValues(new Uint8Array(IV_BITS / 8));
 
-    const key = await subtle.importKey(
-        "raw",
-        HexEncoder.parse(hashedPassword),
-        ENCRYPTION_ALGO,
-        false,
-        ["encrypt"]
-    );
+    const key = await subtle.importKey("raw", HexEncoder.parse(hashedPassword), ENCRYPTION_ALGO, false, ["encrypt"]);
 
     const encrypted = await subtle.encrypt(
         {
@@ -293,13 +350,7 @@ async function decrypt(encryptedMsg, hashedPassword) {
     const iv = HexEncoder.parse(encryptedMsg.substring(0, ivLength));
     const encrypted = encryptedMsg.substring(ivLength);
 
-    const key = await subtle.importKey(
-        "raw",
-        HexEncoder.parse(hashedPassword),
-        ENCRYPTION_ALGO,
-        false,
-        ["decrypt"]
-    );
+    const key = await subtle.importKey("raw", HexEncoder.parse(hashedPassword), ENCRYPTION_ALGO, false, ["decrypt"]);
 
     const outBuffer = await subtle.decrypt(
         {
@@ -381,13 +432,7 @@ exports.hashThirdRound = hashThirdRound;
  * @returns {Promise<string>}
  */
 async function pbkdf2(password, salt, iterations, hashAlgorithm) {
-    const key = await subtle.importKey(
-        "raw",
-        UTF8Encoder.parse(password),
-        "PBKDF2",
-        false,
-        ["deriveBits"]
-    );
+    const key = await subtle.importKey("raw", UTF8Encoder.parse(password), "PBKDF2", false, ["deriveBits"]);
 
     const keyBytes = await subtle.deriveBits(
         {
@@ -427,7 +472,6 @@ async function signMessage(hashedPassword, message) {
 }
 exports.signMessage = signMessage;
 
-
 function getRandomAlphanum() {
     const possibleCharacters = "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789";
 
@@ -455,7 +499,7 @@ function getRandomAlphanum() {
  * @returns {string}
  */
 function generateRandomString(length) {
-    let randomString = '';
+    let randomString = "";
 
     for (let i = 0; i < length; i++) {
         randomString += getRandomAlphanum();
@@ -465,13 +509,12 @@ function generateRandomString(length) {
 }
 exports.generateRandomString = generateRandomString;
 
-
   return exports;
-})())
-</script>
+})());
+        </script>
 
-<script id="codec">
-    window.codec = ((function(){
+        <script id="codec">
+            window.codec = ((function(){
   const exports = {};
   /**
  * Initialize the codec with the provided cryptoEngine - this return functions to encode and decode messages.
@@ -479,117 +522,111 @@ exports.generateRandomString = generateRandomString;
  * @param cryptoEngine - the engine to use for encryption / decryption
  */
 function init(cryptoEngine) {
-  const exports = {};
+    const exports = {};
 
-  /**
-   * Top-level function for encoding a message.
-   * Includes password hashing, encryption, and signing.
-   *
-   * @param {string} msg
-   * @param {string} password
-   * @param {string} salt
-   *
-   * @returns {string} The encoded text
-   */
-  async function encode(msg, password, salt) {
-    const hashedPassword = await cryptoEngine.hashPassword(password, salt);
+    /**
+     * Top-level function for encoding a message.
+     * Includes password hashing, encryption, and signing.
+     *
+     * @param {string} msg
+     * @param {string} password
+     * @param {string} salt
+     *
+     * @returns {string} The encoded text
+     */
+    async function encode(msg, password, salt) {
+        const hashedPassword = await cryptoEngine.hashPassword(password, salt);
 
-    const encrypted = await cryptoEngine.encrypt(msg, hashedPassword);
+        const encrypted = await cryptoEngine.encrypt(msg, hashedPassword);
 
-    // we use the hashed password in the HMAC because this is effectively what will be used a password (so we can store
-    // it in localStorage safely, we don't use the clear text password)
-    const hmac = await cryptoEngine.signMessage(hashedPassword, encrypted);
+        // we use the hashed password in the HMAC because this is effectively what will be used a password (so we can store
+        // it in localStorage safely, we don't use the clear text password)
+        const hmac = await cryptoEngine.signMessage(hashedPassword, encrypted);
 
-    return hmac + encrypted;
-  }
-  exports.encode = encode;
-
-  /**
-   * Encode using a password that has already been hashed. This is useful to encode multiple messages in a row, that way
-   * we don't need to hash the password multiple times.
-   *
-   * @param {string} msg
-   * @param {string} hashedPassword
-   *
-   * @returns {string} The encoded text
-   */
-  async function encodeWithHashedPassword(msg, hashedPassword) {
-    const encrypted = await cryptoEngine.encrypt(msg, hashedPassword);
-
-    // we use the hashed password in the HMAC because this is effectively what will be used a password (so we can store
-    // it in localStorage safely, we don't use the clear text password)
-    const hmac = await cryptoEngine.signMessage(hashedPassword, encrypted);
-
-    return hmac + encrypted;
-  }
-  exports.encodeWithHashedPassword = encodeWithHashedPassword;
-
-  /**
-   * Top-level function for decoding a message.
-   * Includes signature check and decryption.
-   *
-   * @param {string} signedMsg
-   * @param {string} hashedPassword
-   * @param {string} salt
-   * @param {int} backwardCompatibleAttempt
-   * @param {string} originalPassword
-   *
-   * @returns {Object} {success: true, decoded: string} | {success: false, message: string}
-   */
-  async function decode(
-      signedMsg,
-      hashedPassword,
-      salt,
-      backwardCompatibleAttempt = 0,
-      originalPassword = ''
-  ) {
-    const encryptedHMAC = signedMsg.substring(0, 64);
-    const encryptedMsg = signedMsg.substring(64);
-    const decryptedHMAC = await cryptoEngine.signMessage(hashedPassword, encryptedMsg);
-
-    if (decryptedHMAC !== encryptedHMAC) {
-      // we have been raising the number of iterations in the hashing algorithm multiple times, so to support the old
-      // remember-me/autodecrypt links we need to try bringing the old hashes up to speed.
-      originalPassword = originalPassword || hashedPassword;
-      if (backwardCompatibleAttempt === 0) {
-        const updatedHashedPassword = await cryptoEngine.hashThirdRound(originalPassword, salt);
-
-        return decode(signedMsg, updatedHashedPassword, salt, backwardCompatibleAttempt + 1, originalPassword);
-      }
-      if (backwardCompatibleAttempt === 1) {
-        let updatedHashedPassword = await cryptoEngine.hashSecondRound(originalPassword, salt);
-        updatedHashedPassword = await cryptoEngine.hashThirdRound(updatedHashedPassword, salt);
-
-        return decode(signedMsg, updatedHashedPassword, salt, backwardCompatibleAttempt + 1, originalPassword);
-      }
-
-      return { success: false, message: "Signature mismatch" };
+        return hmac + encrypted;
     }
+    exports.encode = encode;
 
-    return {
-      success: true,
-      decoded: await cryptoEngine.decrypt(encryptedMsg, hashedPassword),
-    };
-  }
-  exports.decode = decode;
+    /**
+     * Encode using a password that has already been hashed. This is useful to encode multiple messages in a row, that way
+     * we don't need to hash the password multiple times.
+     *
+     * @param {string} msg
+     * @param {string} hashedPassword
+     *
+     * @returns {string} The encoded text
+     */
+    async function encodeWithHashedPassword(msg, hashedPassword) {
+        const encrypted = await cryptoEngine.encrypt(msg, hashedPassword);
 
-  return exports;
+        // we use the hashed password in the HMAC because this is effectively what will be used a password (so we can store
+        // it in localStorage safely, we don't use the clear text password)
+        const hmac = await cryptoEngine.signMessage(hashedPassword, encrypted);
+
+        return hmac + encrypted;
+    }
+    exports.encodeWithHashedPassword = encodeWithHashedPassword;
+
+    /**
+     * Top-level function for decoding a message.
+     * Includes signature check and decryption.
+     *
+     * @param {string} signedMsg
+     * @param {string} hashedPassword
+     * @param {string} salt
+     * @param {int} backwardCompatibleAttempt
+     * @param {string} originalPassword
+     *
+     * @returns {Object} {success: true, decoded: string} | {success: false, message: string}
+     */
+    async function decode(signedMsg, hashedPassword, salt, backwardCompatibleAttempt = 0, originalPassword = "") {
+        const encryptedHMAC = signedMsg.substring(0, 64);
+        const encryptedMsg = signedMsg.substring(64);
+        const decryptedHMAC = await cryptoEngine.signMessage(hashedPassword, encryptedMsg);
+
+        if (decryptedHMAC !== encryptedHMAC) {
+            // we have been raising the number of iterations in the hashing algorithm multiple times, so to support the old
+            // remember-me/autodecrypt links we need to try bringing the old hashes up to speed.
+            originalPassword = originalPassword || hashedPassword;
+            if (backwardCompatibleAttempt === 0) {
+                const updatedHashedPassword = await cryptoEngine.hashThirdRound(originalPassword, salt);
+
+                return decode(signedMsg, updatedHashedPassword, salt, backwardCompatibleAttempt + 1, originalPassword);
+            }
+            if (backwardCompatibleAttempt === 1) {
+                let updatedHashedPassword = await cryptoEngine.hashSecondRound(originalPassword, salt);
+                updatedHashedPassword = await cryptoEngine.hashThirdRound(updatedHashedPassword, salt);
+
+                return decode(signedMsg, updatedHashedPassword, salt, backwardCompatibleAttempt + 1, originalPassword);
+            }
+
+            return { success: false, message: "Signature mismatch" };
+        }
+
+        return {
+            success: true,
+            decoded: await cryptoEngine.decrypt(encryptedMsg, hashedPassword),
+        };
+    }
+    exports.decode = decode;
+
+    return exports;
 }
 exports.init = init;
 
   return exports;
-})())
-</script>
+})());
+        </script>
 
-<script id="formater">
-    window.formater = ((function(){
+        <script id="formater">
+            window.formater = ((function(){
   const exports = {};
   /**
  * Replace the variable in template tags, between '/*[|variable|]* /0' (without the space in '* /0', ommiting it would
  * break this comment), with the provided data.
  *
  * This weird format is so that we have something that doesn't break JS parser in the template files (it understands it
- * as '0'), so we can still use auto-formatting.
+ * as '0'), so we can still use auto-formatting. The auto-formatter might add a space before the '0', we accept both.
  *
  * @param {string} templateString
  * @param {Object} data
@@ -597,12 +634,12 @@ exports.init = init;
  * @returns string
  */
 function renderTemplate(templateString, data) {
-    return templateString.replace(/\/\*\[\|\s*(\w+)\s*\|]\*\/0/g, function (_, key) {
+    return templateString.replace(/\/\*\[\|\s*(\w+)\s*\|]\*\/\s*0/g, function (_, key) {
         if (!data || data[key] === undefined) {
             return key;
         }
 
-        if (typeof data[key] === 'object') {
+        if (typeof data[key] === "object") {
             return JSON.stringify(data[key]);
         }
 
@@ -611,13 +648,12 @@ function renderTemplate(templateString, data) {
 }
 exports.renderTemplate = renderTemplate;
 
-
   return exports;
-})())
-</script>
+})());
+        </script>
 
-<script id="staticrypt">
-    window.staticrypt = ((function(){
+        <script id="staticrypt">
+            window.staticrypt = ((function(){
   const exports = {};
   const cryptoEngine = ((function(){
   const exports = {};
@@ -691,13 +727,7 @@ async function encrypt(msg, hashedPassword) {
     // https://developer.mozilla.org/en-US/docs/Web/API/SubtleCrypto/encrypt#parameters
     const iv = crypto.getRandomValues(new Uint8Array(IV_BITS / 8));
 
-    const key = await subtle.importKey(
-        "raw",
-        HexEncoder.parse(hashedPassword),
-        ENCRYPTION_ALGO,
-        false,
-        ["encrypt"]
-    );
+    const key = await subtle.importKey("raw", HexEncoder.parse(hashedPassword), ENCRYPTION_ALGO, false, ["encrypt"]);
 
     const encrypted = await subtle.encrypt(
         {
@@ -725,13 +755,7 @@ async function decrypt(encryptedMsg, hashedPassword) {
     const iv = HexEncoder.parse(encryptedMsg.substring(0, ivLength));
     const encrypted = encryptedMsg.substring(ivLength);
 
-    const key = await subtle.importKey(
-        "raw",
-        HexEncoder.parse(hashedPassword),
-        ENCRYPTION_ALGO,
-        false,
-        ["decrypt"]
-    );
+    const key = await subtle.importKey("raw", HexEncoder.parse(hashedPassword), ENCRYPTION_ALGO, false, ["decrypt"]);
 
     const outBuffer = await subtle.decrypt(
         {
@@ -813,13 +837,7 @@ exports.hashThirdRound = hashThirdRound;
  * @returns {Promise<string>}
  */
 async function pbkdf2(password, salt, iterations, hashAlgorithm) {
-    const key = await subtle.importKey(
-        "raw",
-        UTF8Encoder.parse(password),
-        "PBKDF2",
-        false,
-        ["deriveBits"]
-    );
+    const key = await subtle.importKey("raw", UTF8Encoder.parse(password), "PBKDF2", false, ["deriveBits"]);
 
     const keyBytes = await subtle.deriveBits(
         {
@@ -859,7 +877,6 @@ async function signMessage(hashedPassword, message) {
 }
 exports.signMessage = signMessage;
 
-
 function getRandomAlphanum() {
     const possibleCharacters = "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789";
 
@@ -887,7 +904,7 @@ function getRandomAlphanum() {
  * @returns {string}
  */
 function generateRandomString(length) {
-    let randomString = '';
+    let randomString = "";
 
     for (let i = 0; i < length; i++) {
         randomString += getRandomAlphanum();
@@ -897,9 +914,8 @@ function generateRandomString(length) {
 }
 exports.generateRandomString = generateRandomString;
 
-
   return exports;
-})())
+})());
 const codec = ((function(){
   const exports = {};
   /**
@@ -908,108 +924,101 @@ const codec = ((function(){
  * @param cryptoEngine - the engine to use for encryption / decryption
  */
 function init(cryptoEngine) {
-  const exports = {};
+    const exports = {};
 
-  /**
-   * Top-level function for encoding a message.
-   * Includes password hashing, encryption, and signing.
-   *
-   * @param {string} msg
-   * @param {string} password
-   * @param {string} salt
-   *
-   * @returns {string} The encoded text
-   */
-  async function encode(msg, password, salt) {
-    const hashedPassword = await cryptoEngine.hashPassword(password, salt);
+    /**
+     * Top-level function for encoding a message.
+     * Includes password hashing, encryption, and signing.
+     *
+     * @param {string} msg
+     * @param {string} password
+     * @param {string} salt
+     *
+     * @returns {string} The encoded text
+     */
+    async function encode(msg, password, salt) {
+        const hashedPassword = await cryptoEngine.hashPassword(password, salt);
 
-    const encrypted = await cryptoEngine.encrypt(msg, hashedPassword);
+        const encrypted = await cryptoEngine.encrypt(msg, hashedPassword);
 
-    // we use the hashed password in the HMAC because this is effectively what will be used a password (so we can store
-    // it in localStorage safely, we don't use the clear text password)
-    const hmac = await cryptoEngine.signMessage(hashedPassword, encrypted);
+        // we use the hashed password in the HMAC because this is effectively what will be used a password (so we can store
+        // it in localStorage safely, we don't use the clear text password)
+        const hmac = await cryptoEngine.signMessage(hashedPassword, encrypted);
 
-    return hmac + encrypted;
-  }
-  exports.encode = encode;
-
-  /**
-   * Encode using a password that has already been hashed. This is useful to encode multiple messages in a row, that way
-   * we don't need to hash the password multiple times.
-   *
-   * @param {string} msg
-   * @param {string} hashedPassword
-   *
-   * @returns {string} The encoded text
-   */
-  async function encodeWithHashedPassword(msg, hashedPassword) {
-    const encrypted = await cryptoEngine.encrypt(msg, hashedPassword);
-
-    // we use the hashed password in the HMAC because this is effectively what will be used a password (so we can store
-    // it in localStorage safely, we don't use the clear text password)
-    const hmac = await cryptoEngine.signMessage(hashedPassword, encrypted);
-
-    return hmac + encrypted;
-  }
-  exports.encodeWithHashedPassword = encodeWithHashedPassword;
-
-  /**
-   * Top-level function for decoding a message.
-   * Includes signature check and decryption.
-   *
-   * @param {string} signedMsg
-   * @param {string} hashedPassword
-   * @param {string} salt
-   * @param {int} backwardCompatibleAttempt
-   * @param {string} originalPassword
-   *
-   * @returns {Object} {success: true, decoded: string} | {success: false, message: string}
-   */
-  async function decode(
-      signedMsg,
-      hashedPassword,
-      salt,
-      backwardCompatibleAttempt = 0,
-      originalPassword = ''
-  ) {
-    const encryptedHMAC = signedMsg.substring(0, 64);
-    const encryptedMsg = signedMsg.substring(64);
-    const decryptedHMAC = await cryptoEngine.signMessage(hashedPassword, encryptedMsg);
-
-    if (decryptedHMAC !== encryptedHMAC) {
-      // we have been raising the number of iterations in the hashing algorithm multiple times, so to support the old
-      // remember-me/autodecrypt links we need to try bringing the old hashes up to speed.
-      originalPassword = originalPassword || hashedPassword;
-      if (backwardCompatibleAttempt === 0) {
-        const updatedHashedPassword = await cryptoEngine.hashThirdRound(originalPassword, salt);
-
-        return decode(signedMsg, updatedHashedPassword, salt, backwardCompatibleAttempt + 1, originalPassword);
-      }
-      if (backwardCompatibleAttempt === 1) {
-        let updatedHashedPassword = await cryptoEngine.hashSecondRound(originalPassword, salt);
-        updatedHashedPassword = await cryptoEngine.hashThirdRound(updatedHashedPassword, salt);
-
-        return decode(signedMsg, updatedHashedPassword, salt, backwardCompatibleAttempt + 1, originalPassword);
-      }
-
-      return { success: false, message: "Signature mismatch" };
+        return hmac + encrypted;
     }
+    exports.encode = encode;
 
-    return {
-      success: true,
-      decoded: await cryptoEngine.decrypt(encryptedMsg, hashedPassword),
-    };
-  }
-  exports.decode = decode;
+    /**
+     * Encode using a password that has already been hashed. This is useful to encode multiple messages in a row, that way
+     * we don't need to hash the password multiple times.
+     *
+     * @param {string} msg
+     * @param {string} hashedPassword
+     *
+     * @returns {string} The encoded text
+     */
+    async function encodeWithHashedPassword(msg, hashedPassword) {
+        const encrypted = await cryptoEngine.encrypt(msg, hashedPassword);
 
-  return exports;
+        // we use the hashed password in the HMAC because this is effectively what will be used a password (so we can store
+        // it in localStorage safely, we don't use the clear text password)
+        const hmac = await cryptoEngine.signMessage(hashedPassword, encrypted);
+
+        return hmac + encrypted;
+    }
+    exports.encodeWithHashedPassword = encodeWithHashedPassword;
+
+    /**
+     * Top-level function for decoding a message.
+     * Includes signature check and decryption.
+     *
+     * @param {string} signedMsg
+     * @param {string} hashedPassword
+     * @param {string} salt
+     * @param {int} backwardCompatibleAttempt
+     * @param {string} originalPassword
+     *
+     * @returns {Object} {success: true, decoded: string} | {success: false, message: string}
+     */
+    async function decode(signedMsg, hashedPassword, salt, backwardCompatibleAttempt = 0, originalPassword = "") {
+        const encryptedHMAC = signedMsg.substring(0, 64);
+        const encryptedMsg = signedMsg.substring(64);
+        const decryptedHMAC = await cryptoEngine.signMessage(hashedPassword, encryptedMsg);
+
+        if (decryptedHMAC !== encryptedHMAC) {
+            // we have been raising the number of iterations in the hashing algorithm multiple times, so to support the old
+            // remember-me/autodecrypt links we need to try bringing the old hashes up to speed.
+            originalPassword = originalPassword || hashedPassword;
+            if (backwardCompatibleAttempt === 0) {
+                const updatedHashedPassword = await cryptoEngine.hashThirdRound(originalPassword, salt);
+
+                return decode(signedMsg, updatedHashedPassword, salt, backwardCompatibleAttempt + 1, originalPassword);
+            }
+            if (backwardCompatibleAttempt === 1) {
+                let updatedHashedPassword = await cryptoEngine.hashSecondRound(originalPassword, salt);
+                updatedHashedPassword = await cryptoEngine.hashThirdRound(updatedHashedPassword, salt);
+
+                return decode(signedMsg, updatedHashedPassword, salt, backwardCompatibleAttempt + 1, originalPassword);
+            }
+
+            return { success: false, message: "Signature mismatch" };
+        }
+
+        return {
+            success: true,
+            decoded: await cryptoEngine.decrypt(encryptedMsg, hashedPassword),
+        };
+    }
+    exports.decode = decode;
+
+    return exports;
 }
 exports.init = init;
 
   return exports;
-})())
+})());
 const decode = codec.init(cryptoEngine).decode;
-
 
 /**
  * Initialize the staticrypt module, that exposes functions callbable by the password_template.
@@ -1048,7 +1057,7 @@ function init(staticryptConfig, templateConfig) {
         const plainHTML = result.decoded;
 
         // if the user configured a callback call it, otherwise just replace the whole HTML
-        if (typeof replaceHtmlCallback === 'function') {
+        if (typeof replaceHtmlCallback === "function") {
             replaceHtmlCallback(plainHTML);
         } else {
             document.write(plainHTML);
@@ -1109,7 +1118,7 @@ function init(staticryptConfig, templateConfig) {
     function clearLocalStorage() {
         const { clearLocalStorageCallback, rememberExpirationKey, rememberPassphraseKey } = templateConfig;
 
-        if (typeof clearLocalStorageCallback === 'function') {
+        if (typeof clearLocalStorageCallback === "function") {
             clearLocalStorageCallback();
         } else {
             localStorage.removeItem(rememberPassphraseKey);
@@ -1221,161 +1230,162 @@ function init(staticryptConfig, templateConfig) {
     return exports;
 }
 exports.init = init;
+
   return exports;
-})())
-</script>
+})());
+        </script>
 
-<script>
-    const encode = codec.init(cryptoEngine).encode;
+        <script>
+            const encode = codec.init(cryptoEngine).encode;
 
-    // enable CKEDIRTOR
-    CKEDITOR.replace('template_instructions');
+            // enable CKEDIRTOR
+            CKEDITOR.replace("template_instructions");
 
-    let htmlToDownload;
+            let htmlToDownload;
 
-    /**
-     * Extract js code from <script> tag and return it as a string
-     *
-     * @param {string} id
-     * @returns {string}
-     */
-    function getScriptAsString(id) {
-        return document.getElementById(id)
-            .innerText.replace(/window\.\w+ = /, '');
-    }
-
-    /**
-     * Register something happened - this uses a simple Supabase function to implement a counter, and allows to drop
-     * google analytics. We don't store any personal data or IP.
-     *
-     * @param {string} action
-     */
-    function trackEvent(action) {
-        const xhr = new XMLHttpRequest();
-        xhr.open('POST', 'https://zlgpaemmniviswibzuwt.supabase.co/rest/v1/rpc/increment_analytics', true);
-        xhr.setRequestHeader('Content-type', 'application/json; charset=UTF-8')
-        xhr.setRequestHeader('apikey', 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InpsZ3BhZW1tbml2aXN3aWJ6dXd0Iiwicm9sZSI6ImFub24iLCJpYXQiOjE2NjkxMjM0OTcsImV4cCI6MTk4NDY5OTQ5N30.wNoVDHG7F6INx-IPotMs3fL1nudfaF2qvQDgG-1PhNI')
-        xhr.setRequestHeader('Authorization', 'Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InpsZ3BhZW1tbml2aXN3aWJ6dXd0Iiwicm9sZSI6ImFub24iLCJpYXQiOjE2NjkxMjM0OTcsImV4cCI6MTk4NDY5OTQ5N30.wNoVDHG7F6INx-IPotMs3fL1nudfaF2qvQDgG-1PhNI')
-        xhr.send(
-            JSON.stringify({
-                action_input: action
-            }
-        ));
-    }
-
-    /**
-     * Fill the password prompt template with data provided.
-     * @param data
-     */
-    function setFileToDownload (data) {
-        const request = new XMLHttpRequest();
-        request.open('GET', 'lib/password_template.html', true);
-        request.onload = function () {
-            const renderedTmpl = formater.renderTemplate(request.responseText, data);
-
-            const downloadLink = document.querySelector('a.download');
-            downloadLink.href = 'data:text/html,' + encodeURIComponent(renderedTmpl);
-            downloadLink.removeAttribute('disabled');
-
-            htmlToDownload = renderedTmpl;
-        };
-        request.send();
-    }
-
-    // register page load
-    window.onload = function () {
-        trackEvent('show_index');
-    };
-
-    /**
-     * Handle form submission.
-     */
-    document.getElementById('encrypt_form').addEventListener('submit', async function (e) {
-        e.preventDefault();
-
-        trackEvent('generate_encrypted');
-
-        // update instruction textarea value with CKEDITOR content
-        // (see https://stackoverflow.com/questions/3147670/ckeditor-update-textarea)
-        CKEDITOR.instances['template_instructions'].updateElement();
-
-        const unencrypted = document.getElementById('unencrypted_html').value,
-            password = document.getElementById('password').value;
-
-        const salt = cryptoEngine.generateRandomSalt();
-        const encryptedMsg = await encode(unencrypted, password, salt);
-
-        const templateButton = document.getElementById('template_button').value,
-            templateInstructions = document.getElementById('template_instructions').value,
-            isRememberEnabled = document.getElementById('remember').checked,
-            templateTitle = document.getElementById('template_title').value.trim(),
-            templatePlaceholder = document.getElementById('template_placeholder').value.trim(),
-            rememberDurationInDays = document.getElementById('remember_in_days').value || 0,
-            templateRemember = document.getElementById('template_remember').value;
-
-        const data = {
-            staticrypt_config: {
-                encryptedMsg,
-                isRememberEnabled,
-                rememberDurationInDays,
-                salt,
-            },
-            is_remember_enabled: JSON.stringify(isRememberEnabled),
-            js_staticrypt: getScriptAsString('staticrypt'),
-            template_button: templateButton ? templateButton : 'DECRYPT',
-            template_instructions: templateInstructions || '',
-            template_placeholder: templatePlaceholder || 'Password',
-            template_remember: templateRemember || 'Remember me',
-            template_title: templateTitle || 'Protected Page',
-        };
-
-        document.getElementById('encrypted_html_display').textContent = encryptedMsg;
-
-        setFileToDownload(data);
-    });
-
-    document.getElementById('toggle-extra-option')
-        .addEventListener('click', function (e) {
-            e.preventDefault();
-            document.getElementById('extra-options').classList.toggle('hidden');
-        });
-
-    let isConceptShown = false;
-    document.getElementById('toggle-concept')
-        .addEventListener('click', function (e) {
-            e.preventDefault();
-
-            isConceptShown = !isConceptShown;
-
-            document.getElementById('toggle-concept-sign').innerText = isConceptShown ? '▼' : '►';
-
-            document.getElementById('concept').classList.toggle('hidden');
-        });
-
-
-    /**
-     * Browser specific download code.
-     */
-    document.getElementById('download-link')
-        .addEventListener('click', function (e) {
-            // only register the click event if there is actually a generated file
-            if (htmlToDownload) {
-                trackEvent('download_encrypted');
+            /**
+             * Extract js code from <script> tag and return it as a string
+             *
+             * @param {string} id
+             * @returns {string}
+             */
+            function getScriptAsString(id) {
+                return document.getElementById(id).innerText.replace(/window\.\w+ = /, "");
             }
 
-            const isIE = (navigator.userAgent.indexOf("MSIE") !== -1) || (!!document.documentMode === true); // >= 10
-            const isEdge = navigator.userAgent.indexOf("Edge") !== -1;
+            /**
+             * Register something happened - this uses a simple Supabase function to implement a counter, and allows to drop
+             * google analytics. We don't store any personal data or IP.
+             *
+             * @param {string} action
+             */
+            function trackEvent(action) {
+                const xhr = new XMLHttpRequest();
+                xhr.open("POST", "https://zlgpaemmniviswibzuwt.supabase.co/rest/v1/rpc/increment_analytics", true);
+                xhr.setRequestHeader("Content-type", "application/json; charset=UTF-8");
+                xhr.setRequestHeader(
+                    "apikey",
+                    "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InpsZ3BhZW1tbml2aXN3aWJ6dXd0Iiwicm9sZSI6ImFub24iLCJpYXQiOjE2NjkxMjM0OTcsImV4cCI6MTk4NDY5OTQ5N30.wNoVDHG7F6INx-IPotMs3fL1nudfaF2qvQDgG-1PhNI"
+                );
+                xhr.setRequestHeader(
+                    "Authorization",
+                    "Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InpsZ3BhZW1tbml2aXN3aWJ6dXd0Iiwicm9sZSI6ImFub24iLCJpYXQiOjE2NjkxMjM0OTcsImV4cCI6MTk4NDY5OTQ5N30.wNoVDHG7F6INx-IPotMs3fL1nudfaF2qvQDgG-1PhNI"
+                );
+                xhr.send(
+                    JSON.stringify({
+                        action_input: action,
+                    })
+                );
+            }
 
-            // download with MS specific feature
-            if (htmlToDownload && (isIE || isEdge)) {
+            /**
+             * Fill the password prompt template with data provided.
+             * @param data
+             */
+            function setFileToDownload(data) {
+                const request = new XMLHttpRequest();
+                request.open("GET", "lib/password_template.html", true);
+                request.onload = function () {
+                    const renderedTmpl = formater.renderTemplate(request.responseText, data);
+
+                    const downloadLink = document.querySelector("a.download");
+                    downloadLink.href = "data:text/html," + encodeURIComponent(renderedTmpl);
+                    downloadLink.removeAttribute("disabled");
+
+                    htmlToDownload = renderedTmpl;
+                };
+                request.send();
+            }
+
+            // register page load
+            window.onload = function () {
+                trackEvent("show_index");
+            };
+
+            /**
+             * Handle form submission.
+             */
+            document.getElementById("encrypt_form").addEventListener("submit", async function (e) {
                 e.preventDefault();
-                const blobObject = new Blob([htmlToDownload]);
-                window.navigator.msSaveOrOpenBlob(blobObject, 'encrypted.html');
-            }
 
-            return true;
-        })
-</script>
+                trackEvent("generate_encrypted");
 
-</body>
+                // update instruction textarea value with CKEDITOR content
+                // (see https://stackoverflow.com/questions/3147670/ckeditor-update-textarea)
+                CKEDITOR.instances["template_instructions"].updateElement();
+
+                const unencrypted = document.getElementById("unencrypted_html").value,
+                    password = document.getElementById("password").value;
+
+                const salt = cryptoEngine.generateRandomSalt();
+                const encryptedMsg = await encode(unencrypted, password, salt);
+
+                const templateButton = document.getElementById("template_button").value,
+                    templateInstructions = document.getElementById("template_instructions").value,
+                    isRememberEnabled = document.getElementById("remember").checked,
+                    templateTitle = document.getElementById("template_title").value.trim(),
+                    templatePlaceholder = document.getElementById("template_placeholder").value.trim(),
+                    rememberDurationInDays = document.getElementById("remember_in_days").value || 0,
+                    templateRemember = document.getElementById("template_remember").value;
+
+                const data = {
+                    staticrypt_config: {
+                        encryptedMsg,
+                        isRememberEnabled,
+                        rememberDurationInDays,
+                        salt,
+                    },
+                    is_remember_enabled: JSON.stringify(isRememberEnabled),
+                    js_staticrypt: getScriptAsString("staticrypt"),
+                    template_button: templateButton ? templateButton : "DECRYPT",
+                    template_instructions: templateInstructions || "",
+                    template_placeholder: templatePlaceholder || "Password",
+                    template_remember: templateRemember || "Remember me",
+                    template_title: templateTitle || "Protected Page",
+                };
+
+                document.getElementById("encrypted_html_display").textContent = encryptedMsg;
+
+                setFileToDownload(data);
+            });
+
+            document.getElementById("toggle-extra-option").addEventListener("click", function (e) {
+                e.preventDefault();
+                document.getElementById("extra-options").classList.toggle("hidden");
+            });
+
+            let isConceptShown = false;
+            document.getElementById("toggle-concept").addEventListener("click", function (e) {
+                e.preventDefault();
+
+                isConceptShown = !isConceptShown;
+
+                document.getElementById("toggle-concept-sign").innerText = isConceptShown ? "▼" : "►";
+
+                document.getElementById("concept").classList.toggle("hidden");
+            });
+
+            /**
+             * Browser specific download code.
+             */
+            document.getElementById("download-link").addEventListener("click", function (e) {
+                // only register the click event if there is actually a generated file
+                if (htmlToDownload) {
+                    trackEvent("download_encrypted");
+                }
+
+                const isIE = navigator.userAgent.indexOf("MSIE") !== -1 || !!document.documentMode === true; // >= 10
+                const isEdge = navigator.userAgent.indexOf("Edge") !== -1;
+
+                // download with MS specific feature
+                if (htmlToDownload && (isIE || isEdge)) {
+                    e.preventDefault();
+                    const blobObject = new Blob([htmlToDownload]);
+                    window.navigator.msSaveOrOpenBlob(blobObject, "encrypted.html");
+                }
+
+                return true;
+            });
+        </script>
+    </body>
 </html>
