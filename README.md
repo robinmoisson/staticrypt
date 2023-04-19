@@ -2,7 +2,7 @@
 
 # StatiCrypt
 
-StatiCrypt uses AES-256 and WebCrypto to encrypt your HTML file with your long password and return a static page including a password prompt and the javascript decryption logic that you can safely upload anywhere (see [what the page looks like](https://robinmoisson.github.io/staticrypt/example/encrypted/example.html)).
+StatiCrypt uses AES-256 and WebCrypto to encrypt your HTML file with your long password, and returns a static page including a password prompt and the javascript decryption logic that you can safely upload anywhere (see [a live example](https://robinmoisson.github.io/staticrypt/example/encrypted/example.html)).
 
 This means you can **password protect the content of your _public_ static HTML file, without any back-end** - serving it over Netlify, GitHub pages, etc. (see the detail of [how it works](#how-staticrypt-works)).
 
@@ -38,7 +38,7 @@ staticrypt test.html
 **Encrypt a file with the password in an environment variable:** set your long password in the `STATICRYPT_PASSWORD` environment variable ([`.env` files](https://www.npmjs.com/package/dotenv#usage) are supported):
 
 ```bash
-# the password is in the STATICRYPT_PASSWORD env variable
+# the password is in the STATICRYPT_PASSWORD env variable, you won't be prompted
 staticrypt test.html
 ```
 
