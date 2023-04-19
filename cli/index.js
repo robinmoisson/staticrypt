@@ -12,6 +12,8 @@ if (nodeVersion[0] < 16) {
 // parse .env file into process.env
 require('dotenv').config();
 
+const fs = require("fs");
+
 const cryptoEngine = require("../lib/cryptoEngine.js");
 const codec = require("../lib/codec.js");
 const { generateRandomSalt } = cryptoEngine;
@@ -98,30 +100,54 @@ async function runStatiCrypt() {
 
     const hashedPassword = await cryptoEngine.hashPassword(password, salt);
 
-    for (const positionalArgument of positionalArguments) {
-        const inputFilepath = positionalArgument.toString();
+    positionalArguments.forEach(path => encodeAndGenerateFile(
+        path.toString(),
+        hashedPassword,
+        salt,
+        baseTemplateData,
+        isRememberEnabled,
+        namedArgs
+    ));
+}
 
-        // get the file content
-        const contents = getFileContent(inputFilepath);
+async function encodeAndGenerateFile(path, hashedPassword, salt, baseTemplateData, isRememberEnabled, namedArgs) {
+    // if the path is a directory, get into it and process all files
+    if (fs.statSync(path).isDirectory()) {
+        if (!namedArgs.recursive) {
+            console.log("ERROR: The path '" + path + "' is a directory. Use the -r|--recursive flag to process all files in the directory.");
 
-        // encrypt input
-        const encryptedMsg = await encodeWithHashedPassword(contents, hashedPassword);
+            // just return instead of exiting the process, that way all other files can be processed
+            return;
+        }
 
-        const staticryptConfig = {
-            encryptedMsg,
-            isRememberEnabled,
-            rememberDurationInDays: namedArgs.remember,
-            salt,
-        };
-        const templateData = {
-            ...baseTemplateData,
-            staticrypt_config: staticryptConfig,
-        };
+        fs.readdirSync(path).forEach(filePath => {
+            const fullPath = `${path}/${filePath}`;
 
-        const outputFilepath = namedArgs.directory.replace(/\/+$/, '') + "/" + inputFilepath;
-
-        genFile(templateData, outputFilepath, namedArgs.template);
+            encodeAndGenerateFile(fullPath, hashedPassword, salt, baseTemplateData, isRememberEnabled, namedArgs);
+        });
+        return;
     }
+
+    // get the file content
+    const contents = getFileContent(path);
+
+    // encrypt input
+    const encryptedMsg = await encodeWithHashedPassword(contents, hashedPassword);
+
+    const staticryptConfig = {
+        encryptedMsg,
+        isRememberEnabled,
+        rememberDurationInDays: namedArgs.remember,
+        salt,
+    };
+    const templateData = {
+        ...baseTemplateData,
+        staticrypt_config: staticryptConfig,
+    };
+
+    const outputFilepath = namedArgs.directory.replace(/\/+$/, '') + "/" + path;
+
+    genFile(templateData, outputFilepath, namedArgs.template);
 }
 
 runStatiCrypt();

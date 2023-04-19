@@ -30,6 +30,9 @@ You can then run it with `npx staticrypt ...`. You can also install globally wit
 
 ```bash
 staticrypt test.html -p MY_LONG_PASSWORD
+
+# or do not include the password if you want to be prompted for it:
+staticrypt test.html
 ```
 
 **Encrypt a file with the password in an environment variable:** set your long password in the `STATICRYPT_PASSWORD` environment variable ([`.env` files](https://www.npmjs.com/package/dotenv#usage) are supported):
@@ -39,20 +42,23 @@ staticrypt test.html -p MY_LONG_PASSWORD
 staticrypt test.html
 ```
 
-**Encrypt a file and get a shareable link containing the hashed password** - you can include your file URL or leave blank:
-
-```bash
-# you can also pass '--share' without specifying the URL to get the `#staticrypt_pwd=...` 
-staticrypt test.html -p MY_LONG_PASSWORD --share https://example.com/test_encrypted.html
-# => https://example.com/test_encrypted.html#staticrypt_pwd=5bfbf1343c7257cd7be23ecd74bb37fa2c76d041042654f358b6255baeab898f
-```
-
 **Encrypt multiple files at once** and put them in a `encrypted/` directory:
 
 ```bash
 # this will encrypt test_A.html, test_B.html and all files in the test/ directory
 staticrypt test_A.html test_B.html test/* -p MY_LONG_PASSWORD
 # => encrypted files are in encrypted/test_A.html, encrypted/test_B.html, encrypted/test/...
+
+# you can also use the -r flag to recursively encrypt all files in a directory
+staticrypt dir_to_encrypt -p MY_LONG_PASSWORD -r
+```
+
+**Encrypt a file and get a shareable link containing the hashed password** - you can include your file URL or leave blank:
+
+```bash
+# you can also pass '--share' without specifying the URL to get the `#staticrypt_pwd=...` 
+staticrypt test.html -p MY_LONG_PASSWORD --share https://example.com/test_encrypted.html
+# => https://example.com/test_encrypted.html#staticrypt_pwd=5bfbf1343c7257cd7be23ecd74bb37fa2c76d041042654f358b6255baeab898f
 ```
 
 **Pin the salt to use staticrypt in your CI in a build step** - if you want want the "Remember-me" or share features to work accross multiple pages or multiple successive deployment, the salt needs to stay the same ([see why](https://github.com/robinmoisson/staticrypt#why-does-staticrypt-create-a-config-file)). If you run StatiCrypt in a CI step, you can pin the salt in two ways:
@@ -84,6 +90,8 @@ The password argument is optional if `STATICRYPT_PASSWORD` is set in the environ
                                       empty to be prompted for it. If
                                       STATICRYPT_PASSWORD is set in the env, we'll
                                       use that instead.     [string] [default: null]
+      -r, --recursive                 Whether to recursively encrypt the input
+                                      directory.          [boolean] [default: false]
           --remember                  Expiration in days of the "Remember me"
                                       checkbox that will save the (salted + hashed)
                                       password in localStorage when entered by the

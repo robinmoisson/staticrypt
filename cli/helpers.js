@@ -309,6 +309,12 @@ function parseCommandLineArguments() {
                 " is set in the env, we'll use that instead.",
             default: null,
         })
+        .option("r", {
+            alias: "recursive",
+            type: "boolean",
+            describe: "Whether to recursively encrypt the input directory.",
+            default: false,
+        })
         .option("remember", {
             type: "number",
             describe:
