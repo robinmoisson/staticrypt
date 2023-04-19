@@ -15,7 +15,7 @@ require('dotenv').config();
 const cryptoEngine = require("../lib/cryptoEngine.js");
 const codec = require("../lib/codec.js");
 const { generateRandomSalt } = cryptoEngine;
-const { encode } = codec.init(cryptoEngine);
+const { encodeWithHashedPassphrase } = codec.init(cryptoEngine);
 const { parseCommandLineArguments, buildStaticryptJS, isOptionSetByUser, genFile, getFileContent,
     getValidatedSalt,
     getValidatedPassword, getConfig, writeConfig
@@ -31,7 +31,7 @@ async function runStatiCrypt() {
 
     const positionalArguments = namedArgs._;
 
-    // validate the number of arguments
+    // require at least one positional argument unless some specific flags are passed
     if (!hasShareFlag && !(hasSaltFlag && !namedArgs.salt)) {
         if (positionalArguments.length === 0) {
             console.log("ERROR: Invalid number of arguments. Please provide an input file.\n");
@@ -81,24 +81,11 @@ async function runStatiCrypt() {
         writeConfig(configPath, config);
     }
 
-    // get the file content
-    const inputFilepath = positionalArguments[0].toString();
-    const contents = getFileContent(inputFilepath);
-
-    // encrypt input
-    const encryptedMsg = await encode(contents, password, salt);
-
     const isRememberEnabled = namedArgs.remember !== "false";
 
-    const data = {
+    const baseTemplateData = {
         is_remember_enabled: JSON.stringify(isRememberEnabled),
         js_staticrypt: buildStaticryptJS(),
-        staticrypt_config: {
-            encryptedMsg,
-            isRememberEnabled,
-            rememberDurationInDays: namedArgs.remember,
-            salt,
-        },
         template_button: namedArgs.templateButton,
         template_error: namedArgs.templateError,
         template_instructions: namedArgs.templateInstructions,
@@ -109,9 +96,32 @@ async function runStatiCrypt() {
         template_color_secondary: namedArgs.templateColorSecondary,
     };
 
-    const outputFilepath = namedArgs.directory.replace(/\/+$/, '') + "/" + inputFilepath;
+    const hashedPassword = await cryptoEngine.hashPassphrase(password, salt);
 
-    genFile(data, outputFilepath, namedArgs.template);
+    for (const positionalArgument of positionalArguments) {
+        const inputFilepath = positionalArgument.toString();
+
+        // get the file content
+        const contents = getFileContent(inputFilepath);
+
+        // encrypt input
+        const encryptedMsg = await encodeWithHashedPassphrase(contents, hashedPassword);
+
+        const staticryptConfig = {
+            encryptedMsg,
+            isRememberEnabled,
+            rememberDurationInDays: namedArgs.remember,
+            salt,
+        };
+        const templateData = {
+            ...baseTemplateData,
+            staticrypt_config: staticryptConfig,
+        };
+
+        const outputFilepath = namedArgs.directory.replace(/\/+$/, '') + "/" + inputFilepath;
+
+        genFile(templateData, outputFilepath, namedArgs.template);
+    }
 }
 
 runStatiCrypt();

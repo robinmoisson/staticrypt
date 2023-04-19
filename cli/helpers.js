@@ -146,7 +146,7 @@ function getFileContent(filepath) {
     try {
         return fs.readFileSync(filepath, "utf8");
     } catch (e) {
-        exitWithError("input file does not exist!");
+        exitWithError(`input file '${filepath}' does not exist!`);
     }
 }
 exports.getFileContent = getFileContent;
@@ -289,7 +289,7 @@ function isCustomPasswordTemplateDefault(templatePathParameter) {
 exports.isCustomPasswordTemplateDefault = isCustomPasswordTemplateDefault;
 
 function parseCommandLineArguments() {
-    return Yargs.usage("Usage: staticrypt <filename> [options]")
+    return Yargs.usage("Usage: staticrypt <filename> [<filename> ...] [options]")
         .option("c", {
             alias: "config",
             type: "string",

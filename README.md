@@ -47,10 +47,12 @@ staticrypt test.html -p MY_LONG_PASSWORD --share https://example.com/test_encryp
 # => https://example.com/test_encrypted.html#staticrypt_pwd=5bfbf1343c7257cd7be23ecd74bb37fa2c76d041042654f358b6255baeab898f
 ```
 
-**Encrypt all html files from a directory** and put them in a `encrypted/` directory (`{}` will be replaced with each file name by the `find` command):
+**Encrypt multiple files at once** and put them in a `encrypted/` directory:
 
 ```bash
-find . -type f -name "*.html" -exec staticrypt {} -p MY_LONG_PASSWORD \;
+# this will encrypt test_A.html, test_B.html and all files in the test/ directory
+staticrypt test_A.html test_B.html test/* -p MY_LONG_PASSWORD
+# => encrypted files are in encrypted/test_A.html, encrypted/test_B.html, encrypted/test/...
 ```
 
 **Pin the salt to use staticrypt in your CI in a build step** - if you want want the "Remember-me" or share features to work accross multiple pages or multiple successive deployment, the salt needs to stay the same ([see why](https://github.com/robinmoisson/staticrypt#why-does-staticrypt-create-a-config-file)). If you run StatiCrypt in a CI step, you can pin the salt in two ways:
@@ -68,7 +70,7 @@ staticrypt test.html -p MY_LONG_PASSWORD --salt 12345678901234567890123456789012
 
 The password argument is optional if `STATICRYPT_PASSWORD` is set in the environment or `.env` file.
 
-    Usage: staticrypt <filename> [options]
+    Usage: staticrypt <filename> [<filename> ...] [options]
 
     Options:
           --help                      Show help                            [boolean]

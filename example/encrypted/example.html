@@ -488,8 +488,8 @@ function init(cryptoEngine) {
   async function encode(msg, password, salt) {
     const hashedPassphrase = await cryptoEngine.hashPassphrase(password, salt);
 
-
     const encrypted = await cryptoEngine.encrypt(msg, hashedPassphrase);
+
     // we use the hashed password in the HMAC because this is effectively what will be used a password (so we can store
     // it in localStorage safely, we don't use the clear text password)
     const hmac = await cryptoEngine.signMessage(hashedPassphrase, encrypted);
@@ -497,6 +497,26 @@ function init(cryptoEngine) {
     return hmac + encrypted;
   }
   exports.encode = encode;
+
+  /**
+   * Encode using a password that has already been hashed. This is useful to encode multiple messages in a row, that way
+   * we don't need to hash the password multiple times.
+   *
+   * @param {string} msg
+   * @param {string} hashedPassphrase
+   *
+   * @returns {string} The encoded text
+   */
+  async function encodeWithHashedPassphrase(msg, hashedPassphrase) {
+    const encrypted = await cryptoEngine.encrypt(msg, hashedPassphrase);
+
+    // we use the hashed password in the HMAC because this is effectively what will be used a password (so we can store
+    // it in localStorage safely, we don't use the clear text password)
+    const hmac = await cryptoEngine.signMessage(hashedPassphrase, encrypted);
+
+    return hmac + encrypted;
+  }
+  exports.encodeWithHashedPassphrase = encodeWithHashedPassphrase;
 
   /**
    * Top-level function for decoding a message.
@@ -770,7 +790,7 @@ exports.init = init;
 })())
     const templateError = 'Bad password!',
         isRememberEnabled = true,
-        staticryptConfig = {"encryptedMsg":"87f21fbcd8377a4add0382f281123d5f3d7422d99eeac1e8bf287931f307ab42ed795ce671de90d2127951422f748d7f3b93e711e4e0ddf450371c741031208ae7a9c7a7cc38b7969c86dc22beb869ce9b98aa1abd29d2dd658b2e163729341fe247d79e15e172c716e4d99bc7e7b7581a648bc7f87a0639c497b299d2f2fe2b85dd43e8ac7018ef3d0028a39fb3d156ae0f4e303b575e70c4fb0079f353f0510798816b9009a4156d7803b286db1c82e55e68eb2b280be7fb20e4c01dc417f0","isRememberEnabled":true,"rememberDurationInDays":0,"salt":"b93bbaf35459951c47721d1f3eaeb5b9"};
+        staticryptConfig = {"encryptedMsg":"8ad22b42e255e1467bbd5369c84ae7420583384946876422f9450a5ab7fb3eaf33f5b73b1980988ef451c513871bb24582fabe01c8a5d0bde2a0580d564bf9c232cffc7fca5169005c024de005a25f479c172a65f6554405874082906b4a3be1ca7c0118728b25cd3ae915277e19f574c4f794affeffb2a1c3e923ea12fd83f5005a1c1b9606d36448082bd0f8ef70f8cc99f5205075e702b2f2b795c9150e20f2de2c6c86631c2d59ebbe2543c8ec13e450b21bbefdc2f2cb219190a0510538","isRememberEnabled":true,"rememberDurationInDays":0,"salt":"b93bbaf35459951c47721d1f3eaeb5b9"};
 
     // you can edit these values to customize some of the behavior of StatiCrypt
     const templateConfig = {
