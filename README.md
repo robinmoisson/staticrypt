@@ -29,7 +29,7 @@ You can then run it with `npx staticrypt ...`. You can also install globally wit
 **Encrypt a file:** encrypt `test.html` and create a `encrypted/test.html` file (use `-d my_directory` to change the output directory):
 
 ```bash
-staticrypt test.html -p MY_LONG_PASSWORD
+staticrypt test.html -p <long-password>
 
 # or do not include the password if you want to be prompted for it:
 staticrypt test.html
@@ -45,20 +45,32 @@ staticrypt test.html
 **Encrypt multiple files at once** and put them in a `encrypted/` directory:
 
 ```bash
-# this will encrypt test_A.html, test_B.html and all files in the test/ directory
-staticrypt test_A.html test_B.html test/* -p MY_LONG_PASSWORD
-# => encrypted files are in encrypted/test_A.html, encrypted/test_B.html, encrypted/test/...
+# this will encrypt test_A.html and test_B.html
+staticrypt test_A.html test_B.html -p <long-password>
+# => encrypted files are in encrypted/test_A.html and encrypted/test_B.html
 
 # you can also use the -r flag to recursively encrypt all files in a directory
-staticrypt dir_to_encrypt -p MY_LONG_PASSWORD -r
+staticrypt dir_to_encrypt -p <long-password> -r
+# => encrypted files are in encrypted/dir_to_encrypt/...
+
+# if you don't want to include the directory name in the output path, you can use dir_to_encrypt/* instead
+staticrypt dir_to_encrypt/* -p <long-password> -r
+# => encrypted files are in encrypted/...
 ```
 
 **Encrypt a file and get a shareable link containing the hashed password** - you can include your file URL or leave blank:
 
 ```bash
 # you can also pass '--share' without specifying the URL to get the `#staticrypt_pwd=...` 
-staticrypt test.html -p MY_LONG_PASSWORD --share https://example.com/encrypted.html
+staticrypt test.html -p <long-password> --share https://example.com/encrypted.html
 # => https://example.com/encrypted.html#staticrypt_pwd=5bfbf1343c7257cd7be23ecd74bb37fa2c76d041042654f358b6255baeab898f
+```
+
+**Decrypt files you encrypted earlier** straight from the CLI by including the `--decrypt` flag. The `-r|--recursive` flag and output `-d|--directory` option work the same way as when encrypting (default name for the output directory is `decrypted`):
+
+```bash
+staticrypt encrypted/test.html -p <long-password> --decrypt
+# => decrypted file is in decrypted/test.html
 ```
 
 **Pin the salt to use staticrypt in your CI in a build step** - if you want want the "Remember-me" or share features to work accross multiple pages or multiple successive deployment, the salt needs to stay the same ([see why](https://github.com/robinmoisson/staticrypt#why-does-staticrypt-create-a-config-file)). If you run StatiCrypt in a CI step, you can pin the salt in two ways:
@@ -69,7 +81,7 @@ staticrypt test.html -p MY_LONG_PASSWORD --share https://example.com/encrypted.h
 staticrypt --salt
 
 # or hardcode the salt in the CI script command:
-staticrypt test.html -p MY_LONG_PASSWORD --salt 12345678901234567890123456789012
+staticrypt test.html -p <long-password> --salt 12345678901234567890123456789012
 ```
 
 ### CLI Reference
@@ -83,9 +95,12 @@ The password argument is optional if `STATICRYPT_PASSWORD` is set in the environ
           --version                   Show version number                  [boolean]
       -c, --config                    Path to the config file. Set to "false" to
                                       disable.[string] [default: ".staticrypt.json"]
-      -d, --directory                 Name of the directory where the encrypted
-                                      files will be saved.
-                                                    [string] [default: "encrypted/"]
+      -d, --directory                 Name of the directory where the generated
+                                      files will be saved. If the '--decrypt' flag
+                                      is set, default will be 'decrypted'.
+                                                     [string] [default: "encrypted"]
+          --decrypt                   Include this flag to decrypt files instead of
+                                      encrypt.            [boolean] [default: false]
       -p, --password                  The password to encrypt your file with. Leave
                                       empty to be prompted for it. If
                                       STATICRYPT_PASSWORD is set in the env, we'll

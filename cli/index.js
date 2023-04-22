@@ -12,22 +12,28 @@ if (nodeVersion[0] < 16) {
 // parse .env file into process.env
 require("dotenv").config();
 
+const pathModule = require("path");
 const fs = require("fs");
 
 const cryptoEngine = require("../lib/cryptoEngine.js");
 const codec = require("../lib/codec.js");
 const { generateRandomSalt } = cryptoEngine;
-const { encodeWithHashedPassword } = codec.init(cryptoEngine);
+const { decode, encodeWithHashedPassword } = codec.init(cryptoEngine);
 const {
-    parseCommandLineArguments,
+    OUTPUT_DIRECTORY_DEFAULT_PATH,
     buildStaticryptJS,
-    isOptionSetByUser,
+    exitWithError,
     genFile,
-    getFileContent,
-    getValidatedSalt,
-    getValidatedPassword,
     getConfig,
+    getFileContent,
+    getPassword,
+    getValidatedSalt,
+    isOptionSetByUser,
+    parseCommandLineArguments,
+    recursivelyApplyCallbackToFiles,
+    validatePassword,
     writeConfig,
+    writeFile,
 } = require("./helpers.js");
 
 // parse arguments
@@ -67,22 +73,48 @@ async function runStatiCrypt() {
             writeConfig(configPath, config);
         }
 
-        process.exit(0);
+        return;
     }
 
     // get the salt & password
     const salt = getValidatedSalt(namedArgs, config);
-    const password = await getValidatedPassword(namedArgs.password, namedArgs.short);
+    const password = await getPassword(namedArgs.password);
+    const hashedPassword = await cryptoEngine.hashPassword(password, salt);
 
     // display the share link with the hashed password if the --share flag is set
     if (hasShareFlag) {
+        await validatePassword(password, namedArgs.short);
+
         const url = namedArgs.share || "";
 
-        const hashedPassword = await cryptoEngine.hashPassword(password, salt);
-
         console.log(url + "#staticrypt_pwd=" + hashedPassword);
-        process.exit(0);
+        return;
     }
+
+    // only process a directory if the --recursive flag is set
+    const directoriesInArguments = positionalArguments.filter((path) => fs.statSync(path).isDirectory());
+    if (directoriesInArguments.length > 0 && !namedArgs.recursive) {
+        exitWithError(
+            `'${directoriesInArguments[0].toString()}' is a directory. Use the -r|--recursive flag to process directories.`
+        );
+    }
+
+    // if asking for decryption, decrypt all the files
+    if (namedArgs.decrypt) {
+        const isOutputDirectoryDefault =
+            namedArgs.directory === OUTPUT_DIRECTORY_DEFAULT_PATH && !isOptionSetByUser("d", yargs);
+        const outputDirectory = isOutputDirectoryDefault ? "decrypted" : namedArgs.directory;
+
+        positionalArguments.forEach((path) => {
+            recursivelyApplyCallbackToFiles((fullPath, fullRootDirectory) => {
+                decodeAndGenerateFile(fullPath, fullRootDirectory, hashedPassword, salt, outputDirectory);
+            }, path);
+        });
+
+        return;
+    }
+
+    await validatePassword(password, namedArgs.short);
 
     // write salt to config file
     if (config.salt !== salt) {
@@ -105,35 +137,55 @@ async function runStatiCrypt() {
         template_color_secondary: namedArgs.templateColorSecondary,
     };
 
-    const hashedPassword = await cryptoEngine.hashPassword(password, salt);
-
-    positionalArguments.forEach((path) =>
-        encodeAndGenerateFile(path.toString(), hashedPassword, salt, baseTemplateData, isRememberEnabled, namedArgs)
-    );
+    // encode all the files
+    positionalArguments.forEach((path) => {
+        recursivelyApplyCallbackToFiles((fullPath, fullRootDirectory) => {
+            encodeAndGenerateFile(
+                fullPath,
+                fullRootDirectory,
+                hashedPassword,
+                salt,
+                baseTemplateData,
+                isRememberEnabled,
+                namedArgs
+            );
+        }, path);
+    });
 }
 
-async function encodeAndGenerateFile(path, hashedPassword, salt, baseTemplateData, isRememberEnabled, namedArgs) {
-    // if the path is a directory, get into it and process all files
-    if (fs.statSync(path).isDirectory()) {
-        if (!namedArgs.recursive) {
-            console.log(
-                "ERROR: The path '" +
-                    path +
-                    "' is a directory. Use the -r|--recursive flag to process all files in the directory."
-            );
+async function decodeAndGenerateFile(path, rootDirectoryFromArguments, hashedPassword, salt, outputDirectory) {
+    // get the file content
+    const encryptedFileContent = getFileContent(path);
 
-            // just return instead of exiting the process, that way all other files can be processed
-            return;
-        }
+    // extract the cipher text from the encrypted file
+    const cipherTextMatch = encryptedFileContent.match(/"staticryptEncryptedMsgUniqueVariableName":\s*"([^"]+)"/);
 
-        fs.readdirSync(path).forEach((filePath) => {
-            const fullPath = `${path}/${filePath}`;
-
-            encodeAndGenerateFile(fullPath, hashedPassword, salt, baseTemplateData, isRememberEnabled, namedArgs);
-        });
-        return;
+    if (!cipherTextMatch) {
+        return console.log(`ERROR: could not extract cipher text from ${path}`);
     }
 
+    // decrypt input
+    const { success, decoded } = await decode(cipherTextMatch[1], hashedPassword, salt);
+
+    if (!success) {
+        return console.log(`ERROR: could not decrypt ${path}`);
+    }
+
+    const relativePath = pathModule.relative(rootDirectoryFromArguments, path);
+    const outputFilepath = outputDirectory + "/" + relativePath;
+
+    writeFile(outputFilepath, decoded);
+}
+
+async function encodeAndGenerateFile(
+    path,
+    rootDirectoryFromArguments,
+    hashedPassword,
+    salt,
+    baseTemplateData,
+    isRememberEnabled,
+    namedArgs
+) {
     // get the file content
     const contents = getFileContent(path);
 
@@ -141,7 +193,7 @@ async function encodeAndGenerateFile(path, hashedPassword, salt, baseTemplateDat
     const encryptedMsg = await encodeWithHashedPassword(contents, hashedPassword);
 
     const staticryptConfig = {
-        encryptedMsg,
+        staticryptEncryptedMsgUniqueVariableName: encryptedMsg,
         isRememberEnabled,
         rememberDurationInDays: namedArgs.remember,
         salt,
@@ -151,7 +203,9 @@ async function encodeAndGenerateFile(path, hashedPassword, salt, baseTemplateDat
         staticrypt_config: staticryptConfig,
     };
 
-    const outputFilepath = namedArgs.directory.replace(/\/+$/, "") + "/" + path;
+    // remove the base path so that the actual output path is relative to the base path
+    const relativePath = pathModule.relative(rootDirectoryFromArguments, path);
+    const outputFilepath = namedArgs.directory + "/" + relativePath;
 
     genFile(templateData, outputFilepath, namedArgs.template);
 }

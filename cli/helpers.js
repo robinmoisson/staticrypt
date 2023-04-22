@@ -1,4 +1,4 @@
-const path = require("path");
+const pathModule = require("path");
 const fs = require("fs");
 const readline = require("readline");
 
@@ -6,7 +6,9 @@ const { generateRandomSalt, generateRandomString } = require("../lib/cryptoEngin
 const { renderTemplate } = require("../lib/formater.js");
 const Yargs = require("yargs");
 
-const PASSWORD_TEMPLATE_DEFAULT_PATH = path.join(__dirname, "..", "lib", "password_template.html");
+const PASSWORD_TEMPLATE_DEFAULT_PATH = pathModule.join(__dirname, "..", "lib", "password_template.html");
+const OUTPUT_DIRECTORY_DEFAULT_PATH = "encrypted";
+exports.OUTPUT_DIRECTORY_DEFAULT_PATH = OUTPUT_DIRECTORY_DEFAULT_PATH;
 
 /**
  * @param {string} message
@@ -71,16 +73,19 @@ function prompt(question) {
     });
 }
 
-async function getValidatedPassword(passwordArgument, isShortAllowed) {
-    const password = await getPassword(passwordArgument);
-
+/**
+ * @param {string} password
+ * @param {boolean} isShortAllowed
+ * @returns {Promise<void>}
+ */
+async function validatePassword(password, isShortAllowed) {
     if (password.length < 14 && !isShortAllowed) {
         const shouldUseShort = await prompt(
             `WARNING: Your password is less than 14 characters (length: ${password.length})` +
-                " and it's easy to try brute-forcing on public files. For better security we recommend using a longer one, for example: " +
+                " and it's easy to try brute-forcing on public files, so we recommend using a longer one. Here's a generated one: " +
                 generateRandomString(21) +
                 "\nYou can hide this warning by increasing your password length or adding the '--short' flag." +
-                " Do you want to use the short password? [y/N] "
+                "\nDo you want to still want to use the shorter password? [y/N] "
         );
 
         if (!shouldUseShort.match(/^\s*(y|yes)\s*$/i)) {
@@ -88,10 +93,8 @@ async function getValidatedPassword(passwordArgument, isShortAllowed) {
             process.exit(0);
         }
     }
-
-    return password;
 }
-exports.getValidatedPassword = getValidatedPassword;
+exports.validatePassword = validatePassword;
 
 /**
  * Get the config from the config file.
@@ -137,6 +140,7 @@ async function getPassword(passwordArgument) {
     // prompt the user for their password
     return prompt("Enter your long, unusual password: ");
 }
+exports.getPassword = getPassword;
 
 /**
  * @param {string} filepath
@@ -200,8 +204,8 @@ function getSalt(namedArgs, config) {
  * @param {string} modulePath - path from staticrypt root directory
  */
 function convertCommonJSToBrowserJS(modulePath) {
-    const rootDirectory = path.join(__dirname, "..");
-    const resolvedPath = path.join(rootDirectory, ...modulePath.split("/")) + ".js";
+    const rootDirectory = pathModule.join(__dirname, "..");
+    const resolvedPath = pathModule.join(rootDirectory, ...modulePath.split("/")) + ".js";
 
     if (!fs.existsSync(resolvedPath)) {
         exitWithError(`could not find module to convert at path "${resolvedPath}"`);
@@ -262,20 +266,29 @@ function genFile(data, outputFilePath, templateFilePath) {
 
     const renderedTemplate = renderTemplate(templateContents, data);
 
+    writeFile(outputFilePath, renderedTemplate);
+}
+exports.genFile = genFile;
+
+/**
+ * @param {string} filePath
+ * @param {string} contents
+ */
+function writeFile(filePath, contents) {
     // create output directory if it does not exist
-    const dirname = path.dirname(outputFilePath);
+    const dirname = pathModule.dirname(filePath);
     if (!fs.existsSync(dirname)) {
         fs.mkdirSync(dirname, { recursive: true });
     }
 
     try {
-        fs.writeFileSync(outputFilePath, renderedTemplate);
+        fs.writeFileSync(filePath, contents);
     } catch (e) {
         console.error(e);
-        exitWithError("could not generate output file");
+        exitWithError(`could not write file at path "${filePath}"`);
     }
 }
-exports.genFile = genFile;
+exports.writeFile = writeFile;
 
 /**
  * @param {string} templatePathParameter
@@ -286,6 +299,28 @@ function isCustomPasswordTemplateDefault(templatePathParameter) {
     return templatePathParameter === PASSWORD_TEMPLATE_DEFAULT_PATH;
 }
 exports.isCustomPasswordTemplateDefault = isCustomPasswordTemplateDefault;
+
+/**
+ * @param {string} path
+ * @param {string} rootDirectory
+ * @param {(fullPath: string, rootDirectoryFromArgument: string) => void} callback
+ */
+function recursivelyApplyCallbackToFiles(callback, path, rootDirectory = "") {
+    const fullPath = pathModule.resolve(path);
+    const fullRootDirectory = rootDirectory || pathModule.dirname(fullPath);
+
+    if (fs.statSync(fullPath).isDirectory()) {
+        fs.readdirSync(fullPath).forEach((filePath) => {
+            const fullFilePath = `${fullPath}/${filePath}`;
+
+            recursivelyApplyCallbackToFiles(callback, fullFilePath, fullRootDirectory);
+        });
+        return;
+    }
+
+    callback(fullPath, fullRootDirectory);
+}
+exports.recursivelyApplyCallbackToFiles = recursivelyApplyCallbackToFiles;
 
 function parseCommandLineArguments() {
     return (
@@ -299,8 +334,15 @@ function parseCommandLineArguments() {
             .option("d", {
                 alias: "directory",
                 type: "string",
-                describe: "Name of the directory where the encrypted files will be saved.",
-                default: "encrypted/",
+                describe:
+                    "Name of the directory where the generated files will be saved. If the '--decrypt' flag is " +
+                    "set, default will be 'decrypted'.",
+                default: OUTPUT_DIRECTORY_DEFAULT_PATH,
+            })
+            .option("decrypt", {
+                type: "boolean",
+                describe: "Include this flag to decrypt files instead of encrypt.",
+                default: false,
             })
             .option("p", {
                 alias: "password",
