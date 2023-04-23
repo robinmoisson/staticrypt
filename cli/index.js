@@ -107,7 +107,7 @@ async function runStatiCrypt() {
 
         positionalArguments.forEach((path) => {
             recursivelyApplyCallbackToFiles((fullPath, fullRootDirectory) => {
-                decodeAndGenerateFile(fullPath, fullRootDirectory, hashedPassword, salt, outputDirectory);
+                decodeAndGenerateFile(fullPath, fullRootDirectory, hashedPassword, outputDirectory);
             }, path);
         });
 
@@ -153,19 +153,20 @@ async function runStatiCrypt() {
     });
 }
 
-async function decodeAndGenerateFile(path, rootDirectoryFromArguments, hashedPassword, salt, outputDirectory) {
+async function decodeAndGenerateFile(path, rootDirectoryFromArguments, hashedPassword, outputDirectory) {
     // get the file content
     const encryptedFileContent = getFileContent(path);
 
     // extract the cipher text from the encrypted file
     const cipherTextMatch = encryptedFileContent.match(/"staticryptEncryptedMsgUniqueVariableName":\s*"([^"]+)"/);
+    const saltMatch = encryptedFileContent.match(/"staticryptSaltUniqueVariableName":\s*"([^"]+)"/);
 
-    if (!cipherTextMatch) {
-        return console.log(`ERROR: could not extract cipher text from ${path}`);
+    if (!cipherTextMatch || !saltMatch) {
+        return console.log(`ERROR: could not extract cipher text or salt from ${path}`);
     }
 
     // decrypt input
-    const { success, decoded } = await decode(cipherTextMatch[1], hashedPassword, salt);
+    const { success, decoded } = await decode(cipherTextMatch[1], hashedPassword, saltMatch[1]);
 
     if (!success) {
         return console.log(`ERROR: could not decrypt ${path}`);
@@ -196,7 +197,7 @@ async function encodeAndGenerateFile(
         staticryptEncryptedMsgUniqueVariableName: encryptedMsg,
         isRememberEnabled,
         rememberDurationInDays: namedArgs.remember,
-        salt,
+        staticryptSaltUniqueVariableName: salt,
     };
     const templateData = {
         ...baseTemplateData,

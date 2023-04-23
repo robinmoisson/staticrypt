@@ -1044,10 +1044,10 @@ const decode = codec.init(cryptoEngine).decode;
  * Initialize the staticrypt module, that exposes functions callbable by the password_template.
  *
  * @param {{
- *  encryptedMsg: string,
+ *  staticryptEncryptedMsgUniqueVariableName: string,
  *  isRememberEnabled: boolean,
  *  rememberDurationInDays: number,
- *  salt: string,
+ *  staticryptSaltUniqueVariableName: string,
  * }} staticryptConfig - object of data that is stored on the password_template at encryption time.
  *
  * @param {{
@@ -1067,10 +1067,14 @@ function init(staticryptConfig, templateConfig) {
      * @returns {Promise<boolean>}
      */
     async function decryptAndReplaceHtml(hashedPassword) {
-        const { encryptedMsg, salt } = staticryptConfig;
+        const { staticryptEncryptedMsgUniqueVariableName, staticryptSaltUniqueVariableName } = staticryptConfig;
         const { replaceHtmlCallback } = templateConfig;
 
-        const result = await decode(encryptedMsg, hashedPassword, salt);
+        const result = await decode(
+            staticryptEncryptedMsgUniqueVariableName,
+            hashedPassword,
+            staticryptSaltUniqueVariableName
+        );
         if (!result.success) {
             return false;
         }
@@ -1097,11 +1101,11 @@ function init(staticryptConfig, templateConfig) {
      *   expose more information in the future we can do it without breaking the password_template
      */
     async function handleDecryptionOfPage(password, isRememberChecked) {
-        const { isRememberEnabled, rememberDurationInDays, salt } = staticryptConfig;
+        const { isRememberEnabled, rememberDurationInDays, staticryptSaltUniqueVariableName } = staticryptConfig;
         const { rememberExpirationKey, rememberPassphraseKey } = templateConfig;
 
         // decrypt and replace the whole page
-        const hashedPassword = await cryptoEngine.hashPassword(password, salt);
+        const hashedPassword = await cryptoEngine.hashPassword(password, staticryptSaltUniqueVariableName);
 
         const isDecryptionSuccessful = await decryptAndReplaceHtml(hashedPassword);
 

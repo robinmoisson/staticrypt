@@ -553,10 +553,10 @@ const decode = codec.init(cryptoEngine).decode;
  * Initialize the staticrypt module, that exposes functions callbable by the password_template.
  *
  * @param {{
- *  encryptedMsg: string,
+ *  staticryptEncryptedMsgUniqueVariableName: string,
  *  isRememberEnabled: boolean,
  *  rememberDurationInDays: number,
- *  salt: string,
+ *  staticryptSaltUniqueVariableName: string,
  * }} staticryptConfig - object of data that is stored on the password_template at encryption time.
  *
  * @param {{
@@ -576,10 +576,14 @@ function init(staticryptConfig, templateConfig) {
      * @returns {Promise<boolean>}
      */
     async function decryptAndReplaceHtml(hashedPassword) {
-        const { encryptedMsg, salt } = staticryptConfig;
+        const { staticryptEncryptedMsgUniqueVariableName, staticryptSaltUniqueVariableName } = staticryptConfig;
         const { replaceHtmlCallback } = templateConfig;
 
-        const result = await decode(encryptedMsg, hashedPassword, salt);
+        const result = await decode(
+            staticryptEncryptedMsgUniqueVariableName,
+            hashedPassword,
+            staticryptSaltUniqueVariableName
+        );
         if (!result.success) {
             return false;
         }
@@ -606,11 +610,11 @@ function init(staticryptConfig, templateConfig) {
      *   expose more information in the future we can do it without breaking the password_template
      */
     async function handleDecryptionOfPage(password, isRememberChecked) {
-        const { isRememberEnabled, rememberDurationInDays, salt } = staticryptConfig;
+        const { isRememberEnabled, rememberDurationInDays, staticryptSaltUniqueVariableName } = staticryptConfig;
         const { rememberExpirationKey, rememberPassphraseKey } = templateConfig;
 
         // decrypt and replace the whole page
-        const hashedPassword = await cryptoEngine.hashPassword(password, salt);
+        const hashedPassword = await cryptoEngine.hashPassword(password, staticryptSaltUniqueVariableName);
 
         const isDecryptionSuccessful = await decryptAndReplaceHtml(hashedPassword);
 
@@ -764,7 +768,7 @@ exports.init = init;
 })());
             const templateError = "Bad password!",
                 isRememberEnabled = true,
-                staticryptConfig = {"encryptedMsg":"bf0f821fe4fdab54ffde29fd6d812fdf7dd423a0e4e36369c41864d369b71aa6a826caf47e563ba5e4bdfc2b55ea323c5d9fabc6ece3e99cdacc30afd560ec57b6bdda0beef1b2b220e934f214202134e8eb284a5a58f94418c970ca2172622b9286eb5931fff69e345d737c00832ecfbb77057a4e814dd633ab1ef294514d28ef7cb047bb541000b12b8f4c15851fa8ca1e6cd0cbee64c67b4467a46e2bc154896bb4deed9987e222f0c280c8d766ea16769515f9d337592e6807dfa07534ef","isRememberEnabled":true,"rememberDurationInDays":0,"salt":"b93bbaf35459951c47721d1f3eaeb5b9"};
+                staticryptConfig = {"staticryptEncryptedMsgUniqueVariableName":"85cf880a1573985224adbac66ceeba6c026484ad101ffabc6bc0d874a1e4eb75ddee7d265055e80d8e87369a694f873ff044933e1b5d33c46a636e2fdc4f2d108f0dd36252aba4c2e0f71a8e9ed2027839a6ea46a3e3a5f8e0d205046966c3bd1eac8b78e5ba3a5d9015eea2e0d83629d19c47e0b2311966aa7d3ac2fb8b592276484fea27cd90e5e85e65c11abd483a3d938b738efb02d290e94c9d249844f157667be667ed018f0d0e7702f141ef713c8cc2b472e25922d70cb75955a4182b","isRememberEnabled":true,"rememberDurationInDays":0,"staticryptSaltUniqueVariableName":"b93bbaf35459951c47721d1f3eaeb5b9"};
 
             // you can edit these values to customize some of the behavior of StatiCrypt
             const templateConfig = {
