@@ -20,19 +20,20 @@ Staticrypt is available through npm as a CLI, install with
 npm install staticrypt
 ```
 
-You can then run it with `npx staticrypt ...`. You can also install globally with `npm install -g staticrypt` and then just call `staticrypt ...`.
+You can then run it with `npx staticrypt ...`. You can also install globally with `npm install -g staticrypt` and then just call `staticrypt ...` from anywhere.
 
 ### Examples
 
-> These examples will create a `.staticrypt.json` file in the current directory, see the FAQ as to why. You can prevent it by setting the `--config` flag to "false".
+> These examples will create a `.staticrypt.json` file in the current directory, see [the FAQ](#why-does-staticrypt-create-a-config-file) as to why. You can prevent it by setting the `--config` flag to "false".
 
 **Encrypt a file:** encrypt `test.html` and create a `encrypted/test.html` file (use `-d my_directory` to change the output directory):
 
 ```bash
-staticrypt test.html -p <long-password>
-
-# or do not include the password if you want to be prompted for it:
+# this will prompt you for the password, which won't stay in your terminal command history
 staticrypt test.html
+
+# you can also pass the password as an argument
+staticrypt test.html -p <long-password>
 ```
 
 **Encrypt a file with the password in an environment variable:** set your long password in the `STATICRYPT_PASSWORD` environment variable ([`.env` files](https://www.npmjs.com/package/dotenv#usage) are supported):
@@ -42,19 +43,20 @@ staticrypt test.html
 staticrypt test.html
 ```
 
-**Encrypt multiple files at once** and put them in a `encrypted/` directory:
+**Encrypt multiple files at once** and put them in an `encrypted/` directory:
 
 ```bash
 # this will encrypt test_A.html and test_B.html
-staticrypt test_A.html test_B.html -p <long-password>
+staticrypt test_A.html test_B.html
 # => encrypted files are in encrypted/test_A.html and encrypted/test_B.html
 
 # you can also use the -r flag to recursively encrypt all files in a directory
-staticrypt dir_to_encrypt -p <long-password> -r
+staticrypt dir_to_encrypt -r
 # => encrypted files are in encrypted/dir_to_encrypt/...
 
-# if you don't want to include the directory name in the output path, you can use dir_to_encrypt/* instead
-staticrypt dir_to_encrypt/* -p <long-password> -r
+# if you don't want to include the directory name in the output path, you can use dir_to_encrypt/* instead. `-r` will 
+# include potential subdirectories as well
+staticrypt dir_to_encrypt/* -r
 # => encrypted files are in encrypted/...
 ```
 
@@ -62,14 +64,14 @@ staticrypt dir_to_encrypt/* -p <long-password> -r
 
 ```bash
 # you can also pass '--share' without specifying the URL to get the `#staticrypt_pwd=...` 
-staticrypt test.html -p <long-password> --share https://example.com/encrypted.html
+staticrypt test.html --share https://example.com/encrypted.html
 # => https://example.com/encrypted.html#staticrypt_pwd=5bfbf1343c7257cd7be23ecd74bb37fa2c76d041042654f358b6255baeab898f
 ```
 
-**Decrypt files you encrypted earlier** straight from the CLI by including the `--decrypt` flag. The `-r|--recursive` flag and output `-d|--directory` option work the same way as when encrypting (default name for the output directory is `decrypted`):
+**Decrypt files you encrypted earlier** with StatiCrypt straight from the CLI by including the `--decrypt` flag, so you can keep only the encrypted files. The `-r|--recursive` flag and output `-d|--directory` option work the same way as when encrypting (default name for the output directory is `decrypted`):
 
 ```bash
-staticrypt encrypted/test.html -p <long-password> --decrypt
+staticrypt encrypted/test.html --decrypt
 # => decrypted file is in decrypted/test.html
 ```
 
@@ -77,11 +79,11 @@ staticrypt encrypted/test.html -p <long-password> --decrypt
 
 ```bash
 # either commit the .staticrypt.json config file - you can generate a random salt and 
-# config file on your local machine:
+# config file on your local machine with:
 staticrypt --salt
 
-# or hardcode the salt in the CI script command:
-staticrypt test.html -p <long-password> --salt 12345678901234567890123456789012
+# or hardcode the salt in the encryption command in the CI script:
+staticrypt test.html --salt 12345678901234567890123456789012
 ```
 
 ### CLI Reference
@@ -171,6 +173,21 @@ On the technical aspects: we use AES in CBC mode (see a discussion on why this m
 Yes! Just copy `lib/password_template.html`, modify it to suit your style and point to your template file with the `-t path/to/my/file.html` flag. 
 
 Be careful to not break the encrypting javascript part, the variables replaced by StatiCrypt are in this format: `/*[|variable|]*/0`. Don't leave out the `0` at the end, this weird syntax is to avoid conflict with other templating engines while still being read as valid JS to parsers so we can use auto-formatting on the template files.
+
+### Can I support multiple users with different passwords?
+
+At the moment you can only use one passsword per page (though there is a reflection on supporting decryption with multiple different passwords in [#158](https://github.com/robinmoisson/staticrypt/issues/158)). If you want to support multiple users so you can invalidate passwords individualy, the current recommended way is the following:
+
+- Make a script that will encrypt your files with different passwords and different output folders
+
+  ```
+  staticrypt test.html -p <john-password> -d john
+  ...
+  ```
+  
+- send each user the link to their folder with their password: `https://example.com/john/test.html`
+
+In a way, the username input becomes the folder in the `https://example.com/<username>` URL, and the password input is the HTML form. You can then invalidate a single password by changing it in your script and running it again. 
 
 ### Why doesn't StatiCrypt work in HTTP?
 
