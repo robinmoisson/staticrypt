@@ -17,6 +17,10 @@
   "engines": {
     "node": ">=16.0.0"
   },
+  "funding": {
+    "type": "github",
+    "url": "https://github.com/robinmoisson/staticrypt?sponsor=1"
+  },
   "author": "Robin Moisson (https://github.com/robinmoisson)",
   "contributors": [
     "Aaron Coplan (https://github.com/AaronCoplan)",
