@@ -1356,10 +1356,10 @@ exports.init = init;
 
                 const data = {
                     staticrypt_config: {
-                        encryptedMsg,
+                        staticryptEncryptedMsgUniqueVariableName: encryptedMsg,
                         isRememberEnabled,
                         rememberDurationInDays,
-                        salt,
+                        staticryptSaltUniqueVariableName: salt,
                     },
                     is_remember_enabled: JSON.stringify(isRememberEnabled),
                     js_staticrypt: getScriptAsString("staticrypt"),
