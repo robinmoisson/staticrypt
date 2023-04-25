@@ -6,7 +6,11 @@ StatiCrypt uses AES-256 and WebCrypto to encrypt your HTML file with your long p
 
 This means you can **password protect the content of your _public_ static HTML file, without any back-end** - serving it over Netlify, GitHub pages, etc. (see the detail of [how it works](#how-staticrypt-works)).
 
-You can encrypt a file online in your browser (client side) at https://robinmoisson.github.io/staticrypt, or use the CLI to do it in your build process.
+You can encrypt a file online in your browser (client side) at [robinmoisson.github.io/staticrypt](https://robinmoisson.github.io/staticrypt), or use the CLI to do it in your build process.
+
+> **Supporting:** if it's useful to you, you can support StatiCrypt development (and see how the donations are used) by clicking on the sponsor button. Thank you!
+>
+> <a href="/sponsors/robinmoisson"><img src="https://user-images.githubusercontent.com/5664025/234358001-65dfb967-19ab-49da-a8f5-27deca92ceb1.png" alt="Sponsor" /></a>
 
 ## CLI
 
@@ -160,13 +164,13 @@ So it basically encrypts your page and puts everything in a user-friendly way to
 
 ### Is it secure?
 
-Simple answer: your file content has been encrypted with AES-256, a popular and strong encryption algorithm. You can now upload it to any public place and no one will be able to read it without the password. So if you used a long, strong password, then yes it should be pretty secure.
+Simple answer: your file content has been encrypted with AES-256, a popular and strong encryption algorithm. You can now upload it to any public place and no one will be able to read it without the password. So if you used a long, strong password, then yes it should be secure.
 
-That being said, actual security always depends on a number of factors and on the threat model you want to protect against. Because your full encrypted file is accessible client side, brute-force/dictionary attacks would be easy to do at a really fast pace: **use a long, unusual password**. We recommend 16+ alphanum characters, [Bitwarden](https://bitwarden.com/) is a great open-source password manager if you don't have one already. 
+Longer answer: actual security depends on a number of factors and on the threat model you want to protect against. Because your full encrypted file is accessible client side, brute-force/dictionary attacks would be easy to do at a fast pace: **use a long, unusual password**. We recommend 16+ alphanum characters, [Bitwarden](https://bitwarden.com/) is a great open-source password manager if you don't have one already.
 
-On the technical aspects: we use AES in CBC mode (see a discussion on why this mode is appropriate for StatiCrypt in [#19](https://github.com/robinmoisson/staticrypt/issues/19)) and 600k PBKDF2-SHA256 iterations (which is the [recommended number](https://cheatsheetseries.owasp.org/cheatsheets/Password_Storage_Cheat_Sheet.html#pbkdf2) by OWASP - read a detailed report on why this number and the security model of StatiCrypt in [#159](https://github.com/robinmoisson/staticrypt/issues/159)).
+On the technical aspects: we use AES in CBC mode (see a discussion on why this mode is appropriate for StatiCrypt in [#19](https://github.com/robinmoisson/staticrypt/issues/19)) and key stretching with 600k PBKDF2-SHA256 iterations to slow down brute-force attacks (which is the [recommended number](https://cheatsheetseries.owasp.org/cheatsheets/Password_Storage_Cheat_Sheet.html#pbkdf2) by OWASP - read a detailed report on why this number and the security model of StatiCrypt in [#159](https://github.com/robinmoisson/staticrypt/issues/159)).
 
-**Also, disclaimer:** I am not a cryptographer - I try my best to get the implementation right, listen to feedback and be transparent but please adjust accordingly depending on your threat model. If you are an at-risk activist or have sensitive crypto assets to protect, you might want to use something else.
+**Transparency disclaimer:** I am not a cryptographer. I try my best to get the implementation right, listen to feedback and be transparent in stewarding StatiCrypt. But please adjust accordingly depending on your threat model: if you are an at-risk activist or have very sensitive crypto assets to protect, you might want to use something else.
 
 ### Can I customize the password prompt?
 
