@@ -90,7 +90,7 @@ staticrypt test.html --salt 12345678901234567890123456789012
 staticrypt test.html -t my/own/password_template.html
 
 # or customize the default template
-staticrypt test.html --template-primary-color "#fd45a4" --template-title "My custom title" --template-instructions "To unlock this file, you should..." ...
+staticrypt test.html --template-color-primary "#fd45a4" --template-title "My custom title" --template-instructions "To unlock this file, you should..." ...
 ```
 
 **Decrypt files you encrypted earlier** with StatiCrypt straight from the CLI by including the `--decrypt` flag, so you can keep only the encrypted files. The `-r|--recursive` flag and output `-d|--directory` option work the same way as when encrypting (default name for the output directory is `decrypted`):
