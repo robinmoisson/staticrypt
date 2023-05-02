@@ -8,7 +8,7 @@ This means you can **password protect the content of your _public_ static HTML f
 
 You can encrypt a file online in your browser (client side) at [robinmoisson.github.io/staticrypt](https://robinmoisson.github.io/staticrypt), or use the CLI to do it in your build process.
 
-> 🌱 **Supporting:** If you want to support StatiCrypt development, or see how the donations are used, you can do so by clicking on the sponsor button. Thank you!
+> 🌱 **Supporting:** If you want to support StatiCrypt development you can do so by clicking on the sponsor button. See [how donations are used](https://github.com/sponsors/robinmoisson). Thank you!
 >
 > <a href="https://github.com/sponsors/robinmoisson"><img src="https://user-images.githubusercontent.com/5664025/234358001-65dfb967-19ab-49da-a8f5-27deca92ceb1.png" alt="Sponsor" /></a>
 
@@ -58,25 +58,18 @@ staticrypt test_A.html test_B.html
 staticrypt dir_to_encrypt -r
 # => encrypted files are in encrypted/dir_to_encrypt/...
 
-# if you don't want to include the directory name in the output path, you can use dir_to_encrypt/* instead. `-r` will 
-# include potential subdirectories as well
+# if you don't want to include the directory name in the output path, you can use dir_to_encrypt/* 
+# instead. `-r` will include potential subdirectories as well
 staticrypt dir_to_encrypt/* -r
 # => encrypted files are in encrypted/...
 ```
 
-**Encrypt a file and get a shareable link containing the hashed password** - you can include your file URL or leave blank:
+**Encrypt a file and get a shareable link containing the hashed password** - you can include your file URL or leave blank. (⚠️ you should keep your `.staticrypt.json` so the salt is the same each time you encrypt, or re-encrypting will [invalidate the link](#why-does-staticrypt-create-a-config-file)): 
 
 ```bash
 # you can also pass '--share' without specifying the URL to get the `#staticrypt_pwd=...` 
 staticrypt test.html --share https://example.com/encrypted.html
 # => https://example.com/encrypted.html#staticrypt_pwd=5bfbf1343c7257cd7be23ecd74bb37fa2c76d041042654f358b6255baeab898f
-```
-
-**Decrypt files you encrypted earlier** with StatiCrypt straight from the CLI by including the `--decrypt` flag, so you can keep only the encrypted files. The `-r|--recursive` flag and output `-d|--directory` option work the same way as when encrypting (default name for the output directory is `decrypted`):
-
-```bash
-staticrypt encrypted/test.html --decrypt
-# => decrypted file is in decrypted/test.html
 ```
 
 **Pin the salt to use staticrypt in your CI in a build step** - if you want want the "Remember-me" or share features to work accross multiple pages or multiple successive deployment, the salt needs to stay the same ([see why](https://github.com/robinmoisson/staticrypt#why-does-staticrypt-create-a-config-file)). If you run StatiCrypt in a CI step, you can pin the salt in two ways:
@@ -88,6 +81,23 @@ staticrypt --salt
 
 # or hardcode the salt in the encryption command in the CI script:
 staticrypt test.html --salt 12345678901234567890123456789012
+```
+
+**Customize the password prompt** to have the encrypted page match your style (see [the FAQ](#can-i-customize-the-password-prompt) for a full custom template):
+
+```bash
+# use your own custom template
+staticrypt test.html -t my/own/password_template.html
+
+# or customize the default template
+staticrypt test.html --template-primary-color "#fd45a4" --template-title "My custom title" --template-instructions "To unlock this file, you should..." ...
+```
+
+**Decrypt files you encrypted earlier** with StatiCrypt straight from the CLI by including the `--decrypt` flag, so you can keep only the encrypted files. The `-r|--recursive` flag and output `-d|--directory` option work the same way as when encrypting (default name for the output directory is `decrypted`):
+
+```bash
+staticrypt encrypted/test.html --decrypt
+# => decrypted file is in decrypted/test.html
 ```
 
 ### CLI Reference
