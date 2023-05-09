@@ -88,7 +88,6 @@ async function runStatiCrypt() {
         const url = namedArgs.share || "";
 
         console.log(url + "#staticrypt_pwd=" + hashedPassword);
-        return;
     }
 
     // only process a directory if the --recursive flag is set
