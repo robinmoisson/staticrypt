@@ -86,7 +86,7 @@ staticrypt test.html --share https://example.com/encrypted.html
 - or hardcode the salt in the encryption command in the CI script:
 
     ```bash
-staticrypt test.html --salt 12345678901234567890123456789012
+    staticrypt test.html --salt 12345678901234567890123456789012
     ```
 
 See an exemple of how to use StatiCrypt in a CI build step in this community project: [a-nau/password-protected-website-template](https://github.com/a-nau/password-protected-website-template)
