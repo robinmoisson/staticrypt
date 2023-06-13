@@ -64,6 +64,14 @@ staticrypt dir_to_encrypt/* -r
 # => encrypted files are in encrypted/...
 ```
 
+**Replace all the files in a folder with encrypted ones**:
+
+```bash
+# 'dir_to_encrypt/*' as argument will select all the files in the directory ('-r' recursively), and the 
+# '-d dir_to_encrypt' will put them in the same directory, overwriting the files
+staticrypt dir_to_encrypt/* -r -d dir_to_encrypt
+```
+
 **Encrypt a file and get a shareable link containing the hashed password** - you can include your file URL or leave blank. (⚠️ you should keep your `.staticrypt.json` so the salt is the same each time you encrypt, or re-encrypting will [invalidate the link](#why-does-staticrypt-create-a-config-file)): 
 
 ```bash
