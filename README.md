@@ -82,14 +82,14 @@ staticrypt test.html --share https://example.com/encrypted.html
 
 **Pin the salt to use staticrypt in your CI in a build step** - if you want want the "Remember-me" or share features to work accross multiple pages or multiple successive deployment, the salt needs to stay the same ([see why](https://github.com/robinmoisson/staticrypt#why-does-staticrypt-create-a-config-file)). If you run StatiCrypt in a CI step, you can pin the salt in two ways:
 
-```bash
-# either commit the .staticrypt.json config file - you can generate a random salt and 
-# config file on your local machine with:
-staticrypt --salt
+- either commit the `.staticrypt.json` config file - you can generate a random salt and config file on your local machine with `staticrypt --salt`
+- or hardcode the salt in the encryption command in the CI script:
 
-# or hardcode the salt in the encryption command in the CI script:
+    ```bash
 staticrypt test.html --salt 12345678901234567890123456789012
-```
+    ```
+
+See an exemple of how to use StatiCrypt in a CI build step in this community project: [a-nau/password-protected-website-template](https://github.com/a-nau/password-protected-website-template)
 
 **Customize the password prompt** to have the encrypted page match your style (see [the FAQ](#can-i-customize-the-password-prompt) for a full custom template):
 
@@ -131,11 +131,11 @@ The password argument is optional if `STATICRYPT_PASSWORD` is set in the environ
                                       use that instead.     [string] [default: null]
       -r, --recursive                 Whether to recursively encrypt the input
                                       directory.          [boolean] [default: false]
-          --remember                  Expiration in days of the "Remember me"
-                                      checkbox that will save the (salted + hashed)
-                                      password in localStorage when entered by the
-                                      user. Set to "false" to hide the box. Default:
-                                      "0", no expiration.      [number] [default: 0]
+          --remember                  Integer: expiration in days of the "Remember 
+                                      me" checkbox that will save the (salted + 
+                                      hashed) password in localStorage when entered 
+                                      by the user. Set to "false" to hide the box. 
+                                      Default: "0", no expiration.      [default: 0]
       -s, --salt                      Generate a config file or set the salt
                                       manually. Pass a 32-character-long hexadecimal
                                       string to use as salt, or leave empty to
@@ -297,10 +297,10 @@ Here are some other projects and community resources you might find interesting 
 
 If you have a StatiCrypt project you'd like to share, feel free to open an issue describing it.
 
+### Based on StatiCrypt, tutorials and projects
+
+**Template to host an encrypted single page website with Github Pages:** [a-nau/password-protected-website-template](https://github.com/a-nau/password-protected-website-template) is a demonstration of how to build a protected page on Github Pages, integrating with Github Actions.
+
 ### Alternatives to StatiCrypt
 
 [MaxLaumeister/PageCrypt](https://github.com/MaxLaumeister/PageCrypt) is a project with similar features in a different style (I think it was created before StatiCrypt).
-
-### Based on StatiCrypt
-
-**Template to host an encrypted single page website with Github Pages:** [a-nau/password-protected-website-template](https://github.com/a-nau/password-protected-website-template) is a demonstration of how to build a protected page on Github Pages, integrating with Github Actions. (**Warning:** this is compatible with 2.x only, left it here for inspiration purpose. You can follow the [issue on upgrading to 3.x](https://github.com/a-nau/password-protected-website-template/issues/2).)
