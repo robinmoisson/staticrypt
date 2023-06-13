@@ -359,9 +359,8 @@ function parseCommandLineArguments() {
                 default: false,
             })
             .option("remember", {
-                type: "number",
                 describe:
-                    'Expiration in days of the "Remember me" checkbox that will save the (salted + hashed) password ' +
+                    'Integer: expiration in days of the "Remember me" checkbox that will save the (salted + hashed) password ' +
                     'in localStorage when entered by the user. Set to "false" to hide the box. Default: "0", no expiration.',
                 default: 0,
             })

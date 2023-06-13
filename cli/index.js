@@ -193,10 +193,13 @@ async function encodeAndGenerateFile(
     // encrypt input
     const encryptedMsg = await encodeWithHashedPassword(contents, hashedPassword);
 
+    let rememberDurationInDays = parseInt(namedArgs.remember);
+    rememberDurationInDays = isNaN(rememberDurationInDays) ? 0 : rememberDurationInDays;
+
     const staticryptConfig = {
         staticryptEncryptedMsgUniqueVariableName: encryptedMsg,
         isRememberEnabled,
-        rememberDurationInDays: namedArgs.remember,
+        rememberDurationInDays,
         staticryptSaltUniqueVariableName: salt,
     };
     const templateData = {
