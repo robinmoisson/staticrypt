@@ -2,6 +2,8 @@
 
 # StatiCrypt
 
+**This version of StatiCrypt is compatible with HTTP, versions >= 3 only work over HTTPS**
+
 StatiCrypt uses AES-256 to encrypt your HTML file with your long password and return a static page including a password prompt and the javascript decryption logic that you can safely upload anywhere (see [what the page looks like](https://robinmoisson.github.io/staticrypt/example/example_encrypted.html)).
 
 This means you can **password protect the content of your _public_ static HTML file, without any back-end** - serving it over Netlify, GitHub pages, etc. (see the detail of [how it works](#how-staticrypt-works)).
@@ -12,13 +14,13 @@ You can encrypt a file online in your browser (client side) at https://robinmois
 
 ### Installation
 
-Staticrypt is available through npm as a CLI, install with
+Staticrypt v2 is available through npm as a CLI, install with
 
 ```bash
-npm install staticrypt
+npm install staticrypt@2
 ```
 
-You can then run it with `npx staticrypt ...`. You can also install globally with `npm install -g staticrypt` and then just call `staticrypt ...`.
+You can then run it with `npx staticrypt@2 ...`. You can also install globally with `npm install -g staticrypt@2` and then just call `staticrypt ...`.
 
 ### Examples
 
