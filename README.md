@@ -2,11 +2,11 @@
 
 # StatiCrypt
 
-StatiCrypt uses AES-256 and WebCrypto to encrypt your HTML file with your long password, and returns a static page including a password prompt and the javascript decryption logic that you can safely upload anywhere (see [a live example](https://robinmoisson.github.io/staticrypt/example/encrypted/example.html)).
+StatiCrypt uses AES-256 and WebCrypto to encrypt your HTML file with your long password, and returns a static HTML page showing a password prompt that you can now safely upload anywhere, the page containing your encrypted content and decryption happening in javascript client side (see [a live example](https://robinmoisson.github.io/staticrypt/example/encrypted/example.html)).
 
 This means you can **password protect the content of your _public_ static HTML file, without any back-end** - serving it over Netlify, GitHub pages, etc. (see the detail of [how it works](#how-staticrypt-works)).
 
-You can encrypt a file online in your browser (client side) at [robinmoisson.github.io/staticrypt](https://robinmoisson.github.io/staticrypt), or use the CLI to do it in your build process.
+You can encrypt a file online in your browser (client side) at [robinmoisson.github.io/staticrypt](https://robinmoisson.github.io/staticrypt), or use the CLI to do it in your terminal or build process.
 
 > 🌱 **Supporting:** If you want to support StatiCrypt development you can do so by clicking on the sponsor button. See [how donations are used](https://github.com/sponsors/robinmoisson). Thank you!
 >
@@ -72,7 +72,7 @@ staticrypt dir_to_encrypt/* -r
 staticrypt dir_to_encrypt/* -r -d dir_to_encrypt
 ```
 
-**Encrypt a file and get a shareable link containing the hashed password** - you can include your file URL or leave blank. (⚠️ you should keep your `.staticrypt.json` so the salt is the same each time you encrypt, or re-encrypting will [invalidate the link](#why-does-staticrypt-create-a-config-file)): 
+**Get a shareable link containing the hashed password, that will autodecrypt the file** - you can include your file URL or leave blank. (⚠️ you should keep your `.staticrypt.json` so the salt is the same each time you encrypt, or re-encrypting will [invalidate the link](#why-does-staticrypt-create-a-config-file)): 
 
 ```bash
 # you can also pass '--share' without specifying the URL to get the `#staticrypt_pwd=...` 
@@ -82,14 +82,19 @@ staticrypt test.html --share https://example.com/encrypted.html
 
 **Pin the salt to use staticrypt in your CI in a build step** - if you want want the "Remember-me" or share features to work accross multiple pages or multiple successive deployment, the salt needs to stay the same ([see why](https://github.com/robinmoisson/staticrypt#why-does-staticrypt-create-a-config-file)). If you run StatiCrypt in a CI step, you can pin the salt in two ways:
 
-- either commit the `.staticrypt.json` config file - you can generate a random salt and config file on your local machine with `staticrypt --salt`
+- either commit the `.staticrypt.json` config file - you can generate a random salt and config file on your local machine with:
+- 
+    ```bash
+    staticrypt --salt
+    ```
+  
 - or hardcode the salt in the encryption command in the CI script:
 
     ```bash
     staticrypt test.html --salt 12345678901234567890123456789012
     ```
 
-See an exemple of how to use StatiCrypt in a CI build step in this community project: [a-nau/password-protected-website-template](https://github.com/a-nau/password-protected-website-template)
+> See an exemple of how to use StatiCrypt in a CI build step in this community project: [a-nau/password-protected-website-template](https://github.com/a-nau/password-protected-website-template)
 
 **Customize the password prompt** to have the encrypted page match your style (see [the FAQ](#can-i-customize-the-password-prompt) for a full custom template):
 
@@ -101,7 +106,7 @@ staticrypt test.html -t my/own/password_template.html
 staticrypt test.html --template-color-primary "#fd45a4" --template-title "My custom title" --template-instructions "To unlock this file, you should..." ...
 ```
 
-**Decrypt files you encrypted earlier** with StatiCrypt straight from the CLI by including the `--decrypt` flag, so you can keep only the encrypted files. The `-r|--recursive` flag and output `-d|--directory` option work the same way as when encrypting (default name for the output directory is `decrypted`):
+**Decrypt files you encrypted earlier** with StatiCrypt straight from the CLI by including the `--decrypt` flag. (So if you want, you can keep only the encrypted files.) The `-r|--recursive` flag and output `-d|--directory` option work the same way as when encrypting (default name for the output directory is `decrypted`):
 
 ```bash
 staticrypt encrypted/test.html --decrypt
