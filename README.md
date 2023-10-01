@@ -94,7 +94,7 @@ staticrypt test.html --share https://example.com/encrypted.html
     staticrypt test.html --salt 12345678901234567890123456789012
     ```
 
-> See an exemple of how to use StatiCrypt in a CI build step in this community project: [a-nau/password-protected-website-template](https://github.com/a-nau/password-protected-website-template)
+> See an example of how to use StatiCrypt in a CI build step in this community project: [a-nau/password-protected-website-template](https://github.com/a-nau/password-protected-website-template)
 
 **Customize the password prompt** to have the encrypted page match your style (see [the FAQ](#can-i-customize-the-password-prompt) for a full custom template):
 
