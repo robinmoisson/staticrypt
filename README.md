@@ -47,7 +47,7 @@ staticrypt test.html -p <long-password>
 staticrypt test.html
 ```
 
-**Encrypt multiple files at once** and put them in an `encrypted/` directory:
+**Encrypt multiple HTML files at once** and put them in an `encrypted` directory (non-HTML files will be copied as-is):
 
 ```bash
 # this will encrypt test_A.html and test_B.html
