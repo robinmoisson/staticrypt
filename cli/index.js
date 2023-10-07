@@ -30,10 +30,11 @@ const {
     getValidatedSalt,
     isOptionSetByUser,
     parseCommandLineArguments,
-    recursivelyApplyCallbackToFiles,
+    recursivelyApplyCallbackToHtmlFiles,
     validatePassword,
     writeConfig,
     writeFile,
+    getFullOutputPath,
 } = require("./helpers.js");
 
 // parse arguments
@@ -106,9 +107,13 @@ async function runStatiCrypt() {
         const outputDirectory = isOutputDirectoryDefault ? "decrypted" : namedArgs.directory;
 
         positionalArguments.forEach((path) => {
-            recursivelyApplyCallbackToFiles((fullPath, fullRootDirectory) => {
-                decodeAndGenerateFile(fullPath, fullRootDirectory, hashedPassword, outputDirectory);
-            }, path);
+            recursivelyApplyCallbackToHtmlFiles(
+                (fullPath, fullRootDirectory) => {
+                    decodeAndGenerateFile(fullPath, fullRootDirectory, hashedPassword, outputDirectory);
+                },
+                path,
+                namedArgs.directory
+            );
         });
 
         return;
@@ -139,21 +144,25 @@ async function runStatiCrypt() {
 
     // encode all the files
     positionalArguments.forEach((path) => {
-        recursivelyApplyCallbackToFiles((fullPath, fullRootDirectory) => {
-            encodeAndGenerateFile(
-                fullPath,
-                fullRootDirectory,
-                hashedPassword,
-                salt,
-                baseTemplateData,
-                isRememberEnabled,
-                namedArgs
-            );
-        }, path);
+        recursivelyApplyCallbackToHtmlFiles(
+            (fullPath, fullRootDirectory) => {
+                encodeAndGenerateFile(
+                    fullPath,
+                    fullRootDirectory,
+                    hashedPassword,
+                    salt,
+                    baseTemplateData,
+                    isRememberEnabled,
+                    namedArgs
+                );
+            },
+            path,
+            namedArgs.directory
+        );
     });
 }
 
-async function decodeAndGenerateFile(path, rootDirectoryFromArguments, hashedPassword, outputDirectory) {
+async function decodeAndGenerateFile(path, fullRootDirectory, hashedPassword, outputDirectory) {
     // get the file content
     const encryptedFileContent = getFileContent(path);
 
@@ -172,8 +181,7 @@ async function decodeAndGenerateFile(path, rootDirectoryFromArguments, hashedPas
         return console.log(`ERROR: could not decrypt ${path}`);
     }
 
-    const relativePath = pathModule.relative(rootDirectoryFromArguments, path);
-    const outputFilepath = outputDirectory + "/" + relativePath;
+    const outputFilepath = getFullOutputPath(path, fullRootDirectory, outputDirectory);
 
     writeFile(outputFilepath, decoded);
 }

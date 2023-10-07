@@ -271,15 +271,40 @@ function genFile(data, outputFilePath, templateFilePath) {
 exports.genFile = genFile;
 
 /**
+ * @param {string} path
+ * @param {string} fullRootDirectory
+ * @param {string} outputDirectory
+ * @returns {string}
+ */
+function getFullOutputPath(path, fullRootDirectory, outputDirectory) {
+    const relativePath = pathModule.relative(fullRootDirectory, path);
+    return outputDirectory + "/" + relativePath;
+}
+exports.getFullOutputPath = getFullOutputPath;
+
+/**
+ * @param {string} inputFilePath
+ * @param {string} outputFilePath
+ */
+function copyFile(inputFilePath, outputFilePath) {
+    // create output directory if it does not exist
+    createDirectoryStructureForFile(outputFilePath);
+
+    try {
+        fs.copyFileSync(inputFilePath, outputFilePath, fs.constants.COPYFILE_FICLONE);
+    } catch (e) {
+        console.error(e);
+        exitWithError(`could not write file at path "${filePath}"`);
+    }
+}
+
+/**
  * @param {string} filePath
  * @param {string} contents
  */
 function writeFile(filePath, contents) {
     // create output directory if it does not exist
-    const dirname = pathModule.dirname(filePath);
-    if (!fs.existsSync(dirname)) {
-        fs.mkdirSync(dirname, { recursive: true });
-    }
+    createDirectoryStructureForFile(filePath);
 
     try {
         fs.writeFileSync(filePath, contents);
@@ -289,6 +314,16 @@ function writeFile(filePath, contents) {
     }
 }
 exports.writeFile = writeFile;
+
+/**
+ * @param {string} filePath
+ */
+function createDirectoryStructureForFile(filePath) {
+    const dirname = pathModule.dirname(filePath);
+    if (!fs.existsSync(dirname)) {
+        fs.mkdirSync(dirname, { recursive: true });
+    }
+}
 
 /**
  * @param {string} templatePathParameter
@@ -302,10 +337,11 @@ exports.isCustomPasswordTemplateDefault = isCustomPasswordTemplateDefault;
 
 /**
  * @param {string} path
+ * @param {string} outputDirectory
  * @param {string} rootDirectory
  * @param {(fullPath: string, rootDirectoryFromArgument: string) => void} callback
  */
-function recursivelyApplyCallbackToFiles(callback, path, rootDirectory = "") {
+function recursivelyApplyCallbackToHtmlFiles(callback, path, outputDirectory, rootDirectory = "") {
     const fullPath = pathModule.resolve(path);
     const fullRootDirectory = rootDirectory || pathModule.dirname(fullPath);
 
@@ -313,14 +349,22 @@ function recursivelyApplyCallbackToFiles(callback, path, rootDirectory = "") {
         fs.readdirSync(fullPath).forEach((filePath) => {
             const fullFilePath = `${fullPath}/${filePath}`;
 
-            recursivelyApplyCallbackToFiles(callback, fullFilePath, fullRootDirectory);
+            recursivelyApplyCallbackToHtmlFiles(callback, fullFilePath, outputDirectory, fullRootDirectory);
         });
         return;
     }
 
-    callback(fullPath, fullRootDirectory);
+    // apply the callback if it's an HTML file
+    if (fullPath.endsWith(".html")) {
+        callback(fullPath, fullRootDirectory);
+    }
+    // else just copy the file as is
+    else {
+        const fullOutputPath = getFullOutputPath(fullPath, fullRootDirectory, outputDirectory);
+        copyFile(fullPath, fullOutputPath);
+    }
 }
-exports.recursivelyApplyCallbackToFiles = recursivelyApplyCallbackToFiles;
+exports.recursivelyApplyCallbackToHtmlFiles = recursivelyApplyCallbackToHtmlFiles;
 
 function parseCommandLineArguments() {
     return (
