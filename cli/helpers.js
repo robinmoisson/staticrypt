@@ -472,6 +472,11 @@ function parseCommandLineArguments() {
                 describe: 'Label to use for the "Remember me" checkbox.',
                 default: "Remember me",
             })
+            .option("template-remember-checked", {
+                type: "boolean",
+                describe: 'Label to use for the "Remember me" checkbox.',
+                default: false,
+            })
             .option("template-title", {
                 type: "string",
                 describe: "Title for the output HTML page.",

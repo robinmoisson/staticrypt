@@ -137,6 +137,7 @@ async function runStatiCrypt() {
         template_instructions: namedArgs.templateInstructions,
         template_placeholder: namedArgs.templatePlaceholder,
         template_remember: namedArgs.templateRemember,
+        template_remember_checked: namedArgs.templateRememberChecked ? "checked" : "",
         template_title: namedArgs.templateTitle,
         template_color_primary: namedArgs.templateColorPrimary,
         template_color_secondary: namedArgs.templateColorSecondary,

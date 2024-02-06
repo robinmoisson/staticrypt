@@ -11,5 +11,6 @@ node ../cli/index.js example.html \
     --short \
     --salt b93bbaf35459951c47721d1f3eaeb5b9 \
     --config false \
-    --template-instructions "Enter \"test\" to unlock the page"
+    --template-instructions "Enter \"test\" to unlock the page" \
+    --template-remember-checked
 
