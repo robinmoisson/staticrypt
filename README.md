@@ -172,7 +172,7 @@ The password argument is optional if `STATICRYPT_PASSWORD` is set in the environ
           --template-remember         Label to use for the "Remember me" checkbox.
                                                    [string] [default: "Remember me"]
           --template-remember-checked Makes the "Remember me" checkbox checked by default. 
-                                                   [string] [default: "Remember me"]
+                                                   [boolean]: false
           --template-title            Title for the output HTML page.
                                                 [string] [default: "Protected Page"]
 
