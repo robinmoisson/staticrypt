@@ -30,7 +30,9 @@ You can then run it with `npx staticrypt ...`. You can also install globally wit
 
 > These examples will create a `.staticrypt.json` file in the current directory, see [the FAQ](#why-does-staticrypt-create-a-config-file) as to why. You can prevent it by setting the `--config` flag to "false".
 
-**Encrypt a file:** encrypt `test.html` and create a `encrypted/test.html` file (use `-d my_directory` to change the output directory):
+#### Encrypt a file
+
+Encrypt `test.html` and create a `encrypted/test.html` file (use `-d my_directory` to change the output directory):
 
 ```bash
 # this will prompt you for the password, which won't stay in your terminal command history
@@ -40,14 +42,18 @@ staticrypt test.html
 staticrypt test.html -p <long-password>
 ```
 
-**Encrypt a file with the password in an environment variable:** set your long password in the `STATICRYPT_PASSWORD` environment variable ([`.env` files](https://www.npmjs.com/package/dotenv#usage) are supported):
+#### Encrypt a file with the password in an environment variable
+
+Set your long password in the `STATICRYPT_PASSWORD` environment variable ([`.env` files](https://www.npmjs.com/package/dotenv#usage) are supported):
 
 ```bash
 # the password is in the STATICRYPT_PASSWORD env variable, you won't be prompted
 staticrypt test.html
 ```
 
-**Encrypt multiple HTML files at once** and put them in an `encrypted` directory (non-HTML files will be copied as-is):
+#### Encrypt multiple HTML files at once
+
+And put them in an `encrypted` directory (non-HTML files will be copied as-is):
 
 ```bash
 # this will encrypt test_A.html and test_B.html
@@ -64,7 +70,7 @@ staticrypt dir_to_encrypt/* -r
 # => encrypted files are in encrypted/...
 ```
 
-**Replace all the files in a folder with encrypted ones**:
+#### Replace all the files in a folder with encrypted ones
 
 ```bash
 # 'dir_to_encrypt/*' as argument will select all the files in the directory ('-r' recursively), and the 
@@ -72,7 +78,9 @@ staticrypt dir_to_encrypt/* -r
 staticrypt dir_to_encrypt/* -r -d dir_to_encrypt
 ```
 
-**Get a shareable link containing the hashed password, that will autodecrypt the file** - you can include your file URL or leave blank. (⚠️ you should keep your `.staticrypt.json` so the salt is the same each time you encrypt, or re-encrypting will [invalidate the link](#why-does-staticrypt-create-a-config-file)): 
+#### Get a shareable auto-decrypt link
+
+The link contains the hashed password, that will auto-decrypt the file - you can include your file URL or leave blank. (⚠️ you should keep your `.staticrypt.json` so the salt is the same each time you encrypt, or re-encrypting will [invalidate the link](#why-does-staticrypt-create-a-config-file)): 
 
 ```bash
 # you can also pass '--share' without specifying the URL to get the `#staticrypt_pwd=...` 
@@ -85,7 +93,9 @@ staticrypt test.html --share --share-remember
 # => #staticrypt_pwd=5bfbf1343c7257cd7be23ecd74bb37fa2c76d041042654f358b6255baeab898f&remember_me
 ```
 
-**Pin the salt to use staticrypt in your CI in a build step** - if you want want the "Remember-me" or share features to work accross multiple pages or multiple successive deployment, the salt needs to stay the same ([see why](https://github.com/robinmoisson/staticrypt#why-does-staticrypt-create-a-config-file)). If you run StatiCrypt in a CI step, you can pin the salt in two ways:
+#### Pin the salt to use staticrypt in your CI or build step
+
+If you want want the "Remember-me" or share features to work accross multiple pages or multiple successive deployment, the salt needs to stay the same ([see why](https://github.com/robinmoisson/staticrypt#why-does-staticrypt-create-a-config-file)). If you run StatiCrypt in a CI step, you can pin the salt in two ways:
 
 - either commit the `.staticrypt.json` config file - you can generate a random salt and config file on your local machine with:
 
@@ -101,7 +111,9 @@ staticrypt test.html --share --share-remember
 
 > See an example of how to use StatiCrypt in a CI build step in this community project: [a-nau/password-protected-website-template](https://github.com/a-nau/password-protected-website-template)
 
-**Customize the password prompt** to have the encrypted page match your style (see [the FAQ](#can-i-customize-the-password-prompt) for a full custom template):
+#### Customize the password prompt
+
+Customize the HTML to have the encrypted page match your style (see [the FAQ](#can-i-customize-the-password-prompt) for a full custom template):
 
 ```bash
 # use your own custom template
@@ -111,7 +123,9 @@ staticrypt test.html -t my/own/password_template.html
 staticrypt test.html --template-color-primary "#fd45a4" --template-title "My custom title" --template-instructions "To unlock this file, you should..." ...
 ```
 
-**Decrypt files you encrypted earlier** with StatiCrypt straight from the CLI by including the `--decrypt` flag. (So if you want, you can keep only the encrypted files.) The `-r|--recursive` flag and output `-d|--directory` option work the same way as when encrypting (default name for the output directory is `decrypted`):
+#### Decrypt files from the CLI
+
+Decrypt files you encrypted earlier with StatiCrypt straight from the CLI by including the `--decrypt` flag. (So if you want, you can keep only the encrypted files.) The `-r|--recursive` flag and output `-d|--directory` option work the same way as when encrypting (default name for the output directory is `decrypted`):
 
 ```bash
 staticrypt encrypted/test.html --decrypt
