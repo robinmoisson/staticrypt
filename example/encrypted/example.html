@@ -610,11 +610,17 @@ function init(staticryptConfig, templateConfig) {
      *   expose more information in the future we can do it without breaking the password_template
      */
     async function handleDecryptionOfPage(password, isRememberChecked) {
-        const { isRememberEnabled, rememberDurationInDays, staticryptSaltUniqueVariableName } = staticryptConfig;
-        const { rememberExpirationKey, rememberPassphraseKey } = templateConfig;
+        const { staticryptSaltUniqueVariableName } = staticryptConfig;
 
         // decrypt and replace the whole page
         const hashedPassword = await cryptoEngine.hashPassword(password, staticryptSaltUniqueVariableName);
+        return handleDecryptionOfPageFromHash(hashedPassword, isRememberChecked);
+    }
+    exports.handleDecryptionOfPage = handleDecryptionOfPage;
+
+    async function handleDecryptionOfPageFromHash(hashedPassword, isRememberChecked) {
+        const { isRememberEnabled, rememberDurationInDays } = staticryptConfig;
+        const { rememberExpirationKey, rememberPassphraseKey } = templateConfig;
 
         const isDecryptionSuccessful = await decryptAndReplaceHtml(hashedPassword);
 
@@ -643,7 +649,7 @@ function init(staticryptConfig, templateConfig) {
             hashedPassword,
         };
     }
-    exports.handleDecryptionOfPage = handleDecryptionOfPage;
+    exports.handleDecryptionOfPageFromHash = handleDecryptionOfPageFromHash;
 
     /**
      * Clear localstorage from staticrypt related values
@@ -740,21 +746,27 @@ function init(staticryptConfig, templateConfig) {
         return false;
     }
 
-    function decryptOnLoadFromUrl() {
+    async function decryptOnLoadFromUrl() {
         const passwordKey = "staticrypt_pwd";
+        const rememberMeKey = "remember_me";
 
-        // get the password from the query param
+        // try to get the password from the query param (for backward compatibility - we now want to avoid this method,
+        // since it sends the hashed password to the server which isn't needed)
         const queryParams = new URLSearchParams(window.location.search);
         const hashedPasswordQuery = queryParams.get(passwordKey);
+        const rememberMeQuery = queryParams.get(rememberMeKey);
 
+        const urlFragment = window.location.hash.substring(1);
         // get the password from the url fragment
-        const hashRegexMatch = window.location.hash.substring(1).match(new RegExp(passwordKey + "=(.*)"));
-        const hashedPasswordFragment = hashRegexMatch ? hashRegexMatch[1] : null;
+        const hashedPasswordRegexMatch = urlFragment.match(new RegExp(passwordKey + "=([^&]*)"));
+        const hashedPasswordFragment = hashedPasswordRegexMatch ? hashedPasswordRegexMatch[1] : null;
+        const rememberMeFragment = urlFragment.includes(rememberMeKey);
 
         const hashedPassword = hashedPasswordFragment || hashedPasswordQuery;
+        const rememberMe = rememberMeFragment || rememberMeQuery;
 
         if (hashedPassword) {
-            return decryptAndReplaceHtml(hashedPassword);
+            return handleDecryptionOfPageFromHash(hashedPassword, rememberMe);
         }
 
         return false;
@@ -768,7 +780,7 @@ exports.init = init;
 })());
             const templateError = "Bad password!",
                 isRememberEnabled = true,
-                staticryptConfig = {"staticryptEncryptedMsgUniqueVariableName":"da67de28fb1fec9f04aaf615aa0e80a9675a43473e21b51a1dee72cb6153728dde06e9c242c6de08ab4608d18e73c9f922466a4695fe60e8f684f7d5d7b54149d7749bc2e626e39844d6757289f17696ea7992d1c87b49f76903c57d6506bb5aee0f0cdf4183bb20f71ad0f719c5a3ee338a486c70a1d433c00fd4384c2ec65471c436dc4cf0c4ba13a2189db1ee335f113652439c1feb2c02bf237ddada4ae46bd404f3f8417cc6b27d2e7960024afe2323edb19e8f38c699b9f4ce0db36d37","isRememberEnabled":true,"rememberDurationInDays":0,"staticryptSaltUniqueVariableName":"b93bbaf35459951c47721d1f3eaeb5b9"};
+                staticryptConfig = {"staticryptEncryptedMsgUniqueVariableName":"0aebc39457f31c757cef31f0fa9b2fb0cb4ebe9845a3690ab119002ae21ce5b7b200ded81ad6da56d0f6b98df029102c0913440135cd3f75b84f481ee32aab034c0bb3055168d6c49afd4b59e7189b539b573e6effbd29e403ef3234ab8bd1c2de1cd97a4f94e88c4d632f8648e9d99c7d988723634ce805d021d1d017c3e125e98e58914db31c4cca5a0f6b1f4464d284a48548a1eb5edad8f910aea4d2beee6b811785b556c7ec67c48112f551aa860614faf34887267c6119feda894b3ed8","isRememberEnabled":true,"rememberDurationInDays":0,"staticryptSaltUniqueVariableName":"b93bbaf35459951c47721d1f3eaeb5b9"};
 
             // you can edit these values to customize some of the behavior of StatiCrypt
             const templateConfig = {

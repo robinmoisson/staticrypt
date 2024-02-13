@@ -78,6 +78,11 @@ staticrypt dir_to_encrypt/* -r -d dir_to_encrypt
 # you can also pass '--share' without specifying the URL to get the `#staticrypt_pwd=...` 
 staticrypt test.html --share https://example.com/encrypted.html
 # => https://example.com/encrypted.html#staticrypt_pwd=5bfbf1343c7257cd7be23ecd74bb37fa2c76d041042654f358b6255baeab898f
+
+# add --share-remember to auto-enable "Remember-me" - useful if you want send one link to autodecrypt multiple pages
+# (you can also just append '&remember_me')
+staticrypt test.html --share --share-remember
+# => #staticrypt_pwd=5bfbf1343c7257cd7be23ecd74bb37fa2c76d041042654f358b6255baeab898f&remember_me
 ```
 
 **Pin the salt to use staticrypt in your CI in a build step** - if you want want the "Remember-me" or share features to work accross multiple pages or multiple successive deployment, the salt needs to stay the same ([see why](https://github.com/robinmoisson/staticrypt#why-does-staticrypt-create-a-config-file)). If you run StatiCrypt in a CI step, you can pin the salt in two ways:
@@ -152,6 +157,8 @@ The password argument is optional if `STATICRYPT_PASSWORD` is set in the environ
                                       as a value to append
                                       "#staticrypt_pwd=<hashed_pwd>", or leave empty
                                       to display the hash to append.        [string]
+          --share-remember            Whether the share link should auto-enable
+                                      'Remember-me'.      [boolean] [default: false]
           --short                     Hide the "short password" warning.
                                                           [boolean] [default: false]
       -t, --template                  Path to custom HTML template with password

@@ -426,6 +426,11 @@ function parseCommandLineArguments() {
                     '"#staticrypt_pwd=<hashed_pwd>", or leave empty to display the hash to append.',
                 type: "string",
             })
+            .option("share-remember", {
+                type: "boolean",
+                describe: "Whether the share link should auto-enable 'Remember-me'.",
+                default: false,
+            })
             .option("short", {
                 describe: 'Hide the "short password" warning.',
                 type: "boolean",

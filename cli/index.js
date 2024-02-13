@@ -86,9 +86,14 @@ async function runStatiCrypt() {
     if (hasShareFlag) {
         await validatePassword(password, namedArgs.short);
 
-        const url = namedArgs.share || "";
+        let url = namedArgs.share || "";
+        url += "#staticrypt_pwd=" + hashedPassword;
 
-        console.log(url + "#staticrypt_pwd=" + hashedPassword);
+        if (namedArgs.shareRemember) {
+            url += `&remember_me`;
+        }
+
+        console.log(url);
         return;
     }
 
