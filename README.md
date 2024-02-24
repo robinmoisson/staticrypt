@@ -8,7 +8,7 @@ This means you can **password protect the content of your _public_ static HTML f
 
 You can encrypt a file online in your browser (client side) at [robinmoisson.github.io/staticrypt](https://robinmoisson.github.io/staticrypt), or use the CLI to do it in your terminal or build process.
 
-> 🌱 **Supporting:** If you want to support StatiCrypt development you can do so by clicking on the sponsor button. See [how donations are used](https://github.com/sponsors/robinmoisson). Thank you!
+> 🌱 **Supporting:** I quit my software developper job after 10 years to [teach mindfulness meditation](https://robinmoisson.com) in French. If you want to support StatiCrypt development you can do so by clicking on the sponsor button (or, well, come learn meditation!). See [how donations are used](https://github.com/sponsors/robinmoisson). Thank you for your support!
 >
 > <a href="https://github.com/sponsors/robinmoisson"><img src="https://user-images.githubusercontent.com/5664025/234358001-65dfb967-19ab-49da-a8f5-27deca92ceb1.png" alt="Sponsor" /></a>
 
