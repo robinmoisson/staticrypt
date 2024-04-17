@@ -1,12 +1,12 @@
-<p align="center"><img src="preview.png" alt="password prompt preview" width="480"/></p>
+<p align="center"><a href="https://robinmoisson.github.io/staticrypt/example/encrypted/example.html"><img src="preview.png" alt="password prompt preview" width="480"/></a><a href="https://robinmoisson.github.io/staticrypt/example/encrypted/example.html"><br/>live example</a></p>
 
 # StatiCrypt
 
-StatiCrypt uses AES-256 and WebCrypto to encrypt your HTML file with your long password, and returns a static HTML page showing a password prompt that you can now safely upload anywhere, the page containing your encrypted content and decryption happening in javascript client side (see [a live example](https://robinmoisson.github.io/staticrypt/example/encrypted/example.html)).
+Safely encrypt and password protect the content of your _public_ static HTML file, to be decrypted in-browser without any back-end - to serve it over static hosting like Netlify, GitHub pages, etc. (see [a live example](https://robinmoisson.github.io/staticrypt/example/encrypted/example.html)).
 
-This means you can **password protect the content of your _public_ static HTML file, without any back-end** - serving it over Netlify, GitHub pages, etc. (see the detail of [how it works](#how-staticrypt-works)).
+StatiCrypt uses AES-256 and WebCrypto to encrypt your HTML file with your long password, and returns a static HTML page showing a password prompt that you can now safely upload anywhere, the page containing your encrypted content and decryption happening in javascript client side (see the details of [how it works](#how-staticrypt-works)).
 
-You can encrypt a file online in your browser (client side) at [robinmoisson.github.io/staticrypt](https://robinmoisson.github.io/staticrypt), or use the CLI to do it in your terminal or build process.
+👉️ You can encrypt a file online in your browser (client side) at [robinmoisson.github.io/staticrypt](https://robinmoisson.github.io/staticrypt), or use the CLI to do it in your terminal or build process.
 
 > 🌱 **Supporting:** I quit my software developer job after 10 years to [teach mindfulness meditation](https://robinmoisson.com) in French. If you want to support StatiCrypt development you can do so by clicking on the sponsor button (or, well, come learn meditation!). See [how donations are used](https://github.com/sponsors/robinmoisson). Thank you for your support!
 >
@@ -28,7 +28,7 @@ You can then run it with `npx staticrypt ...`. You can also install globally wit
 
 ### Examples
 
-> These examples will create a `.staticrypt.json` file in the current directory, see [the FAQ](#why-does-staticrypt-create-a-config-file) as to why. You can prevent it by setting the `--config` flag to "false".
+> These examples will create a `.staticrypt.json` file in the current directory ([here's why](#why-does-staticrypt-create-a-config-file)). You can prevent this by setting the `--config` flag to `false` (a string).
 
 #### Encrypt a file
 
@@ -53,7 +53,7 @@ staticrypt test.html
 
 #### Encrypt multiple HTML files at once
 
-And put them in an `encrypted` directory (non-HTML files will be copied as-is):
+This will put the HTML files in an `encrypted` directory, created where you run the `staticrypt` command. Non-HTML files will be copied as-is from the input directory, so you can easily overwrite it with the encrypted directory if you want.
 
 ```bash
 # this will encrypt test_A.html and test_B.html
@@ -64,8 +64,8 @@ staticrypt test_A.html test_B.html
 staticrypt dir_to_encrypt -r
 # => encrypted files are in encrypted/dir_to_encrypt/...
 
-# if you don't want to include the directory name in the output path, you can use dir_to_encrypt/* 
-# instead. `-r` will include potential subdirectories as well
+# if you don't want to include the directory name in the output path, you can use 
+# `dir_to_encrypt/*` instead. `-r` will include potential subdirectories as well
 staticrypt dir_to_encrypt/* -r
 # => encrypted files are in encrypted/...
 ```
@@ -73,8 +73,8 @@ staticrypt dir_to_encrypt/* -r
 #### Replace all the files in a folder with encrypted ones
 
 ```bash
-# 'dir_to_encrypt/*' as argument will select all the files in the directory ('-r' recursively), and the 
-# '-d dir_to_encrypt' will put them in the same directory, overwriting the files
+# 'dir_to_encrypt/*' as argument will select all the files in the directory ('-r' recursively), 
+# and the '-d dir_to_encrypt' will put them in the same directory, overwriting the files
 staticrypt dir_to_encrypt/* -r -d dir_to_encrypt
 ```
 
@@ -87,8 +87,8 @@ The link contains the hashed password, that will auto-decrypt the file - you can
 staticrypt test.html --share https://example.com/encrypted.html
 # => https://example.com/encrypted.html#staticrypt_pwd=5bfbf1343c7257cd7be23ecd74bb37fa2c76d041042654f358b6255baeab898f
 
-# add --share-remember to auto-enable "Remember-me" - useful if you want send one link to autodecrypt multiple pages
-# (you can also just append '&remember_me')
+# add --share-remember to auto-enable "Remember-me" - useful if you want send one link to 
+# autodecrypt multiple pages (you can also just append '&remember_me')
 staticrypt test.html --share --share-remember
 # => #staticrypt_pwd=5bfbf1343c7257cd7be23ecd74bb37fa2c76d041042654f358b6255baeab898f&remember_me
 ```
@@ -120,7 +120,11 @@ Customize the HTML to have the encrypted page match your style (see [the FAQ](#c
 staticrypt test.html -t my/own/password_template.html
 
 # or customize the default template
-staticrypt test.html --template-color-primary "#fd45a4" --template-title "My custom title" --template-instructions "To unlock this file, you should..." ...
+staticrypt test.html \
+    --template-color-primary "#fd45a4" \
+    --template-title "My custom title" \
+    --template-instructions "To unlock this file, you should..." \
+    # ...
 ```
 
 #### Decrypt files from the CLI
