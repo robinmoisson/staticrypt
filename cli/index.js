@@ -138,13 +138,15 @@ async function runStatiCrypt() {
         is_remember_enabled: JSON.stringify(isRememberEnabled),
         js_staticrypt: buildStaticryptJS(),
         template_button: namedArgs.templateButton,
+        template_color_primary: namedArgs.templateColorPrimary,
+        template_color_secondary: namedArgs.templateColorSecondary,
         template_error: namedArgs.templateError,
         template_instructions: namedArgs.templateInstructions,
         template_placeholder: namedArgs.templatePlaceholder,
         template_remember: namedArgs.templateRemember,
         template_title: namedArgs.templateTitle,
-        template_color_primary: namedArgs.templateColorPrimary,
-        template_color_secondary: namedArgs.templateColorSecondary,
+        template_toggle_show: namedArgs.templateToggleShow,
+        template_toggle_hide: namedArgs.templateToggleHide,
     };
 
     // encode all the files

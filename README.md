@@ -194,6 +194,12 @@ The password argument is optional if `STATICRYPT_PASSWORD` is set in the environ
                                                    [string] [default: "Remember me"]
           --template-title            Title for the output HTML page.
                                                 [string] [default: "Protected Page"]
+          --template-toggle-hide      Alt text for toggling password visibility -
+                                      "hide" action.
+                                                 [string] [default: "Hide password"]
+          --template-toggle-show      Alt text for toggling password visibility -
+                                      "show" action.
+                                                 [string] [default: "Show password"]
 
 
 ## HOW STATICRYPT WORKS

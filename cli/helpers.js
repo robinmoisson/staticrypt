@@ -482,6 +482,16 @@ function parseCommandLineArguments() {
                 describe: "Title for the output HTML page.",
                 default: "Protected Page",
             })
+            .option("template-toggle-hide", {
+                type: "string",
+                describe: 'Alt text for toggling password visibility - "hide" action.',
+                default: "Hide password",
+            })
+            .option("template-toggle-show", {
+                type: "string",
+                describe: 'Alt text for toggling password visibility - "show" action.',
+                default: "Show password",
+            })
     );
 }
 exports.parseCommandLineArguments = parseCommandLineArguments;
