@@ -1,7 +1,7 @@
 {
   "name": "staticrypt",
-  "version": "3.4.1",
-  "description": "Baed on the [crypto-js](https://github.com/brix/crypto-js) library, StatiCrypt uses AES-256 to encrypt your input with your long password and put it in a HTML file with a password prompt that can decrypted in-browser (client side).",
+  "version": "3.5.0",
+  "description": "Password protect a static HTML file without a backend - StatiCrypt uses AES-256 wiht WebCrypto to encrypt your input with your long password and put it in a HTML file with a password prompt that can decrypted in-browser (client side).",
   "main": "index.js",
   "files": [
     "/cli",
