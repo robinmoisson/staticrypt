@@ -28,7 +28,7 @@ You can then run it with `npx staticrypt ...`. You can also install globally wit
 
 ### Examples
 
-> These examples will create a `.staticrypt.json` file in the current directory ([here's why](#why-does-staticrypt-create-a-config-file)). You can prevent this by setting the `--config` flag to `false` (a string).
+> These examples will create a `.staticrypt.json` file in the current directory ([here's why](#why-does-staticrypt-create-a-config-file)). This file isn't secret and you don't need to protect it. You can prevent this by setting the `--config` flag to `false` (a string).
 
 #### Encrypt a file
 
