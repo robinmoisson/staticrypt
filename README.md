@@ -78,6 +78,13 @@ staticrypt dir_to_encrypt/* -r
 staticrypt dir_to_encrypt/* -r -d dir_to_encrypt
 ```
 
+#### Overwrite files in-place
+
+```bash
+# Use the --overwrite flag to overwrite the original files in-place
+staticrypt dir_to_encrypt/* -r --overwrite
+```
+
 #### Get a shareable auto-decrypt link
 
 The link contains the hashed password, that will auto-decrypt the file - you can include your file URL or leave blank. (⚠️ you should keep your `.staticrypt.json` so the salt is the same each time you encrypt, or re-encrypting will [invalidate the link](#why-does-staticrypt-create-a-config-file)): 
@@ -153,6 +160,8 @@ The password argument is optional if `STATICRYPT_PASSWORD` is set in the environ
                                                      [string] [default: "encrypted"]
           --decrypt                   Include this flag to decrypt files instead of
                                       encrypt.            [boolean] [default: false]
+          --overwrite                 Overwrite the original files in-place.
+                                                          [boolean] [default: false]
       -p, --password                  The password to encrypt your file with. Leave
                                       empty to be prompted for it. If
                                       STATICRYPT_PASSWORD is set in the env, we'll
