@@ -1,0 +1,4 @@
+node_modules
+example/encrypted
+package-lock.json
+index.html

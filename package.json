@@ -1,54 +1,63 @@
 {
-  "name": "staticrypt",
-  "version": "3.5.0",
-  "description": "Password protect a static HTML file without a backend - StatiCrypt uses AES-256 wiht WebCrypto to encrypt your input with your long password and put it in a HTML file with a password prompt that can decrypted in-browser (client side).",
-  "main": "index.js",
-  "files": [
-    "/cli",
-    "/lib"
-  ],
-  "bin": {
-    "staticrypt": "./cli/index.js"
-  },
-  "dependencies": {
-    "dotenv": "^16.0.3",
-    "yargs": ">=10.0.3"
-  },
-  "engines": {
-    "node": ">=16.0.0"
-  },
-  "funding": {
-    "type": "github",
-    "url": "https://github.com/robinmoisson/staticrypt?sponsor=1"
-  },
-  "author": "Robin Moisson (https://github.com/robinmoisson)",
-  "contributors": [
-    "Aaron Coplan (https://github.com/AaronCoplan)",
-    "Adam Hull (https://github.com/hurrymaplelad)"
-  ],
-  "license": "MIT",
-  "scripts": {
-    "build": "bash ./scripts/build.sh"
-  },
-  "repository": {
-    "type": "git",
-    "url": "git+https://github.com/robinmoisson/staticrypt.git"
-  },
-  "keywords": [
-    "static",
-    "html",
-    "password",
-    "protected",
-    "encrypted",
-    "encryption",
-    "crypto",
-    "webcrypto"
-  ],
-  "bugs": {
-    "url": "https://github.com/robinmoisson/staticrypt/issues"
-  },
-  "homepage": "https://github.com/robinmoisson/staticrypt",
-  "devDependencies": {
-    "prettier": "^2.8.7"
-  }
+    "name": "staticrypt",
+    "version": "3.5.0",
+    "description": "Password protect a static HTML file without a backend - StatiCrypt uses AES-256 wiht WebCrypto to encrypt your input with your long password and put it in a HTML file with a password prompt that can decrypted in-browser (client side).",
+    "main": "index.js",
+    "files": [
+        "/cli",
+        "/lib"
+    ],
+    "bin": {
+        "staticrypt": "./cli/index.js"
+    },
+    "dependencies": {
+        "dotenv": "^16.0.3",
+        "yargs": ">=10.0.3"
+    },
+    "engines": {
+        "node": ">=16.0.0"
+    },
+    "funding": {
+        "type": "github",
+        "url": "https://github.com/robinmoisson/staticrypt?sponsor=1"
+    },
+    "author": "Robin Moisson (https://github.com/robinmoisson)",
+    "contributors": [
+        "Aaron Coplan (https://github.com/AaronCoplan)",
+        "Adam Hull (https://github.com/hurrymaplelad)"
+    ],
+    "license": "MIT",
+    "scripts": {
+        "build": "bash ./scripts/build.sh",
+        "format": "prettier --write \"**/*.{js,json,html}\"",
+        "prepare": "husky"
+    },
+    "lint-staged": {
+        "**/*.{js,json,html}": [
+            "prettier --write"
+        ]
+    },
+    "repository": {
+        "type": "git",
+        "url": "git+https://github.com/robinmoisson/staticrypt.git"
+    },
+    "keywords": [
+        "static",
+        "html",
+        "password",
+        "protected",
+        "encrypted",
+        "encryption",
+        "crypto",
+        "webcrypto"
+    ],
+    "bugs": {
+        "url": "https://github.com/robinmoisson/staticrypt/issues"
+    },
+    "homepage": "https://github.com/robinmoisson/staticrypt",
+    "devDependencies": {
+        "husky": "^9.1.6",
+        "lint-staged": "^15.2.10",
+        "prettier": "^2.8.8"
+    }
 }
