@@ -230,7 +230,7 @@ On the technical aspects: we use AES in CBC mode (see a discussion on why this m
 
 Yes! Just copy `lib/password_template.html`, modify it to suit your style and point to your template file with the `-t path/to/my/file.html` flag. 
 
-Be careful to not break the encrypting javascript part, the variables replaced by StatiCrypt are in this format: `/*[|variable|]*/0`. Don't leave out the `0` at the end, this weird syntax is to avoid conflict with other templating engines while still being read as valid JS to parsers so we can use auto-formatting on the template files.
+Be careful to not break the encrypting javascript part, the variables replaced by StatiCrypt are in this format: `/*[|variable|]*/0`. Don't leave out the `0` at the end, this weird syntax is to avoid conflict with other templating engines while still being read as valid JS to parsers so we can use auto-formatting on the template files. Prettier will add a space before the `0` if the variable is in a JS section  - this isn't very pretty but it won't break the templating engine so don't worry about it (if you want to add a prettier plugin that will avoid this behavior, feel free to open a PR!).
 
 ### Can I support multiple users with different passwords?
 
