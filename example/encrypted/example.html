@@ -3,7 +3,7 @@
     <head>
         <meta charset="utf-8" />
         <title>Protected Page</title>
-        <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, minimum-scale=1.0" />
+        <meta name="viewport" content="width=device-width, initial-scale=1" />
 
         <!-- do not cache this page -->
         <meta http-equiv="cache-control" content="max-age=0" />
@@ -165,8 +165,11 @@
                 }
             }
 
-            input {
-                font-size: 16px;
+            @media screen and (-webkit-min-device-pixel-ratio:0) { 
+                .staticrypt-form input[type="password"],
+                input[type="text"]  {
+                    font-size: 16px;
+                }
             }
         </style>
     </head>
@@ -817,7 +820,7 @@ exports.init = init;
                 templateToggleAltShow = "Show password",
                 templateToggleAltHide = "Hide password",
                 isRememberEnabled = true,
-                staticryptConfig = {"staticryptEncryptedMsgUniqueVariableName":"8305703aa9c7e11f335afcb323a99923e1f42e7727c6db6164c17d4cf7cd91b4b7ba6f431008f65c506444fb6176581deeb537905888d04d9aa2d31949831057238e75c05f9651487059100d494858bca171ab4f3ebed4f566f243014095f93ce8a612ccce65964bc4c52eb3e26e6435cae6518f69bf816f77c5922ef02e176ea7f1c342277890683665b621028b2b72c2e1053302be278e66651d0fd7bb54e2294be688d480d968b13afd592a224ef344d89bc023d38c7e3360d82d5b252f01","isRememberEnabled":true,"rememberDurationInDays":0,"staticryptSaltUniqueVariableName":"b93bbaf35459951c47721d1f3eaeb5b9"};
+                staticryptConfig = {"staticryptEncryptedMsgUniqueVariableName":"8e395d6160e79a99ea38ea6115934a9090173fd99186a1cb457b57ea2868ab704e6035e29e2031ce62a11a631efcfeb3565ff471739927d161ac53cec34edb4f9d0fbd7c630651e90c0f3009973d1ac2c04278a5c72622279a43133430862b1ac89dec458421be73f93419606ddbec12aefd3ed5c316f25224826f1baddcb9f247e1fe209608e82946e043de9a4e234ed3c1dfa2f83cfc2e9c3e2467e01322c8a10456e8cf4cc643fa18fd5db58399c3a3f423bc2164c0cd53c3de98be3cd96b","isRememberEnabled":true,"rememberDurationInDays":0,"staticryptSaltUniqueVariableName":"b93bbaf35459951c47721d1f3eaeb5b9"};
 
             // you can edit these values to customize some of the behavior of StatiCrypt
             const templateConfig = {
