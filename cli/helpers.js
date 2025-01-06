@@ -274,9 +274,13 @@ exports.genFile = genFile;
  * @param {string} path
  * @param {string} fullRootDirectory
  * @param {string} outputDirectory
+ * @param {boolean} overwrite
  * @returns {string}
  */
-function getFullOutputPath(path, fullRootDirectory, outputDirectory) {
+function getFullOutputPath(path, fullRootDirectory, outputDirectory, overwrite) {
+    if (overwrite) {
+        return path;
+    }
     const relativePath = pathModule.relative(fullRootDirectory, path);
     return outputDirectory + "/" + relativePath;
 }
@@ -339,9 +343,10 @@ exports.isCustomPasswordTemplateDefault = isCustomPasswordTemplateDefault;
  * @param {string} path
  * @param {string} outputDirectory
  * @param {string} rootDirectory
+ * @param {boolean} overwrite
  * @param {(fullPath: string, rootDirectoryFromArgument: string) => void} callback
  */
-function recursivelyApplyCallbackToHtmlFiles(callback, path, outputDirectory, rootDirectory = "") {
+function recursivelyApplyCallbackToHtmlFiles(callback, path, outputDirectory, rootDirectory = "", overwrite = false) {
     const fullPath = pathModule.resolve(path);
     const fullRootDirectory = rootDirectory || pathModule.dirname(fullPath);
 
@@ -349,7 +354,7 @@ function recursivelyApplyCallbackToHtmlFiles(callback, path, outputDirectory, ro
         fs.readdirSync(fullPath).forEach((filePath) => {
             const fullFilePath = `${fullPath}/${filePath}`;
 
-            recursivelyApplyCallbackToHtmlFiles(callback, fullFilePath, outputDirectory, fullRootDirectory);
+            recursivelyApplyCallbackToHtmlFiles(callback, fullFilePath, outputDirectory, fullRootDirectory, overwrite);
         });
         return;
     }
@@ -360,7 +365,7 @@ function recursivelyApplyCallbackToHtmlFiles(callback, path, outputDirectory, ro
     }
     // else just copy the file as is
     else {
-        const fullOutputPath = getFullOutputPath(fullPath, fullRootDirectory, outputDirectory);
+        const fullOutputPath = getFullOutputPath(fullPath, fullRootDirectory, outputDirectory, overwrite);
         copyFile(fullPath, fullOutputPath);
     }
 }
@@ -386,6 +391,11 @@ function parseCommandLineArguments() {
             .option("decrypt", {
                 type: "boolean",
                 describe: "Include this flag to decrypt files instead of encrypt.",
+                default: false,
+            })
+            .option("overwrite", {
+                type: "boolean",
+                describe: "Overwrite the original files in-place.",
                 default: false,
             })
             .option("p", {
