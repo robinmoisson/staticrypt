@@ -26,11 +26,19 @@
                 font-weight: normal;
             }
 
-            @media screen and (-webkit-min-device-pixel-ratio:0) { 
+            @media screen and (-webkit-min-device-pixel-ratio: 0) {
                 .staticrypt-form input[type="password"],
-                input[type="text"]  {
+                input[type="text"] {
                     font-size: 16px;
                 }
+            }
+
+            .footer {
+                width: 100%;
+                background-color: #f8f9fa;
+                padding: 20px;
+                text-align: center;
+                margin-top: 10em;
             }
         </style>
     </head>
@@ -274,7 +282,13 @@
             </div>
         </div>
 
-        <script src="https://cdn.ckeditor.com/4.7.0/standard/ckeditor.js"></script>
+        <div class="footer">
+            Thank you for using StatiCrypt - I hope you like the tool!
+            <br />
+            If you'd like to support it you can
+            <a href="https://github.com/sponsors/robinmoisson" target="_blank">sponsor me on github</a>, or check-out my
+            other project to <a href="https://translateabook.com" target="_blank">Translate a Book</a> with LLMs.
+        </div>
 
         <script id="cryptoEngine">
             window.cryptoEngine = ((function(){
@@ -1281,9 +1295,6 @@ exports.init = init;
         <script>
             const encode = codec.init(cryptoEngine).encode;
 
-            // enable CKEDIRTOR
-            CKEDITOR.replace("template_instructions");
-
             let htmlToDownload;
 
             /**
@@ -1352,10 +1363,6 @@ exports.init = init;
                 e.preventDefault();
 
                 trackEvent("generate_encrypted");
-
-                // update instruction textarea value with CKEDITOR content
-                // (see https://stackoverflow.com/questions/3147670/ckeditor-update-textarea)
-                CKEDITOR.instances["template_instructions"].updateElement();
 
                 const unencrypted = document.getElementById("unencrypted_html").value,
                     password = document.getElementById("password").value;
