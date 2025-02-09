@@ -8,7 +8,7 @@ StatiCrypt uses AES-256 and WebCrypto to encrypt your HTML file with your long p
 
 👉️ You can encrypt a file online in your browser (client side) at [robinmoisson.github.io/staticrypt](https://robinmoisson.github.io/staticrypt), or use the CLI to do it in your terminal or build process.
 
-> 🌱 **Supporting:** If you want to support StatiCrypt development you can do so by clicking on the sponsor button (or, well, [come learn meditation](https://robinmoisson.com/en/) at my other job!). See [how donations are used](https://github.com/sponsors/robinmoisson). Thank you for your support!
+> 🌱 **Supporting:** If you want to support StatiCrypt development you can do so by clicking on the sponsor button (you can also [come study meditation](https://robinmoisson.com/en/) with me, or use my other tool to [translate books](https://translateabook.com)). See [how donations are used](https://github.com/sponsors/robinmoisson). Thank you for your support!
 >
 > <a href="https://github.com/sponsors/robinmoisson"><img src="https://user-images.githubusercontent.com/5664025/234358001-65dfb967-19ab-49da-a8f5-27deca92ceb1.png" alt="Sponsor" /></a>
 
