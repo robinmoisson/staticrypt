@@ -329,9 +329,9 @@ The testing is done manually for now - you can run [build](#build), then open `e
 
 ## Community and alternatives
 
-Here are some other projects and community resources you might find interesting (this is included as an informative section, I haven't personally vetted any of those). 
+Here are some other projects and community resources you might find interesting. **This is included as an informative section only, I haven't personally vetted any of those.** 
 
-If you have a StatiCrypt project you'd like to share, feel free to open an issue describing it.
+If you have a StatiCrypt project you'd like to share, feel free to open an issue describing it - I'll probably be happy to add it to the list!
 
 ### Based on StatiCrypt, tutorials and projects
 
@@ -339,4 +339,10 @@ If you have a StatiCrypt project you'd like to share, feel free to open an issue
 
 ### Alternatives to StatiCrypt
 
-[MaxLaumeister/PageCrypt](https://github.com/MaxLaumeister/PageCrypt) is a project with similar features in a different style (I think it was created before StatiCrypt).
+(I haven't vetted any of those beyond a quick look, use at your own discretion)
+
+- [mprimi/portable-secret](https://github.com/mprimi/portable-secret) is a similar project that supports files and looks awesome
+- [dividuum/html-vault](https://github.com/dividuum/html-vault) is a similar project which aims as being as tiny as possible to be really easy to audit
+- [MaxLaumeister/PageCrypt](https://github.com/MaxLaumeister/PageCrypt) is a project with similar features in a different style (I think it was created before StatiCrypt).
+- [sowbug/quaid](https://github.com/sowbug/quaid) was described by its author as "Similar (but also for a narrower use case with fewer features). It wraps a JS implementation of only the decryption side of GPG symmetric encryption, so there's less opportunity for the tool itself to introduce security errors."
+- [Izumiko/hugo-encrypt](https://github.com/Izumiko/hugo-encrypt) is a go tool to encrypt Hugo pages with good documentation that allows you to do similar things.
