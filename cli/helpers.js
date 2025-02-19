@@ -355,7 +355,7 @@ function recursivelyApplyCallbackToHtmlFiles(callback, path, outputDirectory, ro
     }
 
     // apply the callback if it's an HTML file
-    if (fullPath.endsWith(".html")) {
+    if (fullPath.endsWith(".html") || fullPath.endsWith(".htm")) {
         callback(fullPath, fullRootDirectory);
     }
     // else just copy the file as is
