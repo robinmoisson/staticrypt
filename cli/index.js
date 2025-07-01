@@ -164,7 +164,9 @@ async function runStatiCrypt() {
                 );
             },
             path,
-            namedArgs.directory
+            namedArgs.directory,
+            "",
+            namedArgs.overwrite
         );
     });
 }
@@ -223,8 +225,7 @@ async function encodeAndGenerateFile(
     };
 
     // remove the base path so that the actual output path is relative to the base path
-    const relativePath = pathModule.relative(rootDirectoryFromArguments, path);
-    const outputFilepath = namedArgs.directory + "/" + relativePath;
+    const outputFilepath = getFullOutputPath(path, rootDirectoryFromArguments, namedArgs.directory, namedArgs.overwrite);
 
     genFile(templateData, outputFilepath, namedArgs.template);
 }
