@@ -2,7 +2,7 @@ const pathModule = require("path");
 const fs = require("fs");
 const readline = require("readline");
 
-const { generateRandomSalt, generateRandomString } = require("../lib/cryptoEngine.js");
+const { generateRandomSaltString, generateRandomString } = require("../lib/cryptoEngine.js");
 const { renderTemplate } = require("../lib/formater.js");
 const Yargs = require("yargs");
 
@@ -74,14 +74,14 @@ function prompt(question) {
 }
 
 /**
- * @param {string} password
+ * @param {string} passwordString
  * @param {boolean} isShortAllowed
  * @returns {Promise<void>}
  */
-async function validatePassword(password, isShortAllowed) {
-    if (password.length < 14 && !isShortAllowed) {
+async function validatePasswordString(passwordString, isShortAllowed) {
+    if (passwordString.length < 14 && !isShortAllowed) {
         const shouldUseShort = await prompt(
-            `WARNING: Your password is less than 14 characters (length: ${password.length})` +
+            `WARNING: Your password is less than 14 characters (length: ${passwordString.length})` +
                 " and it's easy to try brute-forcing on public files, so we recommend using a longer one. Here's a generated one: " +
                 generateRandomString(21) +
                 "\nYou can hide this warning by increasing your password length or adding the '--short' flag." +
@@ -94,7 +94,7 @@ async function validatePassword(password, isShortAllowed) {
         }
     }
 }
-exports.validatePassword = validatePassword;
+exports.validatePasswordString = validatePasswordString;
 
 /**
  * Get the config from the config file.
@@ -124,7 +124,7 @@ exports.writeConfig = writeConfig;
  * @param {string} passwordArgument - password from the command line
  * @returns {Promise<string>}
  */
-async function getPassword(passwordArgument) {
+async function getPasswordString(passwordArgument) {
     // try to get the password from the environment variable
     const envPassword = process.env.STATICRYPT_PASSWORD;
     const hasEnvPassword = envPassword !== undefined && envPassword !== "";
@@ -140,7 +140,7 @@ async function getPassword(passwordArgument) {
     // prompt the user for their password
     return prompt("Enter your long, unusual password: ");
 }
-exports.getPassword = getPassword;
+exports.getPasswordString = getPasswordString;
 
 /**
  * @param {string} filepath
@@ -156,12 +156,25 @@ function getFileContent(filepath) {
 exports.getFileContent = getFileContent;
 
 /**
+ * @param {string} filepath
+ * @returns {Uint8Array}
+ */
+function getFileContentBytes(filepath) {
+    try {
+        return new Uint8Array(fs.readFileSync(filepath));
+    } catch (e) {
+        exitWithError(`input file '${filepath}' does not exist!`);
+    }
+}
+exports.getFileContentBytes = getFileContentBytes;
+
+/**
  * @param {object} namedArgs
  * @param {object} config
  * @returns {string}
  */
-function getValidatedSalt(namedArgs, config) {
-    const salt = getSalt(namedArgs, config);
+function getValidatedSaltString(namedArgs, config) {
+    const salt = getSaltString(namedArgs, config);
 
     // validate the salt
     if (salt.length !== 32 || /[^a-f0-9]/.test(salt)) {
@@ -174,16 +187,16 @@ function getValidatedSalt(namedArgs, config) {
 
     return salt;
 }
-exports.getValidatedSalt = getValidatedSalt;
+exports.getValidatedSaltString = getValidatedSaltString;
 
 /**
  * @param {object} namedArgs
  * @param {object} config
  * @returns {string}
  */
-function getSalt(namedArgs, config) {
+function getSaltString(namedArgs, config) {
     // either a salt was provided by the user through the flag --salt
-    if (!!namedArgs.salt) {
+    if (namedArgs.salt) {
         return String(namedArgs.salt).toLowerCase();
     }
 
@@ -192,7 +205,7 @@ function getSalt(namedArgs, config) {
         return config.salt;
     }
 
-    return generateRandomSalt();
+    return generateRandomSaltString();
 }
 
 /**
