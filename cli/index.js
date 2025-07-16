@@ -180,16 +180,17 @@ async function decodeAndGenerateFile(path, fullRootDirectory, hashedPassword, ou
     const encryptedFileContent = getFileContent(path);
 
     // extract the cipher text from the encrypted file
-    let encryptedMatch = encryptedFileContent.match(/"staticryptEncryptedUniqueVariableName":\s*"([^"]+)"/);
     const ivMatch = encryptedFileContent.match(/"staticryptIvUniqueVariableName":\s*"([^"]+)"/);
     const hmacMatch = encryptedFileContent.match(/"staticryptHmacUniqueVariableName":\s*"([^"]+)"/);
     const saltMatch = encryptedFileContent.match(/"staticryptSaltUniqueVariableName":\s*"([^"]+)"/);
+
+    let encryptedMatch = encryptedFileContent.match(/data-encrypted="data:application\/octet-stream\;base64\,([^"]+)"/);
 
     if (!encryptedMatch || !ivMatch || !hmacMatch || !saltMatch) {
         return console.log(`ERROR: could not extract cipher text, iv, hmac, or salt from ${path}`);
     }
 
-    const encrypted = cryptoEngine.HexEncoder.parse(encryptedMatch[1]);
+    const encrypted = cryptoEngine.Base64Encoder.parse(encryptedMatch[1]);
     encryptedMatch = null;
 
     const iv = cryptoEngine.HexEncoder.parse(ivMatch[1]);
@@ -225,7 +226,6 @@ async function encodeAndGenerateFile(
 
     const staticryptConfig = {
         staticryptIvUniqueVariableName: cryptoEngine.HexEncoder.stringify(encryptedMsg.iv),
-        staticryptEncryptedUniqueVariableName: cryptoEngine.HexEncoder.stringify(encryptedMsg.encrypted),
         staticryptHmacUniqueVariableName: cryptoEngine.HexEncoder.stringify(encryptedMsg.hmac),
 
         isRememberEnabled,
@@ -234,6 +234,7 @@ async function encodeAndGenerateFile(
     };
     const templateData = {
         ...baseTemplateData,
+        encrypted_data: cryptoEngine.Base64Encoder.stringify(encryptedMsg.encrypted),
         staticrypt_config: staticryptConfig,
     };
 
