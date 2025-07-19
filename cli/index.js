@@ -175,6 +175,21 @@ async function runStatiCrypt() {
     });
 }
 
+function getEncryptedData(encryptedFileContent, path) {
+    let encrypted = null;
+
+    const encryptedMatch = encryptedFileContent.match(
+        /data-encrypted="data:application\/octet-stream\;base64\,([^"]+)"/
+    );
+    if (!encryptedMatch) {
+        console.log(`ERROR: could not extract cipher text from ${path}`);
+    } else {
+        encrypted = cryptoEngine.Base64Encoder.parse(encryptedMatch[1]);
+    }
+
+    return encrypted;
+}
+
 async function decodeAndGenerateFile(path, fullRootDirectory, hashedPassword, outputDirectory) {
     // get the file content
     const encryptedFileContent = getFileContent(path);
@@ -184,21 +199,22 @@ async function decodeAndGenerateFile(path, fullRootDirectory, hashedPassword, ou
     const hmacMatch = encryptedFileContent.match(/"staticryptHmacUniqueVariableName":\s*"([^"]+)"/);
     const saltMatch = encryptedFileContent.match(/"staticryptSaltUniqueVariableName":\s*"([^"]+)"/);
 
-    let encryptedMatch = encryptedFileContent.match(/data-encrypted="data:application\/octet-stream\;base64\,([^"]+)"/);
-
-    if (!encryptedMatch || !ivMatch || !hmacMatch || !saltMatch) {
+    if (!ivMatch || !hmacMatch || !saltMatch) {
         return console.log(`ERROR: could not extract cipher text, iv, hmac, or salt from ${path}`);
     }
-
-    const encrypted = cryptoEngine.Base64Encoder.parse(encryptedMatch[1]);
-    encryptedMatch = null;
 
     const iv = cryptoEngine.HexEncoder.parse(ivMatch[1]);
     const hmac = cryptoEngine.HexEncoder.parse(hmacMatch[1]);
     const salt = cryptoEngine.HexEncoder.parse(saltMatch[1]);
 
     // decrypt input
-    const { success, decoded } = await decode(iv, encrypted, hmac, hashedPassword, salt);
+    const { success, decoded } = await decode(
+        iv,
+        () => getEncryptedData(encryptedFileContent, path),
+        hmac,
+        hashedPassword,
+        salt
+    );
 
     if (!success) {
         return console.log(`ERROR: could not decrypt ${path}`);
@@ -219,7 +235,7 @@ async function encodeAndGenerateFile(
     namedArgs
 ) {
     // encrypt input
-    const encryptedMsg = await encodeWithHashedPassword(getFileContentBytes(path), hashedPassword);
+    const encryptedMsg = await encodeWithHashedPassword(() => getFileContentBytes(path), hashedPassword);
 
     let rememberDurationInDays = parseInt(namedArgs.remember);
     rememberDurationInDays = isNaN(rememberDurationInDays) ? 0 : rememberDurationInDays;
