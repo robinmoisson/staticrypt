@@ -1,0 +1,714 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>恋爱占有欲指数计算器</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            font-family: 'Helvetica Neue', Arial, sans-serif;
+        }
+        
+        body {
+            background: linear-gradient(135deg, #f5f7fa 0%, #c3cfe2 100%);
+            min-height: 100vh;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            padding: 20px;
+            color: #333;
+        }
+        
+        .container {
+            max-width: 800px;
+            width: 100%;
+            background: white;
+            border-radius: 20px;
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.1);
+            overflow: hidden;
+        }
+        
+        header {
+            background: linear-gradient(135deg, #ff9a9e 0%, #fad0c4 100%);
+            padding: 30px;
+            text-align: center;
+            color: white;
+        }
+        
+        h1 {
+            font-size: 2.5rem;
+            margin-bottom: 10px;
+            text-shadow: 1px 1px 3px rgba(0, 0, 0, 0.2);
+        }
+        
+        .subtitle {
+            font-size: 1.2rem;
+            opacity: 0.9;
+        }
+        
+        .content {
+            padding: 30px;
+        }
+        
+        .intro {
+            text-align: center;
+            margin-bottom: 30px;
+            line-height: 1.6;
+            color: #555;
+        }
+        
+        .question-card {
+            background: #f9f9f9;
+            border-radius: 15px;
+            padding: 25px;
+            margin-bottom: 20px;
+            box-shadow: 0 5px 15px rgba(0, 0, 0, 0.05);
+            transition: transform 0.3s ease;
+        }
+        
+        .question-card:hover {
+            transform: translateY(-5px);
+        }
+        
+        .question {
+            font-size: 1.2rem;
+            margin-bottom: 20px;
+            color: #444;
+            font-weight: 500;
+        }
+        
+        .options {
+            display: flex;
+            flex-direction: column;
+            gap: 12px;
+        }
+        
+        .option {
+            display: flex;
+            align-items: center;
+            padding: 12px 15px;
+            background: white;
+            border-radius: 10px;
+            cursor: pointer;
+            transition: all 0.2s ease;
+            border: 2px solid #eee;
+        }
+        
+        .option:hover {
+            background: #f0f0f0;
+            border-color: #ddd;
+        }
+        
+        .option.selected {
+            background: #ffeaea;
+            border-color: #ff9a9e;
+        }
+        
+        .option input {
+            margin-right: 10px;
+            transform: scale(1.2);
+        }
+        
+        .btn-container {
+            display: flex;
+            justify-content: space-between;
+            margin-top: 30px;
+        }
+        
+        .btn {
+            background: linear-gradient(135deg, #ff9a9e 0%, #fad0c4 100%);
+            color: white;
+            border: none;
+            padding: 15px 40px;
+            font-size: 1.1rem;
+            border-radius: 50px;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            box-shadow: 0 5px 15px rgba(255, 154, 158, 0.4);
+        }
+        
+        .btn:hover {
+            transform: translateY(-3px);
+            box-shadow: 0 8px 20px rgba(255, 154, 158, 0.6);
+        }
+        
+        .btn:disabled {
+            background: #cccccc;
+            cursor: not-allowed;
+            transform: none;
+            box-shadow: none;
+        }
+        
+        .btn-secondary {
+            background: #6c757d;
+        }
+        
+        .btn-secondary:hover {
+            background: #5a6268;
+        }
+        
+        .result {
+            display: none;
+            text-align: center;
+            padding: 30px;
+            background: #f9f9f9;
+            border-radius: 15px;
+            margin-top: 20px;
+        }
+        
+        .score {
+            font-size: 4rem;
+            font-weight: bold;
+            color: #ff6b6b;
+            margin: 20px 0;
+        }
+        
+        .level {
+            font-size: 1.5rem;
+            margin-bottom: 20px;
+            color: #444;
+        }
+        
+        .description {
+            line-height: 1.6;
+            color: #555;
+            text-align: left;
+            margin-bottom: 20px;
+        }
+        
+        .advice {
+            background: #fff5f5;
+            padding: 20px;
+            border-radius: 10px;
+            margin-top: 20px;
+            text-align: left;
+        }
+        
+        .advice h3 {
+            color: #ff6b6b;
+            margin-bottom: 10px;
+        }
+        
+        .restart-btn {
+            background: #6c757d;
+            color: white;
+            border: none;
+            padding: 12px 25px;
+            border-radius: 50px;
+            cursor: pointer;
+            margin-top: 20px;
+            transition: all 0.3s ease;
+        }
+        
+        .restart-btn:hover {
+            background: #5a6268;
+        }
+        
+        .progress-bar {
+            height: 8px;
+            background: #eee;
+            border-radius: 4px;
+            margin: 20px 0;
+            overflow: hidden;
+        }
+        
+        .progress {
+            height: 100%;
+            background: linear-gradient(135deg, #ff9a9e 0%, #fad0c4 100%);
+            width: 0%;
+            transition: width 0.5s ease;
+        }
+        
+        .question-counter {
+            text-align: right;
+            color: #888;
+            font-size: 0.9rem;
+            margin-bottom: 10px;
+        }
+        
+        @media (max-width: 600px) {
+            h1 {
+                font-size: 2rem;
+            }
+            
+            .content {
+                padding: 20px;
+            }
+            
+            .question-card {
+                padding: 20px;
+            }
+            
+            .btn-container {
+                flex-direction: column;
+                gap: 15px;
+            }
+            
+            .btn {
+                width: 100%;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <header>
+            <h1>恋爱占有欲指数计算器</h1>
+            <p class="subtitle">测测你的恋爱占有欲有多强？</p>
+        </header>
+        
+        <div class="content">
+            <div class="intro">
+                <p>想知道你在恋爱关系中的占有欲有多强吗？完成以下25个问题，我们将为你分析你的占有欲指数，并提供个性化建议。</p>
+            </div>
+            
+            <div class="question-counter">问题 <span id="current-question">1</span>/25</div>
+            <div class="progress-bar">
+                <div class="progress" id="progress"></div>
+            </div>
+            
+            <div id="quiz-container">
+                <!-- 问题将通过JavaScript动态生成 -->
+            </div>
+            
+            <div class="btn-container">
+                <button class="btn btn-secondary" id="prev-btn" disabled>上一题</button>
+                <button class="btn" id="next-btn">下一题</button>
+                <button class="btn" id="submit-btn" style="display: none;">查看结果</button>
+            </div>
+            
+            <div class="result" id="result">
+                <h2>你的恋爱占有欲指数</h2>
+                <div class="score" id="score">0</div>
+                <div class="level" id="level">占有欲水平</div>
+                <div class="description" id="description"></div>
+                <div class="advice">
+                    <h3>专家建议</h3>
+                    <div id="advice-text"></div>
+                </div>
+                <button class="restart-btn" id="restart-btn">重新测试</button>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // 问题数据 - 扩展为25道题目
+        const questions = [
+            {
+                question: "当你的伴侣与异性朋友单独相处时，你会感到不安吗？",
+                options: [
+                    { text: "从不，完全信任", score: 0 },
+                    { text: "偶尔，但很快会释怀", score: 1 },
+                    { text: "经常，会有些担心", score: 2 },
+                    { text: "总是，会感到焦虑不安", score: 3 }
+                ]
+            },
+            {
+                question: "你会经常查看伴侣的手机或社交媒体吗？",
+                options: [
+                    { text: "从不，尊重隐私", score: 0 },
+                    { text: "偶尔，出于好奇", score: 1 },
+                    { text: "经常，想了解TA的动态", score: 2 },
+                    { text: "总是，觉得有必要知道一切", score: 3 }
+                ]
+            },
+            {
+                question: "如果你的伴侣与前任保持联系，你的反应是？",
+                options: [
+                    { text: "完全理解，保持友好关系很正常", score: 0 },
+                    { text: "有点介意，但会尝试接受", score: 1 },
+                    { text: "非常介意，会明确表达不满", score: 2 },
+                    { text: "绝对不能接受，会要求断绝联系", score: 3 }
+                ]
+            },
+            {
+                question: "你希望伴侣向你报告TA的行踪吗？",
+                options: [
+                    { text: "从不，TA有自由安排时间的权利", score: 0 },
+                    { text: "偶尔，特别是重要行程", score: 1 },
+                    { text: "经常，想知道TA在做什么", score: 2 },
+                    { text: "总是，需要随时知道TA在哪里", score: 3 }
+                ]
+            },
+            {
+                question: "当伴侣赞美他人时，你会感到嫉妒吗？",
+                options: [
+                    { text: "从不，觉得这是正常社交", score: 0 },
+                    { text: "偶尔，但不会表现出来", score: 1 },
+                    { text: "经常，会感到不舒服", score: 2 },
+                    { text: "总是，会立即表达不满", score: 3 }
+                ]
+            },
+            {
+                question: "你会在社交媒体上频繁发布与伴侣的合照吗？",
+                options: [
+                    { text: "很少，尊重双方隐私", score: 0 },
+                    { text: "偶尔，分享美好时刻", score: 1 },
+                    { text: "经常，喜欢展示我们的关系", score: 2 },
+                    { text: "总是，想让所有人知道TA是我的", score: 3 }
+                ]
+            },
+            {
+                question: "如果伴侣与异性同事共进午餐，你的反应是？",
+                options: [
+                    { text: "完全理解，工作需要很正常", score: 0 },
+                    { text: "有点介意，但不会说什么", score: 1 },
+                    { text: "会询问具体情况，表达关注", score: 2 },
+                    { text: "会明确表示不满，要求避免这种情况", score: 3 }
+                ]
+            },
+            {
+                question: "你会因为伴侣没有及时回复消息而生气吗？",
+                options: [
+                    { text: "从不，理解TA可能很忙", score: 0 },
+                    { text: "偶尔，如果等待时间过长", score: 1 },
+                    { text: "经常，觉得TA应该优先回复我", score: 2 },
+                    { text: "总是，认为这是不重视我的表现", score: 3 }
+                ]
+            },
+            {
+                question: "你希望伴侣的社交圈中只有你吗？",
+                options: [
+                    { text: "从不，鼓励TA有自己的朋友圈", score: 0 },
+                    { text: "偶尔，希望我是TA最重要的朋友", score: 1 },
+                    { text: "经常，希望TA多花时间陪我", score: 2 },
+                    { text: "总是，希望TA的世界只有我", score: 3 }
+                ]
+            },
+            {
+                question: "你会因为伴侣与异性互动而与其发生争执吗？",
+                options: [
+                    { text: "从不，信任是关系的基础", score: 0 },
+                    { text: "偶尔，如果觉得互动过于亲密", score: 1 },
+                    { text: "经常，会因此产生矛盾", score: 2 },
+                    { text: "总是，无法接受TA与异性互动", score: 3 }
+                ]
+            },
+            {
+                question: "你会要求伴侣删除所有异性的联系方式吗？",
+                options: [
+                    { text: "从不，这太极端了", score: 0 },
+                    { text: "偶尔，如果对方让我感到不安", score: 1 },
+                    { text: "经常，希望TA的社交圈简单些", score: 2 },
+                    { text: "总是，希望TA只与我联系", score: 3 }
+                ]
+            },
+            {
+                question: "你会因为伴侣关注其他异性的社交媒体而生气吗？",
+                options: [
+                    { text: "从不，这是TA的自由", score: 0 },
+                    { text: "偶尔，如果对方很吸引人", score: 1 },
+                    { text: "经常，会感到被忽视", score: 2 },
+                    { text: "总是，会立即质问TA", score: 3 }
+                ]
+            },
+            {
+                question: "你会检查伴侣的通讯记录吗？",
+                options: [
+                    { text: "从不，尊重隐私", score: 0 },
+                    { text: "偶尔，当感到不安时", score: 1 },
+                    { text: "经常，想确认TA的忠诚", score: 2 },
+                    { text: "总是，需要随时监控", score: 3 }
+                ]
+            },
+            {
+                question: "你会干涉伴侣的穿衣风格吗？",
+                options: [
+                    { text: "从不，TA有穿衣自由", score: 0 },
+                    { text: "偶尔，如果觉得不合适", score: 1 },
+                    { text: "经常，希望TA按我的喜好穿衣", score: 2 },
+                    { text: "总是，会直接要求TA改变", score: 3 }
+                ]
+            },
+            {
+                question: "你会因为伴侣与朋友聚会而心情不好吗？",
+                options: [
+                    { text: "从不，支持TA的社交生活", score: 0 },
+                    { text: "偶尔，如果聚会时间太长", score: 1 },
+                    { text: "经常，希望TA多陪我", score: 2 },
+                    { text: "总是，会因此发脾气", score: 3 }
+                ]
+            },
+            {
+                question: "你会要求伴侣随时分享位置吗？",
+                options: [
+                    { text: "从不，没必要", score: 0 },
+                    { text: "偶尔，当担心TA的安全时", score: 1 },
+                    { text: "经常，想知道TA在哪里", score: 2 },
+                    { text: "总是，需要随时掌握TA的行踪", score: 3 }
+                ]
+            },
+            {
+                question: "你会因为伴侣与异性有工作往来而吃醋吗？",
+                options: [
+                    { text: "从不，理解这是工作需求", score: 0 },
+                    { text: "偶尔，如果对方很有魅力", score: 1 },
+                    { text: "经常，会感到不安", score: 2 },
+                    { text: "总是，会要求TA换工作", score: 3 }
+                ]
+            },
+            {
+                question: "你会限制伴侣与异性朋友的见面频率吗？",
+                options: [
+                    { text: "从不，信任TA的判断", score: 0 },
+                    { text: "偶尔，如果见面太频繁", score: 1 },
+                    { text: "经常，会设定一些限制", score: 2 },
+                    { text: "总是，不允许TA单独见异性朋友", score: 3 }
+                ]
+            },
+            {
+                question: "你会因为伴侣赞美其他异性而闷闷不乐吗？",
+                options: [
+                    { text: "从不，这是正常的社交", score: 0 },
+                    { text: "偶尔，但很快会忘记", score: 1 },
+                    { text: "经常，会记在心里", score: 2 },
+                    { text: "总是，会持续不开心很久", score: 3 }
+                ]
+            },
+            {
+                question: "你会要求伴侣在社交媒体上公开你们的关系吗？",
+                options: [
+                    { text: "从不，顺其自然", score: 0 },
+                    { text: "偶尔，暗示过但没强求", score: 1 },
+                    { text: "经常，希望TA主动公开", score: 2 },
+                    { text: "总是，要求TA必须公开", score: 3 }
+                ]
+            },
+            {
+                question: "你会因为伴侣与异性聊天而打断他们吗？",
+                options: [
+                    { text: "从不，尊重TA的社交", score: 0 },
+                    { text: "偶尔，如果聊得太久", score: 1 },
+                    { text: "经常，会找借口打断", score: 2 },
+                    { text: "总是，会直接介入对话", score: 3 }
+                ]
+            },
+            {
+                question: "你会查看伴侣的购物记录和消费情况吗？",
+                options: [
+                    { text: "从不，这是TA的隐私", score: 0 },
+                    { text: "偶尔，出于好奇", score: 1 },
+                    { text: "经常，想了解TA的花费", score: 2 },
+                    { text: "总是，需要掌握TA的消费情况", score: 3 }
+                ]
+            },
+            {
+                question: "你会要求伴侣减少与家人相处的时间来陪你吗？",
+                options: [
+                    { text: "从不，家庭很重要", score: 0 },
+                    { text: "偶尔，如果特别想TA", score: 1 },
+                    { text: "经常，希望TA多陪我", score: 2 },
+                    { text: "总是，认为我比家人更重要", score: 3 }
+                ]
+            },
+            {
+                question: "你会因为伴侣的过去情史而耿耿于怀吗？",
+                options: [
+                    { text: "从不，过去就过去了", score: 0 },
+                    { text: "偶尔，会有点好奇", score: 1 },
+                    { text: "经常，会忍不住比较", score: 2 },
+                    { text: "总是，无法释怀TA的过去", score: 3 }
+                ]
+            },
+            {
+                question: "你会要求伴侣放弃某些爱好来陪你吗？",
+                options: [
+                    { text: "从不，支持TA的爱好", score: 0 },
+                    { text: "偶尔，如果占用太多时间", score: 1 },
+                    { text: "经常，希望TA多关注我", score: 2 },
+                    { text: "总是，要求TA以我为优先", score: 3 }
+                ]
+            }
+        ];
+
+        // 当前问题索引
+        let currentQuestionIndex = 0;
+        // 用户得分
+        let userScore = 0;
+        // 用户选择的答案
+        const userAnswers = new Array(questions.length).fill(null);
+
+        // DOM元素
+        const quizContainer = document.getElementById('quiz-container');
+        const prevBtn = document.getElementById('prev-btn');
+        const nextBtn = document.getElementById('next-btn');
+        const submitBtn = document.getElementById('submit-btn');
+        const resultContainer = document.getElementById('result');
+        const scoreElement = document.getElementById('score');
+        const levelElement = document.getElementById('level');
+        const descriptionElement = document.getElementById('description');
+        const adviceElement = document.getElementById('advice-text');
+        const restartBtn = document.getElementById('restart-btn');
+        const currentQuestionElement = document.getElementById('current-question');
+        const progressElement = document.getElementById('progress');
+
+        // 初始化测验
+        function initQuiz() {
+            showQuestion(currentQuestionIndex);
+            updateProgress();
+            updateButtons();
+        }
+
+        // 显示问题
+        function showQuestion(index) {
+            const question = questions[index];
+            currentQuestionElement.textContent = index + 1;
+            
+            let optionsHTML = '';
+            question.options.forEach((option, optionIndex) => {
+                const isChecked = userAnswers[index] === optionIndex ? 'checked' : '';
+                optionsHTML += `
+                    <div class="option ${isChecked ? 'selected' : ''}" onclick="selectOption(${optionIndex})">
+                        <input type="radio" name="question-${index}" value="${optionIndex}" ${isChecked}>
+                        <label>${option.text}</label>
+                    </div>
+                `;
+            });
+            
+            quizContainer.innerHTML = `
+                <div class="question-card">
+                    <div class="question">${question.question}</div>
+                    <div class="options">${optionsHTML}</div>
+                </div>
+            `;
+            
+            // 更新按钮状态
+            updateButtons();
+        }
+
+        // 选择选项
+        function selectOption(optionIndex) {
+            userAnswers[currentQuestionIndex] = optionIndex;
+            showQuestion(currentQuestionIndex);
+            updateProgress();
+        }
+
+        // 更新按钮状态
+        function updateButtons() {
+            // 上一题按钮
+            prevBtn.disabled = currentQuestionIndex === 0;
+            
+            // 下一题/提交按钮
+            if (currentQuestionIndex === questions.length - 1) {
+                nextBtn.style.display = 'none';
+                submitBtn.style.display = 'block';
+                submitBtn.disabled = userAnswers[currentQuestionIndex] === null;
+            } else {
+                nextBtn.style.display = 'block';
+                submitBtn.style.display = 'none';
+                nextBtn.disabled = userAnswers[currentQuestionIndex] === null;
+            }
+        }
+
+        // 更新进度条
+        function updateProgress() {
+            const answeredCount = userAnswers.filter(answer => answer !== null).length;
+            const progressPercentage = (answeredCount / questions.length) * 100;
+            progressElement.style.width = `${progressPercentage}%`;
+        }
+
+        // 上一题
+        function prevQuestion() {
+            if (currentQuestionIndex > 0) {
+                currentQuestionIndex--;
+                showQuestion(currentQuestionIndex);
+            }
+        }
+
+        // 下一题
+        function nextQuestion() {
+            if (currentQuestionIndex < questions.length - 1) {
+                currentQuestionIndex++;
+                showQuestion(currentQuestionIndex);
+            }
+        }
+
+        // 提交答案
+        function submitAnswers() {
+            // 计算总分
+            userScore = 0;
+            userAnswers.forEach((answerIndex, questionIndex) => {
+                if (answerIndex !== null) {
+                    userScore += questions[questionIndex].options[answerIndex].score;
+                }
+            });
+            
+            // 显示结果
+            showResult();
+        }
+
+        // 显示结果
+        function showResult() {
+            // 计算百分比（满分75分）
+            const percentage = Math.round((userScore / 75) * 100);
+            scoreElement.textContent = percentage;
+            
+            // 根据分数确定等级和描述
+            let level, description, advice;
+            
+            if (userScore <= 18) {
+                level = "自由型恋人";
+                description = "你在恋爱中表现出较低的占有欲，给予伴侣充分的自由和空间。你相信信任是健康关系的基础，不会因为小事而产生猜忌。这种态度有助于建立平等、尊重的关系。";
+                advice = "继续保持这种健康的恋爱观！你的信任和尊重是维系长久关系的关键。不过也要注意，适度的关心和关注也是表达爱意的方式，不要让对方感到被忽视。";
+            } else if (userScore <= 37) {
+                level = "平衡型恋人";
+                description = "你的占有欲处于健康水平，既不会过度控制伴侣，也不会完全放任。你懂得在关心和尊重之间找到平衡，能够在适当的时候表达自己的感受，同时尊重伴侣的个人空间。";
+                advice = "你拥有健康的恋爱观！继续保持这种平衡，同时注意沟通技巧。当感到不安时，尝试与伴侣坦诚交流，而不是压抑或过度反应。";
+            } else if (userScore <= 56) {
+                level = "关注型恋人";
+                description = "你在恋爱中表现出中等偏高的占有欲，对伴侣的关注较多，有时可能会因为小事而感到不安。你重视关系的稳定性，希望与伴侣保持紧密联系，但偶尔可能会让对方感到压力。";
+                advice = "尝试给伴侣更多信任和个人空间。培养自己的兴趣爱好，分散对关系的过度关注。当感到不安时，先冷静思考这种情绪的合理性，再与伴侣沟通。";
+            } else {
+                level = "控制型恋人";
+                description = "你的占有欲较强，可能会过度关注伴侣的一举一动，容易因小事产生猜忌和不安。这种强烈的控制欲可能源于不安全感，长期下去可能会对关系造成压力。";
+                advice = "强烈建议反思自己的恋爱模式。过度的控制欲可能会伤害关系。尝试建立自信，信任伴侣，给予彼此适当的空间。如果难以自我调节，考虑寻求专业心理咨询帮助。";
+            }
+            
+            levelElement.textContent = level;
+            descriptionElement.textContent = description;
+            adviceElement.textContent = advice;
+            
+            // 隐藏测验区域，显示结果区域
+            document.querySelector('.intro').style.display = 'none';
+            document.querySelector('.question-counter').style.display = 'none';
+            document.querySelector('.progress-bar').style.display = 'none';
+            quizContainer.style.display = 'none';
+            document.querySelector('.btn-container').style.display = 'none';
+            resultContainer.style.display = 'block';
+            
+            // 滚动到顶部
+            window.scrollTo({ top: 0, behavior: 'smooth' });
+        }
+
+        // 重新开始测验
+        function restartQuiz() {
+            currentQuestionIndex = 0;
+            userScore = 0;
+            userAnswers.fill(null);
+            
+            // 重置显示
+            document.querySelector('.intro').style.display = 'block';
+            document.querySelector('.question-counter').style.display = 'block';
+            document.querySelector('.progress-bar').style.display = 'block';
+            quizContainer.style.display = 'block';
+            document.querySelector('.btn-container').style.display = 'flex';
+            resultContainer.style.display = 'none';
+            
+            // 重新初始化
+            initQuiz();
+        }
+
+        // 事件监听
+        prevBtn.addEventListener('click', prevQuestion);
+        nextBtn.addEventListener('click', nextQuestion);
+        submitBtn.addEventListener('click', submitAnswers);
+        restartBtn.addEventListener('click', restartQuiz);
+
+        // 初始化测验
+        initQuiz();
+    </script>
+</body>
+</html>
