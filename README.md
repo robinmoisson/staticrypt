@@ -95,7 +95,7 @@ staticrypt test.html --share --share-remember
 
 #### Pin the salt to use staticrypt in your CI or build step
 
-If you want want the "Remember-me" or share features to work accross multiple pages or multiple successive deployment, the salt needs to stay the same ([see why](https://github.com/robinmoisson/staticrypt#why-does-staticrypt-create-a-config-file)). If you run StatiCrypt in a CI step, you can pin the salt in two ways:
+If you want the "Remember-me" or share features to work across multiple pages or multiple successive deployment, the salt needs to stay the same ([see why](https://github.com/robinmoisson/staticrypt#why-does-staticrypt-create-a-config-file)). If you run StatiCrypt in a CI step, you can pin the salt in two ways:
 
 - either commit the `.staticrypt.json` config file - you can generate a random salt and config file on your local machine with:
 
