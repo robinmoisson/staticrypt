@@ -6,3 +6,15 @@ node_modules
 encrypted/
 !example/encrypted/
 decrypted/
+
+# AI tooling artifacts (kept local)
+AGENTS.md
+CLAUDE.md
+CLAUDE.local.md
+.claude/
+docs/superpowers/
+.cursor/
+.aider*
+
+# Manual-test fixtures (used by scripts/build.sh, not by automated tests)
+test/fixtures/legacy-html/
