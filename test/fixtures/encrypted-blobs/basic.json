@@ -1,0 +1,9 @@
+{
+    "plaintext": "Hello, world! héllo wörld",
+    "password": "testpassword123",
+    "salt": "abcd1234abcd1234abcd1234abcd1234",
+    "hashLegacyOnly": "2c604d17a2bd3f824ef29ee524a301a9f353f884814ca5b6b319fb59c59b04e5",
+    "hashLegacyAndSecond": "cb2b7fd427dfc23709b3e63647207228d1b97e202c2f650b4aa639292698ec0d",
+    "hashFull": "fae456c9423f706ed6784f2e5210c7f9e2013f6adc7e2a7d93ea168659613e81",
+    "encrypted": "21d5b2ba82eab7a5c495f706e9ea1061fe8d64ffcd484ddd8d617a9ba24181c8b013ab8ee437bb7c15a291f5e75bde3f5d8cb9907f6c05b0fed4c8813d4b27adf1120e2414612ca0434c678ebc57e737"
+}
