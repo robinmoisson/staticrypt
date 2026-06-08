@@ -30,7 +30,8 @@
     "scripts": {
         "build": "bash ./scripts/build.sh",
         "format": "prettier --write \"**/*.{js,json,html}\"",
-        "prepare": "husky"
+        "prepare": "husky",
+        "test": "node --test --test-reporter=spec"
     },
     "lint-staged": {
         "**/*.{js,json,html}": [
@@ -57,6 +58,7 @@
     "homepage": "https://github.com/robinmoisson/staticrypt",
     "devDependencies": {
         "husky": "^9.1.6",
+        "jsdom": "^24.0.0",
         "lint-staged": "^15.2.10",
         "prettier": "^2.8.8"
     }

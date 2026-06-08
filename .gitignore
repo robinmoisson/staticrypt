@@ -6,4 +6,3 @@ node_modules
 encrypted/
 !example/encrypted/
 decrypted/
-test/
