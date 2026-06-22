@@ -17,7 +17,7 @@ const fs = require("fs");
 
 const cryptoEngine = require("../lib/cryptoEngine.js");
 const codec = require("../lib/codec.js");
-const { generateRandomSalt } = cryptoEngine;
+const { generateRandomSaltString } = cryptoEngine;
 const { decode, encodeWithHashedPassword } = codec.init(cryptoEngine);
 const {
     OUTPUT_DIRECTORY_DEFAULT_PATH,
@@ -26,12 +26,13 @@ const {
     genFile,
     getConfig,
     getFileContent,
-    getPassword,
-    getValidatedSalt,
+    getFileContentBytes,
+    getPasswordString,
+    getValidatedSaltString,
     isOptionSetByUser,
     parseCommandLineArguments,
     recursivelyApplyCallbackToHtmlFiles,
-    validatePassword,
+    validatePasswordString,
     writeConfig,
     writeFile,
     getFullOutputPath,
@@ -63,14 +64,14 @@ async function runStatiCrypt() {
 
     // if the 's' flag is passed without parameter, generate a salt, display & exit
     if (hasSaltFlag && !namedArgs.salt) {
-        const generatedSalt = generateRandomSalt();
+        const generatedSaltString = generateRandomSaltString();
 
         // show salt
-        console.log(generatedSalt);
+        console.log(generatedSaltstring);
 
         // write to config file if it doesn't exist
         if (!config.salt) {
-            config.salt = generatedSalt;
+            config.salt = generatedSaltstring;
             writeConfig(configPath, config);
         }
 
@@ -78,16 +79,21 @@ async function runStatiCrypt() {
     }
 
     // get the salt & password
-    const salt = getValidatedSalt(namedArgs, config);
-    const password = await getPassword(namedArgs.password);
+    const saltString = getValidatedSaltString(namedArgs, config);
+    const salt = cryptoEngine.HexEncoder.parse(saltString);
+
+    const passwordString = await getPasswordString(namedArgs.password);
+    const password = cryptoEngine.UTF8Encoder.parse(passwordString);
+
     const hashedPassword = await cryptoEngine.hashPassword(password, salt);
+    const hashedPasswordString = cryptoEngine.HexEncoder.stringify(hashedPassword);
 
     // display the share link with the hashed password if the --share flag is set
     if (hasShareFlag) {
-        await validatePassword(password, namedArgs.short);
+        await validatePasswordString(passwordString, namedArgs.short);
 
         let url = namedArgs.share || "";
-        url += "#staticrypt_pwd=" + hashedPassword;
+        url += "#staticrypt_pwd=" + hashedPasswordString;
 
         if (namedArgs.shareRemember) {
             url += `&remember_me`;
@@ -124,11 +130,11 @@ async function runStatiCrypt() {
         return;
     }
 
-    await validatePassword(password, namedArgs.short);
+    await validatePasswordString(passwordString, namedArgs.short);
 
     // write salt to config file
-    if (config.salt !== salt) {
-        config.salt = salt;
+    if (config.salt !== saltString) {
+        config.salt = saltString;
         writeConfig(configPath, config);
     }
 
@@ -157,7 +163,7 @@ async function runStatiCrypt() {
                     fullPath,
                     fullRootDirectory,
                     hashedPassword,
-                    salt,
+                    saltString,
                     baseTemplateData,
                     isRememberEnabled,
                     namedArgs
@@ -174,15 +180,24 @@ async function decodeAndGenerateFile(path, fullRootDirectory, hashedPassword, ou
     const encryptedFileContent = getFileContent(path);
 
     // extract the cipher text from the encrypted file
-    const cipherTextMatch = encryptedFileContent.match(/"staticryptEncryptedMsgUniqueVariableName":\s*"([^"]+)"/);
+    let encryptedMatch = encryptedFileContent.match(/"staticryptEncryptedUniqueVariableName":\s*"([^"]+)"/);
+    const ivMatch = encryptedFileContent.match(/"staticryptIvUniqueVariableName":\s*"([^"]+)"/);
+    const hmacMatch = encryptedFileContent.match(/"staticryptHmacUniqueVariableName":\s*"([^"]+)"/);
     const saltMatch = encryptedFileContent.match(/"staticryptSaltUniqueVariableName":\s*"([^"]+)"/);
 
-    if (!cipherTextMatch || !saltMatch) {
-        return console.log(`ERROR: could not extract cipher text or salt from ${path}`);
+    if (!encryptedMatch || !ivMatch || !hmacMatch || !saltMatch) {
+        return console.log(`ERROR: could not extract cipher text, iv, hmac, or salt from ${path}`);
     }
 
+    const encrypted = cryptoEngine.HexEncoder.parse(encryptedMatch[1]);
+    encryptedMatch = null;
+
+    const iv = cryptoEngine.HexEncoder.parse(ivMatch[1]);
+    const hmac = cryptoEngine.HexEncoder.parse(hmacMatch[1]);
+    const salt = cryptoEngine.HexEncoder.parse(saltMatch[1]);
+
     // decrypt input
-    const { success, decoded } = await decode(cipherTextMatch[1], hashedPassword, saltMatch[1]);
+    const { success, decoded } = await decode(iv, encrypted, hmac, hashedPassword, salt);
 
     if (!success) {
         return console.log(`ERROR: could not decrypt ${path}`);
@@ -197,25 +212,25 @@ async function encodeAndGenerateFile(
     path,
     rootDirectoryFromArguments,
     hashedPassword,
-    salt,
+    saltString,
     baseTemplateData,
     isRememberEnabled,
     namedArgs
 ) {
-    // get the file content
-    const contents = getFileContent(path);
-
     // encrypt input
-    const encryptedMsg = await encodeWithHashedPassword(contents, hashedPassword);
+    const encryptedMsg = await encodeWithHashedPassword(getFileContentBytes(path), hashedPassword);
 
     let rememberDurationInDays = parseInt(namedArgs.remember);
     rememberDurationInDays = isNaN(rememberDurationInDays) ? 0 : rememberDurationInDays;
 
     const staticryptConfig = {
-        staticryptEncryptedMsgUniqueVariableName: encryptedMsg,
+        staticryptIvUniqueVariableName: cryptoEngine.HexEncoder.stringify(encryptedMsg.iv),
+        staticryptEncryptedUniqueVariableName: cryptoEngine.HexEncoder.stringify(encryptedMsg.encrypted),
+        staticryptHmacUniqueVariableName: cryptoEngine.HexEncoder.stringify(encryptedMsg.hmac),
+
         isRememberEnabled,
         rememberDurationInDays,
-        staticryptSaltUniqueVariableName: salt,
+        staticryptSaltUniqueVariableName: saltString,
     };
     const templateData = {
         ...baseTemplateData,
