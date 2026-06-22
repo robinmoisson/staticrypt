@@ -381,10 +381,14 @@
 
                 trackEvent("generate_encrypted");
 
-                const unencrypted = document.getElementById("unencrypted_html").value,
-                    password = document.getElementById("password").value;
+                const unencrypted = cryptoEngine.UTF8Encoder.parse(document.getElementById("unencrypted_html").value);
 
-                const salt = cryptoEngine.generateRandomSalt();
+                const passwordString = document.getElementById("password").value;
+                const password = cryptoEngine.HexEncoder.parse(passwordString);
+
+                const saltString = cryptoEngine.generateRandomSaltString();
+                const salt = cryptoEngine.HexEncoder.parse(saltString);
+
                 const encryptedMsg = await encode(unencrypted, password, salt);
 
                 const templateButton = document.getElementById("template_button").value,
@@ -399,7 +403,11 @@
 
                 const data = {
                     staticrypt_config: {
-                        staticryptEncryptedMsgUniqueVariableName: encryptedMsg,
+                        staticryptIvUniqueVariableName: cryptoEngine.HexEncoder.stringify(encryptedMsg.iv),
+                        staticryptEncryptedUniqueVariableName: cryptoEngine.HexEncoder.stringify(
+                            encryptedMsg.encrypted
+                        ),
+                        staticryptHmacUniqueVariableName: cryptoEngine.HexEncoder.stringify(encryptedMsg.hmac),
                         isRememberEnabled,
                         rememberDurationInDays,
                         staticryptSaltUniqueVariableName: salt,
@@ -415,7 +423,11 @@
                     template_title: templateTitle || "Protected Page",
                 };
 
-                document.getElementById("encrypted_html_display").textContent = encryptedMsg;
+                // TODO: Displaying the old encryptedMsg hex string is problematic for large
+                // TODO:   pages. Maybe implement a way to allow user to request that (button?)
+                // TODO:   maybe we need to create a new format to support copy/past,
+                // TODO:   (possibly JSON)?
+                document.getElementById("encrypted_html_display").textContent = "HTML is encrypted";
 
                 setFileToDownload(data);
             });
