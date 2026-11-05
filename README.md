@@ -337,6 +337,8 @@ If you have a StatiCrypt project you'd like to share, feel free to open an issue
 
 **Template to host an encrypted single page website with Github Pages:** [a-nau/password-protected-website-template](https://github.com/a-nau/password-protected-website-template) is a demonstration of how to build a protected page on Github Pages, integrating with Github Actions.
 
+**Template tutorial for Quarto + StatiCrypt + Github Pages:** [biermanr/quarto_static_encrypted_website](https://github.com/biermanr/quarto_static_encrypted_website) is a similar demonstration as the above @a-nau template github repository with added info for Quarto rendered websites on Github Actions.
+
 ### Alternatives to StatiCrypt
 
 (I haven't vetted any of those beyond a quick look, use at your own discretion)
